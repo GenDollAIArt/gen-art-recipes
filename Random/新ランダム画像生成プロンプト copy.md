@@ -22,6 +22,12 @@ VARIABLES
 {{User enters image concept, situation, and special notes here}}
 * If instructions are provided in Japanese, they must be automatically converted into English prompts. Clothing instructions here override all defaults.
 ============================================================
+TRIGGER
+============================================================
+Triggers should be ignored during prompt generation and copied as a string at the end of the prompt.
+
+skin dentation, tight clothing, skin tight, undersized clothes, stretched fabric,perfect breasts, natural breasts, round breasts, natural sag, full breasts,erect nipples, hard nipples, nipple outline, visible nipples, nipples visible through clothing
+============================================================
 REALITY
 ============================================================
 (no anime:1.9), (no illustration:1.9), (no plastic skin:1.9), (no waxy skin:1.9),
