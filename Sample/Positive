@@ -1,122 +1,95 @@
-Positive
-beautiful japanese actress,
-east asian woman,
+# Positive
+score_9,
+score_8_up,
+score_7_up,
 
-mid-20s,
+1girl,
+solo,
 
-soft oval face,
-small face,
-delicate facial features,
-
-gentle slightly droopy eyes,
-slightly downturned eyes,
-natural eyes,
-
-straight long black hair,
-heavy bangs,
-silky hair,
-
+beautiful japanese woman,
 fair skin,
-clear skin,
 
-large natural breasts,
-projected breasts,
-round lower breast,
-lower-pole fullness,
-natural breast slope,
-soft breast contour,
-wide-set breasts,
-defined cleavage,
+long black hair,
+very long hair,
+large loose waves,
+voluminous hair,
+soft bangs,
 
+almond eyes,
+soft gaze,
+
+long neck,
+long torso,
 slim waist,
+
+large breasts,
+natural breasts,
+teardrop breasts,
+lower-pole fullness,
+bottom-heavy breasts,
+natural sag,
+soft breast shape,
+
 slim hips,
-
-healthy feminine figure,
 long legs,
-long arms,
 
-fitted sleeveless top,
-visible cleavage,
+cowboy shot,
+from thighs up,
 
-mid-thigh shot,
-upper-thigh crop,
-cropped above knees,
-portrait framing,
-subject fills frame,
-
-three-quarter view,
-slight body turn,
-looking at camera,
-
-upper body emphasis,
+slight side angle,
 
 studio photography,
-clean studio background,
-plain light gray backdrop,
-soft lighting,
+simple studio background,
+white backdrop,
 
 photorealistic,
-ultra detailed,
-high quality,
-masterpiece
+highly detailed,
+masterpiece,
 
-Negative
+skin dentation,
+tight clothing,
+skin tight,
+undersized clothes,
+stretched fabric,
+perfect breasts,
+natural breasts,
+round breasts,
+natural sag,
+full breasts,
+erect nipples,
+hard nipples,
+nipple outline,
+visible nipples,
+nipples visible through clothing
 
-worst quality,
-low quality,
-normal quality,
-lowres,
-blurry,
-
-bad anatomy,
-bad proportions,
-deformed body,
-
-bad hands,
-extra fingers,
-missing fingers,
-fused fingers,
-
-extra limbs,
-missing limbs,
-duplicate limbs,
-
-cross-eyed,
-lazy eye,
+# Negative
+score_4,
+score_5,
+score_6,
 
 short hair,
-bob haircut,
-blonde hair,
+bob cut,
+pixie cut,
 
-muscular,
-athletic body,
-bodybuilder,
+small breasts,
+flat chest,
 
 wide hips,
 thick thighs,
 
-small breasts,
-flat chest,
-tiny breasts,
+child,
+loli,
 
-spherical breasts,
-ball-shaped breasts,
-fake breasts,
-implanted breasts,
-augmented breasts,
-push-up bra,
-upper pole fullness,
+low quality,
+worst quality,
+bad anatomy,
+bad hands,
+extra fingers,
+missing fingers,
 
-full body,
-feet,
-toes,
-
-watermark,
-signature,
-text,
-logo,
-
+cartoon,
+illustration,
 cgi,
 3d render,
-anime,
-cartoon
+plastic skin,
+wax skin
