@@ -1,52 +1,66 @@
 ---
 created: 2026-06-27T01:05:27+09:00
-modified: 2026-06-27T01:09:01+09:00
+modified: 2026-06-27T01:20:45+09:00
 ---
 
 # leonardo.ai
 
-leonardo.ai 
+1. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, front view, looking at viewer, gentle smile, soft lighting, white background, high quality
 
+2. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, three-quarter view, slight head tilt, charming expression, soft natural light, white background, high quality
 
-1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, white background, high quality
+3. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, side view, elegant profile, serene expression, side lighting, white background, high quality
 
+4. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, low angle, confident smile, bright lighting, white background, high quality
 
-front view, full body, standing, white t-shirt, jeans, arms at sides
+5. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, laughing happily, dynamic expression, soft rim light, white background, high quality
 
-side view, full body, standing, white t-shirt, jeans, looking forward
+6. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, three-quarter view, thoughtful expression, dramatic side lighting, white background, high quality
 
-back view, full body, standing, white t-shirt, jeans
+7. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, slight smile, eye contact, golden hour lighting, white background, high quality
 
-three quarter view, full body, standing, white t-shirt, jeans
+8. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, head slightly turned, playful wink, soft diffused light, white background, high quality
 
-front view, upper body, white t-shirt, jeans, slight smile
+9. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, front view, calm and elegant, cool tone lighting, white background, high quality
 
-front view, full body, standing, summer dress, light blue
+10. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, upward gaze, dreamy expression, back lighting, white background, high quality
 
-front view, full body, standing, school uniform, blazer, skirt
+11. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, standing, front view, hands on hips, confident pose, soft lighting, white background, high quality
 
-front view, full body, standing, casual hoodie, sweatpants
+12. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, three-quarter view, slight body turn, gentle smile, warm lighting, white background, high quality
 
-front view, full body, standing, office wear, white blouse, black skirt
+13. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, standing straight, front view, elegant posture, natural lighting, white background, high quality
 
-front view, full body, standing, sportswear, tight leggings
+14. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, dynamic pose, one hand raised, cheerful expression, side lighting, white background, high quality
 
-side view, upper body, white t-shirt, hair blowing
+15. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, sitting pose, legs crossed, seductive smile, soft shadow lighting, white background, high quality
 
-three quarter view, upper body, looking at camera, slight smile
+16. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, walking pose, three-quarter view, flowing hair, cinematic lighting, white background, high quality
 
-front view, full body, sitting on chair, jeans, white t-shirt
+17. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, leaning forward, eye contact, dramatic rim light, white background, high quality
 
-front view, full body, arms crossed, white t-shirt, jeans
+18. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, arms crossed, confident look, cool side lighting, white background, high quality
 
-front view, full body, hands on hips, white t-shirt, jeans
+19. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, playful twirling pose, happy expression, bright even lighting, white background, high quality
 
-front view, full body, standing, winter coat, long
+20. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, side view, elegant standing, soft back lighting, white background, high quality
 
-front view, full body, standing, denim jacket, white inner shirt
+21. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up to medium, looking over shoulder, seductive gaze, warm lighting, white background, high quality
 
-back view, upper body, long hair visible, white t-shirt
+22. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, low angle shot, powerful pose, dramatic lighting, white background, high quality
 
-three quarter back view, full body, standing, jeans
+23. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, relaxed sitting, gentle smile, soft diffused light, white background, high quality
 
-front view, full body, standing, sundress, floral pattern
+24. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, three-quarter view, hands behind back, innocent expression, natural lighting, white background, high quality
+
+25. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, dynamic hair flip, energetic pose, bright lighting, white background, high quality
+
+26. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, high angle view, cute pose, soft lighting, white background, high quality
+
+27. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up to medium, thoughtful expression, side profile with turn, moody lighting, white background, high quality
+
+28. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, standing with slight lean, confident and elegant, golden lighting, white background, high quality
+
+29. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, medium shot, laughing with head back, joyful expression, bright soft light, white background, high quality
+
+30. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, full body, front view with slight twist, perfect proportions, cinematic even lighting, white background, high quality
