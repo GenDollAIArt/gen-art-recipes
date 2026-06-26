@@ -1,9 +1,11 @@
 ---
 created: 2026-06-27T01:05:27+09:00
-modified: 2026-06-27T01:20:45+09:00
+modified: 2026-06-27T01:40:58+09:00
 ---
 
 # leonardo.ai
+
+https://leonardo.ai/
 
 1. 1girl, korean, long hair, dark brown hair, beautiful face, realistic, photorealistic, large breasts, curvy body, slim waist, close-up portrait, front view, looking at viewer, gentle smile, soft lighting, white background, high quality
 
