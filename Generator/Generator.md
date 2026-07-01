@@ -1,6 +1,6 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-02T08:03:13+09:00
+modified: 2026-07-02T08:04:28+09:00
 ---
 
 # Generator
@@ -272,19 +272,22 @@ modified: 2026-07-02T08:03:13+09:00
     <div class="chips" id="toneChips"></div>
   </div>
 
-  <!-- ④⑤ Bokeh -->
+  <!-- ④ Bokeh & Effects -->
   <div class="card">
-    <div class="slabel">④ ボケ設定</div>
-    <div class="toggle-row">
-      <button class="toggle-btn" id="toggleBg" onclick="toggleBokeh('bg')">
-        <span class="toggle-pill"><span class="toggle-dot"></span></span>
-        背景ボケ
-      </button>
-      <button class="toggle-btn" id="toggleLight" onclick="toggleBokeh('light')">
-        <span class="toggle-pill"><span class="toggle-dot"></span></span>
-        光の玉ボケ
-      </button>
-    </div>
+    <div class="slabel">④ エフェクト（複数選択可）</div>
+    <div class="chips" id="effectChips"></div>
+  </div>
+
+  <!-- ⑤ Tension -->
+  <div class="card">
+    <div class="slabel">⑤ テンション</div>
+    <div class="chips" id="tensionChips"></div>
+  </div>
+
+  <!-- ⑥ Emotion -->
+  <div class="card">
+    <div class="slabel">⑥ 感情</div>
+    <div class="chips" id="emotionChips"></div>
   </div>
 
   <!-- Buttons -->
@@ -408,10 +411,45 @@ const OVERALL_TONES = [
   {label:"ミニマル / 静寂",   value:"minimal quiet aesthetic, negative space composition, serene calm mood"},
 ];
 
+// ── Effects (multi-select) ────────────────────────────────────────────────────
+const EFFECTS = [
+  {label:"🌫️ 背景ボケ",     value:"(background bokeh blur:1.6), (shallow depth of field with soft defocused background:1.6)"},
+  {label:"✨ 光の玉ボケ",    value:"(light orb bokeh:1.5), (ambient light circles in background:1.5), (specular bokeh highlights:1.5)"},
+  {label:"💧 水滴/結露感",   value:"(condensation droplets on glass or skin:1.4), (subtle water droplet texture:1.4)"},
+  {label:"✨ きらめき粒子",  value:"(sparkling glitter particles in air:1.4), (subtle shimmering light particles:1.4)"},
+  {label:"🌁 ソフトフォーカス", value:"(soft focus haze:1.4), (gentle dreamy blur on edges:1.4), (diffused hazy atmosphere:1.4)"},
+  {label:"🌙 逆光/リムライト", value:"(backlighting:1.5), (rim light on hair and shoulders:1.5), (silhouette-edge glow:1.4)"},
+  {label:"📼 VHSノイズ",     value:"(subtle VHS scan lines:1.3), (retro analog video noise:1.3), (slight chromatic aberration:1.3)"},
+  {label:"🔥 暖色フレア",    value:"(warm lens flare:1.4), (golden warm light flare streaks:1.4)"},
+  {label:"❄️ 冷色フィルター", value:"(cool blue color grading:1.4), (cold tone filter:1.4)"},
+  {label:"🌈 光漏れ",       value:"(light leak effect:1.4), (film light leak streaks across frame:1.4)"},
+  {label:"🖤 ビネット",     value:"(vignette:1.4), (soft dark edge falloff around frame:1.4)"},
+  {label:"🎞️ フィルムグレイン強め", value:"(heavy film grain:1.5), (pronounced analog grain texture:1.5)"},
+];
+
+// ── Tension options ────────────────────────────────────────────────────────────
+const TENSIONS = [
+  {label:"😌 低め（落ち着き）", value:"low"},
+  {label:"🙂 普通",           value:"medium"},
+  {label:"😄 やや高め",        value:"medium-high"},
+  {label:"🤩 高め（元気）",    value:"high"},
+];
+
+// ── Emotion options ────────────────────────────────────────────────────────────
+const EMOTIONS = [
+  {label:"🍶 ほろ酔い",     value:"tipsy"},
+  {label:"👯 社交的",       value:"social"},
+  {label:"🌙 物思い/孤独",  value:"reflective"},
+  {label:"😔 憂鬱/疲れ",    value:"melancholy"},
+  {label:"☕ カジュアル",   value:"casual"},
+  {label:"💖 自信/嬉しい",  value:"confident"},
+  {label:"😐 ニュートラル", value:"neutral"},
+];
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let state = {
   weather: "", film: "", tone: "",
-  bgBokeh: false, lightBokeh: false,
+  effects: [], tension: "", emotion: "",
 };
 let tokyoNow = {};
 
@@ -431,348 +469,4 @@ function getTokyoNow() {
     {h:[23,24],label:"深夜", en:"midnight",       mood:"deep night solitude, tender melancholy"},
   ];
   const hour = jst.getHours();
-  const timeCtx = timeCtxList.find(t => hour >= t.h[0] && hour < t.h[1]) || timeCtxList[0];
-  return {
-    month: jst.getMonth() + 1,
-    day: days[jst.getDay()],
-    hour,
-    minute: jst.getMinutes(),
-    timeStr: jst.toLocaleTimeString("ja-JP", {hour:"2-digit", minute:"2-digit"}),
-    timeCtx,
-  };
-}
-
-function detectScene(text) {
-  const t = text;
-  if (/家|自宅|部屋|home|apartment|room/.test(t)) return "home";
-  if (/デート|date/.test(t)) return "date";
-  if (/仕事帰り|退勤|after work|office/.test(t)) return "after work";
-  if (/居酒屋|バー|飲み|izakaya|bar|pub|drink|club|夜遊び/.test(t)) return "night out";
-  return "casual";
-}
-
-// ── Update clock ──────────────────────────────────────────────────────────────
-function updateClock() {
-  tokyoNow = getTokyoNow();
-  document.getElementById("hTime").textContent = tokyoNow.timeStr + " JST";
-  document.getElementById("hDay").textContent = tokyoNow.day + " · " + tokyoNow.month + "月 · " + tokyoNow.timeCtx.label;
-  document.getElementById("infoDay").innerHTML = "<span class='info-val'>" + tokyoNow.day + " / " + tokyoNow.month + "月 / " + tokyoNow.timeCtx.label + "（" + tokyoNow.timeCtx.en + "）</span>";
-  document.getElementById("infoTime").innerHTML = "<span class='info-val'>" + tokyoNow.timeStr + " JST</span>";
-  document.getElementById("infoDayMood").textContent = DAY_MOOD[tokyoNow.day];
-  document.getElementById("infoHair").textContent = HAIR_BY_MONTH[tokyoNow.month];
-}
-
-// ── Render chip groups ────────────────────────────────────────────────────────
-function renderChips(containerId, items, stateKey) {
-  const el = document.getElementById(containerId);
-  el.innerHTML = "";
-  items.forEach((item, i) => {
-    const btn = document.createElement("button");
-    btn.className = "chip" + (state[stateKey] === item.value ? " active" : "");
-    btn.textContent = item.label;
-    btn.onclick = () => {
-      state[stateKey] = (state[stateKey] === item.value) ? "" : item.value;
-      renderChips(containerId, items, stateKey);
-    };
-    el.appendChild(btn);
-  });
-}
-
-function toggleBokeh(type) {
-  if (type === "bg") {
-    state.bgBokeh = !state.bgBokeh;
-    document.getElementById("toggleBg").classList.toggle("active", state.bgBokeh);
-  } else {
-    state.lightBokeh = !state.lightBokeh;
-    document.getElementById("toggleLight").classList.toggle("active", state.lightBokeh);
-  }
-}
-
-// ── Claude API: resolve motion ────────────────────────────────────────────────
-function resolveMotion(situation, dayMood, timeCtx) {
-  const t = situation + " " + dayMood + " " + timeCtx.mood;
-
-  // ── Detect emotion ──────────────────────────────────────────────────────────
-  let emotion = "neutral";
-  if (/飲み|居酒屋|バー|酔|飲ん|tipsy|social|飲み会|ビール|ワイン|乾杯/.test(t))
-    emotion = "tipsy";
-  else if (/友達|友人|みんな|パーティ|飲み会|social|遊び/.test(t))
-    emotion = "social";
-  else if (/ひとり|一人|孤独|lonely|寂し|reflective|物思い|夜|深夜/.test(t))
-    emotion = "reflective";
-  else if (/悲し|憂鬱|melancholy|疲れ|しんど|疲労|憂い/.test(t))
-    emotion = "melancholy";
-  else if (/散歩|歩く|カフェ|コーヒー|のんびり|casual|リラックス|休日/.test(t))
-    emotion = "casual";
-  else if (/仕事|残業|会社|office|デスク|tired|疲/.test(t))
-    emotion = "melancholy";
-  else if (/デート|彼|ときめき|嬉し|楽し|happy|confident|自信/.test(t))
-    emotion = "confident";
-
-  // ── Detect tension ──────────────────────────────────────────────────────────
-  let tension = "medium";
-  if (/深夜|ひとり|一人|孤独|静か|quiet|calm|家|自宅|部屋|眠/.test(t))
-    tension = "low";
-  else if (/走|急|hurry|energetic|excited|興奮|はしゃ|元気|パーティ|踊/.test(t))
-    tension = "high";
-  else if (/飲み|バー|居酒屋|友達|集まり|social|にぎや/.test(t))
-    tension = "medium-high";
-
-  // ── Build motion text ───────────────────────────────────────────────────────
-  let base = "";
-  if (tension === "low")
-    base = "slow movement, breathing motion, minimal tilt, micro-movements";
-  else if (tension === "medium")
-    base = "gentle lean, head tilt, arm shift, soft hair";
-  else
-    base = "walking, turning, playful tilt, energetic arm movement, hair swaying";
-
-  let extra = "";
-  if (emotion === "reflective" || emotion === "lonely" || emotion === "melancholy")
-    extra = "slow blink, downward gaze, soft angle";
-  else if (emotion === "confident" || emotion === "casual")
-    extra = "hip shift, relaxed shoulder, natural stride";
-  else if (emotion === "tipsy" || emotion === "social")
-    extra = "loose arm, playful tilt, relaxed posture";
-
-  return extra ? base + ", " + extra : base;
-}
-
-// ── Build prompt ──────────────────────────────────────────────────────────────
-function buildPrompt(t, situation, weatherVal, filmVal, toneVal, bgBokeh, lightBokeh, angle, expression, scene, accessories, motionText) {
-  const weatherLabel = WEATHER_OPTIONS.find(w => w.value === weatherVal)?.label || "";
-  const overviewParts = [];
-  if (situation.trim()) overviewParts.push(situation.trim());
-  overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
-  overviewParts.push("day: " + t.day + " — " + DAY_MOOD[t.day]);
-  if (weatherVal) overviewParts.push("weather: " + weatherVal);
-  overviewParts.push("time-of-day mood: " + t.timeCtx.mood);
-  if (filmVal) overviewParts.push(filmVal);
-  if (toneVal) overviewParts.push(toneVal);
-  if (bgBokeh) overviewParts.push("(background bokeh blur:1.6), (shallow depth of field with soft defocused background:1.6)");
-  if (lightBokeh) overviewParts.push("(light orb bokeh:1.5), (ambient light circles in background:1.5), (specular bokeh highlights:1.5)");
-
-  return `============================================================
-VARIABLE EXPANSION MODE v3.2 — FULLY EXPANDED
-============================================================
-All variables resolved. Apply directly.
-============================================================
-RESOLVED VARIABLES
-============================================================
-[DAY]   = ${t.day}
-[MONTH] = ${t.month}
-[TIME]  = ${t.timeCtx.label} / ${t.timeCtx.en} (${t.timeStr} JST)
-============================================================
-[IMAGE OVERVIEW] — ABSOLUTE PRIORITY
-============================================================
-${overviewParts.join(", ")}
-* Clothing instructions above override all defaults.
-============================================================
-REALITY
-============================================================
-(no anime:1.9), (no illustration:1.9), (no plastic skin:1.9), (no waxy skin:1.9),
-(no beauty filters:1.8), (photographic realism only:1.9),
-(real skin texture with pores and micro-details:1.9),
-(realistic lighting and shadows:1.8), (real-world imperfections:1.7)
-============================================================
-ENVIRONMENT
-============================================================
-(real Japanese locations:1.8),
-(real izakaya, bars, streets, apartments, trains, cafés:1.8),
-(realistic crowd and posture:1.7), (realistic tableware, signage, furniture:1.7),
-(authentic ambient lighting:1.7), (no fantasy elements:1.8)
-============================================================
-ASPECT
-============================================================
-(aspect ratio 9:16:1.6), (vertical smartphone framing:1.6)
-============================================================
-CAMERA
-============================================================
-(smartphone in her hand IS the active camera:1.9),
-(viewpoint MUST match her held smartphone:1.9),
-(only ONE smartphone in scene:1.9)
-============================================================
-SELFIE POV
-============================================================
-(POV smartphone front-camera selfie:1.8), (arm's-length distance:1.7),
-(random left hand or right hand holding the phone:1.9),
-(natural wide-angle selfie distortion:1.6),
-(camera is ALWAYS her held smartphone:1.9),
-(viewpoint ALWAYS from her hand-held front camera:1.9),
-(no third-person shots:1.9), (no external camera angles:1.9),
-(natural arm extension consistent with selfie:1.8),
-(perspective MUST reflect handheld selfie:1.9)
-============================================================
-ANGLE — RESOLVED: [${angle.name}]
-============================================================
-${angle.prompt}
-============================================================
-EXPRESSION & MOOD — RESOLVED
-============================================================
-(context-driven emotional expression:1.9),
-(emotion and expression strongly reflects the situation, time, weather, and atmosphere:1.9),
-(${expression}:1.9),
-(day mood: ${DAY_MOOD[t.day]}:1.7),
-(time-of-day atmosphere: ${t.timeCtx.mood}:1.7),
-(natural micro-expressions and subtle changes according to situation:1.7)
-============================================================
-MOTION — RESOLVED
-============================================================
-(${motionText}:1.7)
-============================================================
-CHARACTER
-============================================================
-(24-year-old woman:1.4), (corporate secretary:1.3),
-(has boyfriend but values personal time:1.3),
-(social with many friends, enjoys drinking parties:1.3),
-(loves drinking alone at home or bars:1.4),
-(quiet nights drinking alone, self-reflecting:1.4),
-(gentle, emotionally deep, slightly introverted:1.4),
-(fragile beauty with subtle melancholy:1.5),
-(soft transparent slightly lonely aura:1.4),
-(strikingly pale fair porcelain skin:1.8),
-(elegant sorrow and delicate vulnerability:1.5)
-============================================================
-FACE IDENTITY
-============================================================
-(refined East-Asian actress face exactly in the style of Ko Yoon-jung:1.9),
-(translucent elegant beauty like Ko Yoon-jung:1.9),
-(extremely fair porcelain complexion like Ko Yoon-jung:1.9),
-(consistent facial identity:1.9), (stable refined proportions:1.7),
-(soft rounded jawline:1.6), (natural almond-shaped eyes with emotional depth:1.6),
-(balanced nose and lips:1.6), (intelligent calm atmosphere:1.7)
-============================================================
-BODY
-============================================================
-(slender I-line silhouette with long lean vertical proportions:1.6),
-(narrow waist smooth body flow:1.5), (refined fashion-model proportions:1.5),
-(realistic anatomy:1.8), (no exaggerated glamour proportions:1.7),
-(naturally large breasts with realistic volume and gravity-consistent shape:1.9),
-(enhanced fullness without push-up or cleavage emphasis:1.8),
-(soft three-dimensional contour visible through fabric only:1.8),
-(no explicit anatomy:1.9), (no sexual expression:1.9)
-============================================================
-NECKLINE & COMPOSITION
-============================================================
-(beautiful neck-to-collarbone line composition:1.8),
-(elegant deep-V or wide open neckline:1.6),
-(face is primary visual focal point:1.9),
-(face > neck > collarbone > upper silhouette hierarchy:1.9),
-(no cleavage-centered or chest-focused composition:1.9)
-============================================================
-ACCESSORIES — RESOLVED: [${scene.toUpperCase()}]
-============================================================
-${accessories}
-============================================================
-HAIR — RESOLVED: [MONTH ${t.month}]
-============================================================
-${HAIR_BY_MONTH[t.month]}
-============================================================
-LIGHTING & SMARTPHONE
-============================================================
-(realistic ambient lighting from actual fixtures:1.7),
-(real smartphone rendering:1.8), (natural grain in low light:1.6),
-(realistic HDR:1.5), (authentic color temperature:1.6),
-(realistic depth of field:1.6), (hand-held micro shake:1.5)
-============================================================`;
-}
-
-// ── Generate ──────────────────────────────────────────────────────────────────
-function handleGenerate() {
-  const situation = document.getElementById("situation").value;
-  const btn = document.getElementById("btnGen");
-  btn.disabled = true;
-  btn.innerHTML = "⏳ 生成中…";
-
-  const t = getTokyoNow();
-  tokyoNow = t;
-  updateClock();
-
-  const scene = detectScene(situation);
-  const accessories = ACCESSORIES_MAP[scene];
-  const angle = ANGLES[Math.floor(Math.random() * ANGLES.length)];
-  const expression = EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
-
-  const motionText = resolveMotion(situation, DAY_MOOD[t.day], t.timeCtx);
-
-  const prompt = buildPrompt(t, situation, state.weather, state.film, state.tone, state.bgBokeh, state.lightBokeh, angle, expression, scene, accessories, motionText);
-
-  // Show meta
-  document.getElementById("metaCard").classList.remove("hidden");
-  document.getElementById("metaContent").innerHTML =
-    "🕐 <b style='color:#c4b5fd'>時間帯</b>：" + t.timeCtx.label + " / " + t.timeCtx.en + "<br>" +
-    "📅 <b style='color:#c4b5fd'>曜日 mood</b>：" + DAY_MOOD[t.day] + "<br>" +
-    "✂️ <b style='color:#c4b5fd'>ヘア</b>：" + HAIR_BY_MONTH[t.month] + "<br>" +
-    "📸 <b style='color:#c4b5fd'>アングル</b>：" + angle.name + "<br>" +
-    "😊 <b style='color:#c4b5fd'>表情</b>：" + expression + "<br>" +
-    "👜 <b style='color:#c4b5fd'>アクセ</b>：" + scene + "<br>" +
-    "🎬 <b style='color:#c4b5fd'>モーション</b>：" + motionText;
-
-  // Show output
-  document.getElementById("outputCard").classList.remove("hidden");
-  document.getElementById("outputArea").value = prompt;
-
-  btn.disabled = false;
-  btn.innerHTML = "✦ プロンプト生成";
-
-  // Scroll to output
-  document.getElementById("outputCard").scrollIntoView({ behavior: "smooth" });
-}
-
-// ── Copy ──────────────────────────────────────────────────────────────────────
-function handleCopy() {
-  const ta = document.getElementById("outputArea");
-  ta.focus();
-  ta.select();
-  ta.setSelectionRange(0, ta.value.length);
-
-  let success = false;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(ta.value).then(() => showCopied()).catch(() => fallbackCopy(ta));
-  } else {
-    fallbackCopy(ta);
-  }
-}
-
-function fallbackCopy(ta) {
-  try {
-    document.execCommand("copy");
-    showCopied();
-  } catch {
-    alert("コピーできませんでした。テキストエリアを長押しして「すべてを選択」→「コピー」してください。");
-  }
-}
-
-function showCopied() {
-  const btn = document.getElementById("btnCopy");
-  btn.textContent = "✓ コピー済み";
-  btn.classList.add("copied");
-  setTimeout(() => {
-    btn.textContent = "コピー";
-    btn.classList.remove("copied");
-  }, 2500);
-}
-
-// ── Reset ─────────────────────────────────────────────────────────────────────
-function handleReset() {
-  document.getElementById("situation").value = "";
-  state = { weather:"", film:"", tone:"", bgBokeh:false, lightBokeh:false };
-  document.getElementById("toggleBg").classList.remove("active");
-  document.getElementById("toggleLight").classList.remove("active");
-  document.getElementById("metaCard").classList.add("hidden");
-  document.getElementById("outputCard").classList.add("hidden");
-  document.getElementById("outputArea").value = "";
-  renderChips("weatherChips", WEATHER_OPTIONS, "weather");
-  renderChips("filmChips", FILM_TONES, "film");
-  renderChips("toneChips", OVERALL_TONES, "tone");
-}
-
-// ── Init ──────────────────────────────────────────────────────────────────────
-updateClock();
-setInterval(updateClock, 30000);
-renderChips("weatherChips", WEATHER_OPTIONS, "weather");
-renderChips("filmChips", FILM_TONES, "film");
-renderChips("toneChips", OVERALL_TONES, "tone");
-</script>
-</body>
-</html>
+  const timeCtx = timeCtxList.find(t => hour >= t.h[0]
