@@ -1,10 +1,21 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-02T08:04:28+09:00
+modified: 2026-07-02T23:54:55+09:00
 ---
 
 # Generator
 
+<!--
+  Selfie Prompt Generator
+  Version: 2.2.0
+  Updated: 2026-07-02
+  Changelog:
+    v2.2.0 - 表情の手動選択（⑦）を追加。未選択時は従来通りランダム
+    v2.1.0 - エフェクト複数選択・テンション/感情の手動選択チップを追加
+    v2.0.0 - Claude API依存を廃止、完全オフライン化（キーワード判定ロジック）
+    v1.1.0 - モバイルコピー対応（execCommandフォールバック）、出力をtextarea化
+    v1.0.0 - 初期版（React/JSXプロトタイプからHTML単体化）
+-->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -286,8 +297,15 @@ modified: 2026-07-02T08:04:28+09:00
 
   <!-- ⑥ Emotion -->
   <div class="card">
-    <div class="slabel">⑥ 感情</div>
+    <div class="slabel">⑥ 感情（モーション用）</div>
     <div class="chips" id="emotionChips"></div>
+  </div>
+
+  <!-- ⑦ Expression -->
+  <div class="card">
+    <div class="slabel">⑦ 表情</div>
+    <div class="hint">未選択の場合はランダムで決定されます</div>
+    <div class="chips" id="expressionChips"></div>
   </div>
 
   <!-- Buttons -->
@@ -446,27 +464,14 @@ const EMOTIONS = [
   {label:"😐 ニュートラル", value:"neutral"},
 ];
 
-// ── State ─────────────────────────────────────────────────────────────────────
-let state = {
-  weather: "", film: "", tone: "",
-  effects: [], tension: "", emotion: "",
-};
-let tokyoNow = {};
-
-// ── Tokyo time ────────────────────────────────────────────────────────────────
-function getTokyoNow() {
-  const now = new Date();
-  const jst = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
-  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const timeCtxList = [
-    {h:[0,5],  label:"深夜", en:"late night",     mood:"melancholic quiet solitude, exhausted calm"},
-    {h:[5,9],  label:"早朝", en:"early morning",  mood:"serene fresh morning calm, gentle awakening"},
-    {h:[9,12], label:"午前", en:"late morning",   mood:"composed focused morning clarity"},
-    {h:[12,14],label:"昼",   en:"noon",           mood:"bright casual midday energy"},
-    {h:[14,17],label:"午後", en:"afternoon",      mood:"relaxed comfortable afternoon drift"},
-    {h:[17,20],label:"夕方", en:"evening",        mood:"warm golden-hour nostalgia, gentle longing"},
-    {h:[20,23],label:"夜",   en:"night",          mood:"intimate night warmth, social or quiet reflection"},
-    {h:[23,24],label:"深夜", en:"midnight",       mood:"deep night solitude, tender melancholy"},
-  ];
-  const hour = jst.getHours();
-  const timeCtx = timeCtxList.find(t => hour >= t.h[0]
+// ── Expression options (manual override for EXPRESSIONS random pick) ──────────
+const EXPRESSION_OPTIONS = [
+  {label:"😐 真顔/クール",      value:"neutral deadpan, calm, composed expression"},
+  {label:"🙂 優しい微笑み",     value:"soft gentle smile, warm and approachable expression"},
+  {label:"😊 口角を上げて笑う", value:"gently raised mouth corners, natural warm smile with lifted lips, soft genuine smile"},
+  {label:"😄 明るい笑顔",       value:"bright happy, lively cheerful expression"},
+  {label:"🥰 甘え/愛おしそう",  value:"sweet, slightly clingy, affectionate expression"},
+  {label:"😋 いたずらっぽい笑み", value:"teasing, mischievous smirk expression"},
+  {label:"😌 物憂げ",          value:"melancholic, reflective, subtle loneliness in expression"},
+  {label:"😪 気だるげ",         value:"tired but gentle, quiet fatigue expression"},
+  {label:"🍶 ほろ酔い",        value
