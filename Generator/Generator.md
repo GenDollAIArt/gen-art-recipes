@@ -1,16 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:12:34+09:00
+modified: 2026-07-03T15:48:31+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.17.0-pose-motion-optimization
+  Version: 3.19.0-angle-mode-expansion
   Updated: 2026-07-03
   Changelog:
-    v3.17.0 - MOTIONをPOSE / MOTIONに整理。構図・アングル・シーン・テンション・感情に応じて、体の向き、腕、肩、歩き、目線、自然な自撮り姿勢を最適化
+    v3.19.0 - 顔優先からLOW系を完全除外。顔ズームアップ、腰だめスーパーロー、頭上スーパーハイなど撮影姿勢が明確な構図プリセットを追加
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
 
@@ -248,7 +248,7 @@ modified: 2026-07-03T15:12:34+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.17</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.19</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -321,7 +321,7 @@ modified: 2026-07-03T15:12:34+09:00
   <!-- Composition / naturalness -->
   <div class="card">
     <div class="slabel">⑦ 構図 / 自然さ</div>
-    <div class="hint">顔固定はそのままに、構図だけを「自然な日常感」寄りか「顔優先」寄りかで切り替えます。アングルはこの設定をもとに候補から自動選択され、LOW / SUPER LOW も条件次第で選ばれます</div>
+    <div class="hint">顔固定はそのままに、構図とスマホの持ち位置を切り替えます。顔優先ではLOW系を選ばず、腰だめ/頭上などは専用プリセットで明確に指定します</div>
     <div class="chips" id="compositionChips"></div>
   </div>
 
@@ -397,12 +397,12 @@ const DAY_MOOD = {
 };
 
 const ANGLES = [
-  {name:"SUPER HIGH ANGLE", prompt:"(camera extremely high above head, steep downward look:1.8), (arm fully extended upward:1.8), (bird's-eye framing of face and upper chest:1.8), (face tilted up toward camera:1.7)"},
-  {name:"GOLDEN ANGLE",     prompt:"(camera above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes looking slightly upward:1.8)"},
+  {name:"SUPER HIGH ANGLE", prompt:"(true overhead super high-angle selfie:1.9), (arm fully extended above head:1.9), (smartphone high over her head looking almost straight down:1.9), (bird\'s-eye framing of face, shoulders, outfit and surroundings:1.8), (face tilted up toward camera:1.8), (not eye-level:1.9), (not low-angle:1.9)"},
+  {name:"GOLDEN ANGLE",     prompt:"(camera above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes looking slightly upward:1.8), (flattering high selfie angle:1.8)"},
   {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (head slightly tilted up:1.7), (eyes directed upward to lens:1.8)"},
   {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7)"},
-  {name:"LOW ANGLE",        prompt:"(camera below chin level:1.8), (angled upward toward face:1.8), (face angled slightly down:1.7), (confident posture:1.7)"},
-  {name:"SUPER LOW ANGLE",  prompt:"(camera significantly below face:1.7), (looking sharply upward:1.7), (dynamic perspective distortion:1.7)"},
+  {name:"LOW ANGLE",        prompt:"(true low-angle selfie:1.9), (phone held below chest level:1.9), (camera clearly below the face and angled upward:1.9), (viewer sees the subject from a lower hand position:1.8), (face looking slightly down toward the lens:1.8), (lower handheld perspective, not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9)"},
+  {name:"SUPER LOW ANGLE",  prompt:"(true super low-angle selfie:1.9), (phone held near waist or hip level:1.9), (strong upward perspective from below the torso:1.8), (camera far below the face looking up:1.9), (torso and jacket line emphasized by low perspective:1.8), (face looking down toward the lens:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9)"},
   {name:"DYNAMIC TILTED",   prompt:"(camera slightly rotated:1.8), (diagonal composition:1.8), (face tilted with camera:1.7), (snapshot atmosphere:1.8)"},
   {name:"OVER SHOULDER",    prompt:"(face partially turned away:1.7), (looking back toward lens:1.8), (shoulder line emphasized:1.7), (candid feel:1.7)"},
   {name:"WALKING",          prompt:"(captured mid-walk:1.8), (subtle body motion:1.7), (hair movement from motion:1.7), (face turned slightly to camera:1.7)"},
@@ -472,10 +472,4 @@ const EFFECTS = [
   {label:"💧 水滴/結露感",   value:"(condensation droplets on glass or skin:1.4), (subtle water droplet texture:1.4)"},
   {label:"✨ きらめき粒子",  value:"(sparkling glitter particles in air:1.4), (subtle shimmering light particles:1.4)"},
   {label:"🌁 ソフトフォーカス", value:"(soft focus haze:1.4), (gentle dreamy blur on edges:1.4), (diffused hazy atmosphere:1.4)"},
-  {label:"🌙 逆光/リムライト", value:"(backlighting:1.5), (rim light on hair and shoulders:1.5), (silhouette-edge glow:1.4)"},
-  {label:"📼 VHSノイズ",     value:"(subtle VHS scan lines:1.3), (retro analog video noise:1.3), (slight chromatic aberration:1.3)"},
-  {label:"🔥 暖色フレア",    value:"(warm lens flare:1.4), (golden warm light flare streaks:1.4)"},
-  {label:"❄️ 冷色フィルター", value:"(cool blue color grading:1.4), (cold tone filter:1.4)"},
-  {label:"🌈 光漏れ",       value:"(light leak effect:1.4), (film light leak streaks across frame:1.4)"},
-  {label:"🖤 ビネット",     value:"(vignette:1.4), (soft dark edge falloff around frame:1.4)"},
-  {label:"🎞️ フィルムグレイン強め", value:"(heavy film
+  {label:"🌙 逆光/リムライト", value:"(backlighting:1.5), (rim light on hair and shoulders:1.5), (silhouette-edge glow:1.4)
