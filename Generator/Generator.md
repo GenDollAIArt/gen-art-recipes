@@ -1,16 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:09:48+09:00
+modified: 2026-07-03T15:10:20+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.4.0-kmodel-face-lock
+  Version: 3.5.0-korean-model-base
   Updated: 2026-07-03
   Changelog:
-    v3.4.0 - 顔固定を再調整。頬骨・丸頬・強いチーク・可愛い笑顔方向を抑制し、韓国ファッションモデル風の細いVライン、平滑な中顔面、低彩度の色白肌、横長で静かな目元を優先
+    v3.5.0 - 固定キャラ冒頭をユーザー指定の Korean model woman ベースへ変更。韓国ファッションモデル風、同一人物固定、尖った顎ライン、細いVライン、頬骨抑制、色白透明肌を強化
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
 
@@ -243,7 +243,7 @@ modified: 2026-07-03T15:09:48+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.4</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.5</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -268,7 +268,7 @@ modified: 2026-07-03T15:09:48+09:00
       <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
       <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
     </div>
-    <div class="hint">デフォルトは参考顔の「韓国ファッションモデル風の顔骨格・色白肌・低彩度チーク・横長の静かな目元」だけを固定。口元・髪型はシーン側や表情設定で変わる前提。</div>
+    <div class="hint">デフォルトは Korean model woman ベース。韓国ファッションモデル風の細いVライン、尖った顎、頬骨抑制、色白透明肌を固定。口元・髪型はシーン側や表情設定で変わる前提。</div>
     <textarea id="characterLock" rows="8"></textarea>
   </div>
 
@@ -480,5 +480,4 @@ const EMOTIONS = [
   {label:"👯 社交的",       value:"social"},
   {label:"🌙 物思い/孤独",  value:"reflective"},
   {label:"😔 憂鬱/疲れ",    value:"melancholy"},
-  {label:"☕ カジュアル",   value:"casual"},
-  {label
+  {label:"☕ カジュアル",
