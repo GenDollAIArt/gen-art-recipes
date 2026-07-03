@@ -1,16 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:10:20+09:00
+modified: 2026-07-03T15:11:01+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.5.0-korean-model-base
+  Version: 3.6.0-contour-nose-effects
   Updated: 2026-07-03
   Changelog:
-    v3.5.0 - 固定キャラ冒頭をユーザー指定の Korean model woman ベースへ変更。韓国ファッションモデル風、同一人物固定、尖った顎ライン、細いVライン、頬骨抑制、色白透明肌を強化
+    v3.6.0 - 輪郭と鼻を再調整。顔の縦長感、細いVライン、すっと通った高めの鼻筋を強化。透明感スマホHDR系エフェクトを分割選択式で追加
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
 
@@ -243,7 +243,7 @@ modified: 2026-07-03T15:10:20+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.5</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.6</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -268,7 +268,7 @@ modified: 2026-07-03T15:10:20+09:00
       <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
       <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
     </div>
-    <div class="hint">デフォルトは Korean model woman ベース。韓国ファッションモデル風の細いVライン、尖った顎、頬骨抑制、色白透明肌を固定。口元・髪型はシーン側や表情設定で変わる前提。</div>
+    <div class="hint">デフォルトは Korean model woman ベース。顔の縦長感、細いVライン、尖った顎、すっと通った鼻筋、頬骨抑制、色白透明肌を固定。口元・髪型はシーン側や表情設定で変わる前提。</div>
     <textarea id="characterLock" rows="8"></textarea>
   </div>
 
@@ -307,6 +307,7 @@ modified: 2026-07-03T15:10:20+09:00
   <!-- ④ Bokeh & Effects -->
   <div class="card">
     <div class="slabel">⑥ エフェクト（複数選択可）</div>
+    <div class="hint">背景ボケ系に加えて、透明感スマホHDR系を分割して個別に選べます</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
@@ -464,20 +465,8 @@ const EFFECTS = [
   {label:"🌈 光漏れ",       value:"(light leak effect:1.4), (film light leak streaks across frame:1.4)"},
   {label:"🖤 ビネット",     value:"(vignette:1.4), (soft dark edge falloff around frame:1.4)"},
   {label:"🎞️ フィルムグレイン強め", value:"(heavy film grain:1.5), (pronounced analog grain texture:1.5)"},
-];
-
-// ── Tension options ────────────────────────────────────────────────────────────
-const TENSIONS = [
-  {label:"😌 低め（落ち着き）", value:"low"},
-  {label:"🙂 普通",           value:"medium"},
-  {label:"😄 やや高め",        value:"medium-high"},
-  {label:"🤩 高め（元気）",    value:"high"},
-];
-
-// ── Emotion options ────────────────────────────────────────────────────────────
-const EMOTIONS = [
-  {label:"🍶 ほろ酔い",     value:"tipsy"},
-  {label:"👯 社交的",       value:"social"},
-  {label:"🌙 物思い/孤独",  value:"reflective"},
-  {label:"😔 憂鬱/疲れ",    value:"melancholy"},
-  {label:"☕ カジュアル",
+  {label:"☀️ 自然光ハイライト", value:"(soft natural daylight:1.5), (soft highlight on nose bridge and forehead:1.4)"},
+  {label:"📱 スマホHDR", value:"(subtle smartphone HDR:1.4), (realistic smartphone rendering:1.5)"},
+  {label:"🤍 白肌オーバー露光", value:"(slight overexposure on fair skin:1.4), (clean pale skin rendering:1.5)"},
+  {label:"🫧 透明感カラー", value:"(light airy transparent color grading:1.4), (smooth but realistic skin texture:1.5)"},
+  {label:"🌤️ 低コントラスト影", value:"(low contrast facial shadows:1.4), (soft even daylight shadow transition:
