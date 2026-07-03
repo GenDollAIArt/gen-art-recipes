@@ -1,16 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:11:01+09:00
+modified: 2026-07-03T15:11:44+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.6.0-contour-nose-effects
+  Version: 3.8.0-no-hair-in-face-lock
   Updated: 2026-07-03
   Changelog:
-    v3.6.0 - 輪郭と鼻を再調整。顔の縦長感、細いVライン、すっと通った高めの鼻筋を強化。透明感スマホHDR系エフェクトを分割選択式で追加
+    v3.8.0 - 髪型指定を固定キャラ側から除外。髪型は月別HAIR設定だけで管理する方針に戻し、7月ヘアの特別優先注記も削除
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
 
@@ -243,7 +243,7 @@ modified: 2026-07-03T15:11:01+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.6</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.8</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -268,7 +268,7 @@ modified: 2026-07-03T15:11:01+09:00
       <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
       <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
     </div>
-    <div class="hint">デフォルトは Korean model woman ベース。顔の縦長感、細いVライン、尖った顎、すっと通った鼻筋、頬骨抑制、色白透明肌を固定。口元・髪型はシーン側や表情設定で変わる前提。</div>
+    <div class="hint">デフォルトは Korean model woman ベース。耳から顎まで流れる細い輪郭、平滑な頬、縦長感、尖った顎、すっと通った鼻筋、大きめの目、色白透明肌を固定。口元・髪型は固定せず、髪型は月別HAIR設定だけで管理。</div>
     <textarea id="characterLock" rows="8"></textarea>
   </div>
 
@@ -469,4 +469,4 @@ const EFFECTS = [
   {label:"📱 スマホHDR", value:"(subtle smartphone HDR:1.4), (realistic smartphone rendering:1.5)"},
   {label:"🤍 白肌オーバー露光", value:"(slight overexposure on fair skin:1.4), (clean pale skin rendering:1.5)"},
   {label:"🫧 透明感カラー", value:"(light airy transparent color grading:1.4), (smooth but realistic skin texture:1.5)"},
-  {label:"🌤️ 低コントラスト影", value:"(low contrast facial shadows:1.4), (soft even daylight shadow transition:
+  {label:"🌤️ 低コントラスト影", value:"(low contrast facial shadows:1.4), (soft even daylight shadow t
