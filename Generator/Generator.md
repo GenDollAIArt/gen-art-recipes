@@ -1,14 +1,14 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-02T23:54:55+09:00
+modified: 2026-07-03T15:06:59+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 2.2.0
-  Updated: 2026-07-02
+  Version: 3.0.0-stable-character
+  Updated: 2026-07-03
   Changelog:
     v2.2.0 - 表情の手動選択（⑦）を追加。未選択時は従来通りランダム
     v2.1.0 - エフェクト複数選択・テンション/感情の手動選択チップを追加
@@ -238,8 +238,8 @@ modified: 2026-07-02T23:54:55+09:00
 <div class="header">
   <div class="header-icon">✦</div>
   <div>
-    <div class="header-title">Selfie Prompt Generator</div>
-    <div class="header-sub">IMAGE OVERVIEW ビルダー v2</div>
+    <div class="header-title">Stable Character Prompt Generator</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -258,52 +258,69 @@ modified: 2026-07-02T23:54:55+09:00
     <div class="info-row"><span class="info-icon">✂️</span><span id="infoHair" style="font-size:11px;color:#71717a;"></span></div>
   </div>
 
+  <!-- Character lock -->
+  <div class="card card-dark">
+    <div class="card-head">
+      <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
+      <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
+    </div>
+    <div class="hint">顔・体型・透明感を固定。実在人物名は使わず、雰囲気だけを言語化。</div>
+    <textarea id="characterLock" rows="8"></textarea>
+  </div>
+
+  <!-- ① Scene only -->
+  <div class="card">
+    <div class="slabel">① 今回のシーンだけ（日本語で入力）</div>
+    <div class="hint">ここだけ毎回変更：場所・服装・ポーズ・表情・何してるか</div>
+    <textarea id="situation" rows="4" placeholder="例：&#10;薄い紺色のワイシャツ、紺色のビジネスパンツ。西中島南方のラーメン店でラーメンをすすっている。"></textarea>
+  </div>
+
+  <!-- Body silhouette -->
+  <div class="card">
+    <div class="slabel">② 体型・胸シルエットの安定度</div>
+    <div class="hint">露出強調ではなく、服の上からの自然な形として固定</div>
+    <div class="chips" id="bustChips"></div>
+  </div>
+
   <!-- Weather -->
   <div class="card">
-    <div class="slabel">天気を選択</div>
+    <div class="slabel">③ 天気を選択</div>
     <div class="chips" id="weatherChips"></div>
   </div>
 
-  <!-- ① Situation -->
+  <!-- ④ Film tone -->
   <div class="card">
-    <div class="slabel">① シチュエーション（日本語で入力）</div>
-    <div class="hint">コーデ・何してるか・場所</div>
-    <textarea id="situation" rows="4" placeholder="例：&#10;黒のニットワンピース、渋谷の居酒屋でひとり飲み"></textarea>
-  </div>
-
-  <!-- ② Film tone -->
-  <div class="card">
-    <div class="slabel">② フィルムトーン / 質感</div>
+    <div class="slabel">④ フィルムトーン / 質感</div>
     <div class="chips" id="filmChips"></div>
   </div>
 
   <!-- ③ Overall tone -->
   <div class="card">
-    <div class="slabel">③ 作品トーン</div>
+    <div class="slabel">⑤ 作品トーン</div>
     <div class="chips" id="toneChips"></div>
   </div>
 
   <!-- ④ Bokeh & Effects -->
   <div class="card">
-    <div class="slabel">④ エフェクト（複数選択可）</div>
+    <div class="slabel">⑥ エフェクト（複数選択可）</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
   <!-- ⑤ Tension -->
   <div class="card">
-    <div class="slabel">⑤ テンション</div>
+    <div class="slabel">⑦ テンション</div>
     <div class="chips" id="tensionChips"></div>
   </div>
 
   <!-- ⑥ Emotion -->
   <div class="card">
-    <div class="slabel">⑥ 感情（モーション用）</div>
+    <div class="slabel">⑧ 感情（モーション用）</div>
     <div class="chips" id="emotionChips"></div>
   </div>
 
   <!-- ⑦ Expression -->
   <div class="card">
-    <div class="slabel">⑦ 表情</div>
+    <div class="slabel">⑨ 表情</div>
     <div class="hint">未選択の場合はランダムで決定されます</div>
     <div class="chips" id="expressionChips"></div>
   </div>
@@ -467,11 +484,4 @@ const EMOTIONS = [
 // ── Expression options (manual override for EXPRESSIONS random pick) ──────────
 const EXPRESSION_OPTIONS = [
   {label:"😐 真顔/クール",      value:"neutral deadpan, calm, composed expression"},
-  {label:"🙂 優しい微笑み",     value:"soft gentle smile, warm and approachable expression"},
-  {label:"😊 口角を上げて笑う", value:"gently raised mouth corners, natural warm smile with lifted lips, soft genuine smile"},
-  {label:"😄 明るい笑顔",       value:"bright happy, lively cheerful expression"},
-  {label:"🥰 甘え/愛おしそう",  value:"sweet, slightly clingy, affectionate expression"},
-  {label:"😋 いたずらっぽい笑み", value:"teasing, mischievous smirk expression"},
-  {label:"😌 物憂げ",          value:"melancholic, reflective, subtle loneliness in expression"},
-  {label:"😪 気だるげ",         value:"tired but gentle, quiet fatigue expression"},
-  {label:"🍶 ほろ酔い",        value
+  {label:"🙂
