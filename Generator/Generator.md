@@ -1,15 +1,18 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:06:59+09:00
+modified: 2026-07-03T15:08:43+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.0.0-stable-character
+  Version: 3.1.0-structured-silhouette
   Updated: 2026-07-03
   Changelog:
+    v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
+    v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
+
     v2.2.0 - 表情の手動選択（⑦）を追加。未選択時は従来通りランダム
     v2.1.0 - エフェクト複数選択・テンション/感情の手動選択チップを追加
     v2.0.0 - Claude API依存を廃止、完全オフライン化（キーワード判定ロジック）
@@ -21,7 +24,7 @@ modified: 2026-07-03T15:06:59+09:00
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Selfie Prompt Generator</title>
+<title>Stable Character Prompt Generator</title>
 <style>
   /* ── CSS Variables: Dark (default) ── */
   :root {
@@ -277,8 +280,8 @@ modified: 2026-07-03T15:06:59+09:00
 
   <!-- Body silhouette -->
   <div class="card">
-    <div class="slabel">② 体型・胸シルエットの安定度</div>
-    <div class="hint">露出強調ではなく、服の上からの自然な形として固定</div>
+    <div class="slabel">② 体型・胸シルエットの固定</div>
+    <div class="hint">服越しでも「構造感があり、筋肉質に支えられた形。だけど柔らかい」。服装に応じて自然な谷間も許可。</div>
     <div class="chips" id="bustChips"></div>
   </div>
 
@@ -481,7 +484,4 @@ const EMOTIONS = [
   {label:"😐 ニュートラル", value:"neutral"},
 ];
 
-// ── Expression options (manual override for EXPRESSIONS random pick) ──────────
-const EXPRESSION_OPTIONS = [
-  {label:"😐 真顔/クール",      value:"neutral deadpan, calm, composed expression"},
-  {label:"🙂
+// ── Expression options (manual override for EXPRESSI
