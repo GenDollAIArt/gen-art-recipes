@@ -1,16 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:48:31+09:00
+modified: 2026-07-03T16:23:52+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.19.0-angle-mode-expansion
+  Version: 3.21.0-contradiction-audit-fix
   Updated: 2026-07-03
   Changelog:
-    v3.19.0 - 顔優先からLOW系を完全除外。顔ズームアップ、腰だめスーパーロー、頭上スーパーハイなど撮影姿勢が明確な構図プリセットを追加
+    v3.21.0 - 矛盾チェック修正。曜日ムードの時間矛盾を解消し、透明感系/粒状フィルム系/暖色系/冷色系の相反選択をより厳密に整理
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
 
@@ -248,7 +248,7 @@ modified: 2026-07-03T15:48:31+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.19</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.22</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -287,7 +287,7 @@ modified: 2026-07-03T15:48:31+09:00
   <!-- Body silhouette -->
   <div class="card">
     <div class="slabel">② 体型・胸シルエットの固定</div>
-    <div class="hint">服越しでも「構造感があり、筋肉質に支えられた形。だけど柔らかい」。服装に応じて自然な谷間も許可。</div>
+    <div class="hint">服越しでも「筋肉質な土台があり、前にしっかり出る立体感。高めの位置で、柔らかさもある」。西洋人寄りの前方投影を自然な範囲で固定できます。</div>
     <div class="chips" id="bustChips"></div>
   </div>
 
@@ -300,21 +300,21 @@ modified: 2026-07-03T15:48:31+09:00
   <!-- ④ Film tone -->
   <div class="card">
     <div class="slabel">④ フィルムトーン / 質感</div>
-    <div class="hint">選択中の写真トーンやエフェクトと相反するものは自動で選べないようになります</div>
+    <div class="hint">選択したフィルムトーンは以前より強く出ます。相反するものは自動で選べません</div>
     <div class="chips" id="filmChips"></div>
   </div>
 
   <!-- ③ Overall tone -->
   <div class="card">
     <div class="slabel">⑤ 作品トーン</div>
-    <div class="hint">透明感系とストリート/ダーク系など、反対方向の組み合わせは自動で整理</div>
+    <div class="hint">作品トーンは一目で分かるくらい強く出ます。透明感系とストリート/ダーク系など反対方向は自動整理</div>
     <div class="chips" id="toneChips"></div>
   </div>
 
   <!-- ④ Bokeh & Effects -->
   <div class="card">
     <div class="slabel">⑥ エフェクト（複数選択可）</div>
-    <div class="hint">背景ボケ系に加えて、透明感スマホHDR系を分割して個別に選べます。相反する効果は無効化されます</div>
+    <div class="hint">背景ボケ・光漏れ・グレイン・スマホHDRなどをはっきり効かせます。相反する効果は無効化されます</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
@@ -387,13 +387,13 @@ const HAIR_BY_MONTH = {
 };
 
 const DAY_MOOD = {
-  Sun:"Quiet reflective melancholy, gentle Sunday loneliness",
-  Mon:"Tired but composed Monday composure",
+  Sun:"Quiet reflective Sunday mood, gentle weekend loneliness",
+  Mon:"Tired but composed Monday mood",
   Tue:"Focused stable neutral Tuesday calm",
   Wed:"Midweek fatigue, quiet weariness",
-  Thu:"Slightly excited pre-weekend anticipation",
-  Fri:"High energy social drinking atmosphere, lively Friday night mood",
-  Sat:"Relaxed confident outgoing Saturday energy",
+  Thu:"Slight pre-weekend anticipation",
+  Fri:"Friday pre-weekend energy, lively but time-neutral mood",
+  Sat:"Relaxed confident Saturday energy",
 };
 
 const ANGLES = [
@@ -443,33 +443,23 @@ const WEATHER_OPTIONS = [
 
 const FILM_TONES = [
   {label:"なし",              value:""},
-  {label:"コダック ゴールド 200", value:"Kodak Gold 200 film tone, warm golden cast, slightly elevated grain, vintage analog feel"},
-  {label:"フジ プロ 400H",       value:"Fuji Pro 400H film tone, soft pastel palette, subtle cool shadows, natural skin tones"},
-  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, rich warm skin, creamy highlights, visible film grain"},
-  {label:"イルフォード HP5",      value:"Ilford HP5 black and white film, high contrast monochrome, classic grain texture"},
-  {label:"シネスコープ",          value:"CinemaScope film tone, teal and orange grade, cinematic color grading, anamorphic feel"},
-  {label:"ローモ",               value:"Lomography vivid tone, saturated cross-processed colors, vignette edges, lo-fi aesthetic"},
-  {label:"ポラロイド",            value:"Polaroid instant film tone, faded soft colors, nostalgic warm cast"},
-  {label:"ヴィンテージ 90s",      value:"1990s vintage film tone, slightly desaturated, muted warm mid-tones, retro color shift"},
+  {label:"コダック ゴールド 200", value:"Kodak Gold 200 film tone, clearly visible warm golden cast, noticeable analog warmth, lightly visible grain, unmistakable vintage print feel"},
+  {label:"フジ プロ 400H",       value:"Fuji Pro 400H film tone, clearly visible pastel palette, soft mint-cool shadows, airy film color separation, unmistakable film softness"},
+  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, clearly visible rich warm skin, creamy highlight rolloff, noticeable film grain, unmistakable premium portrait film look"},
+  {label:"イルフォード HP5",      value:"Ilford HP5 black and white film, clearly visible monochrome rendering, strong classic contrast, obvious grain texture, unmistakable black-and-white film look"},
+  {label:"シネスコープ",          value:"CinemaScope film tone, clearly visible teal and orange grade, cinematic color separation, anamorphic blockbuster look, unmistakable movie-like grading"},
+  {label:"ローモ",               value:"Lomography vivid tone, clearly visible cross-processed colors, strong saturation shift, lo-fi contrast, vignette edges, unmistakable lomo look"},
+  {label:"ポラロイド",            value:"Polaroid instant film tone, clearly visible faded instant-film colors, nostalgic warm cast, soft bloom, unmistakable instant snapshot feel"},
+  {label:"ヴィンテージ 90s",      value:"1990s vintage film tone, clearly visible retro color shift, muted warm mid-tones, nostalgic softness, unmistakable 90s film-photo mood"},
 ];
 
 const OVERALL_TONES = [
   {label:"なし",          value:""},
-  {label:"クール / モダン",   value:"cool modern aesthetic, sharp clean composition, urban sophisticated mood"},
-  {label:"キュート / 柔らか", value:"cute soft aesthetic, gentle pastel atmosphere, warm approachable mood"},
-  {label:"ダーク / ムーディ", value:"dark moody aesthetic, deep shadows, brooding emotional atmosphere"},
-  {label:"ナチュラル / 透明感",value:"natural transparent beauty aesthetic, fresh clean look, minimal mood"},
-  {label:"エレガント / 上品", value:"elegant refined aesthetic, graceful composition, sophisticated atmosphere"},
-  {label:"ストリート / エッジ",value:"street edge aesthetic, raw urban energy, gritty authentic mood"},
-  {label:"ロマンティック",    value:"romantic dreamy aesthetic, soft warm glow, tender emotional atmosphere"},
-  {label:"ミニマル / 静寂",   value:"minimal quiet aesthetic, negative space composition, serene calm mood"},
-];
-
-// ── Effects (multi-select) ────────────────────────────────────────────────────
-const EFFECTS = [
-  {label:"🌫️ 背景ボケ",     value:"(background bokeh blur:1.6), (shallow depth of field with soft defocused background:1.6)"},
-  {label:"✨ 光の玉ボケ",    value:"(light orb bokeh:1.5), (ambient light circles in background:1.5), (specular bokeh highlights:1.5)"},
-  {label:"💧 水滴/結露感",   value:"(condensation droplets on glass or skin:1.4), (subtle water droplet texture:1.4)"},
-  {label:"✨ きらめき粒子",  value:"(sparkling glitter particles in air:1.4), (subtle shimmering light particles:1.4)"},
-  {label:"🌁 ソフトフォーカス", value:"(soft focus haze:1.4), (gentle dreamy blur on edges:1.4), (diffused hazy atmosphere:1.4)"},
-  {label:"🌙 逆光/リムライト", value:"(backlighting:1.5), (rim light on hair and shoulders:1.5), (silhouette-edge glow:1.4)
+  {label:"クール / モダン",   value:"clearly visible cool modern aesthetic, crisp clean image design, urban sophisticated mood, unmistakably sleek and contemporary"},
+  {label:"キュート / 柔らか", value:"clearly visible cute soft aesthetic, gentle pastel atmosphere, soft warm friendliness, unmistakably sweet and tender"},
+  {label:"ダーク / ムーディ", value:"clearly visible dark moody aesthetic, deeper shadows, brooding emotional atmosphere, unmistakably heavy and cinematic"},
+  {label:"ナチュラル / 透明感",value:"clearly visible natural transparent beauty aesthetic, fresh clean look, airy brightness, unmistakably translucent and refined"},
+  {label:"エレガント / 上品", value:"clearly visible elegant refined aesthetic, graceful composition, polished sophistication, unmistakably classy and upscale"},
+  {label:"ストリート / エッジ",value:"clearly visible street edge aesthetic, raw urban energy, gritty authentic mood, unmistakably rough and street-styled"},
+  {label:"ロマンティック",    value:"clearly visible romantic dreamy aesthetic, soft warm glow, tender emotional atmosphere, unmistakably dreamy and sentimental"},
+  {label:"ミニマル / 静寂",   value:"clearly visible minimal quiet aesthetic, negative-
