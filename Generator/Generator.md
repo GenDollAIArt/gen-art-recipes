@@ -1,16 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T15:11:44+09:00
+modified: 2026-07-03T15:12:34+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.8.0-no-hair-in-face-lock
+  Version: 3.17.0-pose-motion-optimization
   Updated: 2026-07-03
   Changelog:
-    v3.8.0 - 髪型指定を固定キャラ側から除外。髪型は月別HAIR設定だけで管理する方針に戻し、7月ヘアの特別優先注記も削除
+    v3.17.0 - MOTIONをPOSE / MOTIONに整理。構図・アングル・シーン・テンション・感情に応じて、体の向き、腕、肩、歩き、目線、自然な自撮り姿勢を最適化
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
 
@@ -153,6 +153,11 @@ modified: 2026-07-03T15:11:44+09:00
     border-color: var(--chip-abdr);
     background: var(--chip-abg); color: var(--chip-acol); font-weight: 600;
   }
+  .chip.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+  }
 
   .toggle-row { display: flex; gap: 10px; }
   .toggle-btn {
@@ -243,7 +248,7 @@ modified: 2026-07-03T15:11:44+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.8</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.17</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -268,7 +273,7 @@ modified: 2026-07-03T15:11:44+09:00
       <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
       <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
     </div>
-    <div class="hint">デフォルトは Korean model woman ベース。耳から顎まで流れる細い輪郭、平滑な頬、縦長感、尖った顎、すっと通った鼻筋、大きめの目、色白透明肌を固定。口元・髪型は固定せず、髪型は月別HAIR設定だけで管理。</div>
+    <div class="hint">デフォルトは Korean model woman ベース。細く縦長の輪郭、すっと通る鼻筋、大きめの目、色白で透けるような透明肌を固定。幸薄さは表情ではなく、低彩度・白肌・影の薄さとして扱います。口元・髪型は固定せず、髪型は月別HAIR設定だけで管理。</div>
     <textarea id="characterLock" rows="8"></textarea>
   </div>
 
@@ -295,37 +300,46 @@ modified: 2026-07-03T15:11:44+09:00
   <!-- ④ Film tone -->
   <div class="card">
     <div class="slabel">④ フィルムトーン / 質感</div>
+    <div class="hint">選択中の写真トーンやエフェクトと相反するものは自動で選べないようになります</div>
     <div class="chips" id="filmChips"></div>
   </div>
 
   <!-- ③ Overall tone -->
   <div class="card">
     <div class="slabel">⑤ 作品トーン</div>
+    <div class="hint">透明感系とストリート/ダーク系など、反対方向の組み合わせは自動で整理</div>
     <div class="chips" id="toneChips"></div>
   </div>
 
   <!-- ④ Bokeh & Effects -->
   <div class="card">
     <div class="slabel">⑥ エフェクト（複数選択可）</div>
-    <div class="hint">背景ボケ系に加えて、透明感スマホHDR系を分割して個別に選べます</div>
+    <div class="hint">背景ボケ系に加えて、透明感スマホHDR系を分割して個別に選べます。相反する効果は無効化されます</div>
     <div class="chips" id="effectChips"></div>
+  </div>
+
+  <!-- Composition / naturalness -->
+  <div class="card">
+    <div class="slabel">⑦ 構図 / 自然さ</div>
+    <div class="hint">顔固定はそのままに、構図だけを「自然な日常感」寄りか「顔優先」寄りかで切り替えます。アングルはこの設定をもとに候補から自動選択され、LOW / SUPER LOW も条件次第で選ばれます</div>
+    <div class="chips" id="compositionChips"></div>
   </div>
 
   <!-- ⑤ Tension -->
   <div class="card">
-    <div class="slabel">⑦ テンション</div>
+    <div class="slabel">⑧ テンション（ポーズ/動きに反映）</div>
     <div class="chips" id="tensionChips"></div>
   </div>
 
   <!-- ⑥ Emotion -->
   <div class="card">
-    <div class="slabel">⑧ 感情（モーション用）</div>
+    <div class="slabel">⑨ 感情（ポーズ/表情の補助）</div>
     <div class="chips" id="emotionChips"></div>
   </div>
 
   <!-- ⑦ Expression -->
   <div class="card">
-    <div class="slabel">⑨ 表情</div>
+    <div class="slabel">⑩ 表情</div>
     <div class="hint">未選択の場合はランダムで決定されます</div>
     <div class="chips" id="expressionChips"></div>
   </div>
@@ -464,9 +478,4 @@ const EFFECTS = [
   {label:"❄️ 冷色フィルター", value:"(cool blue color grading:1.4), (cold tone filter:1.4)"},
   {label:"🌈 光漏れ",       value:"(light leak effect:1.4), (film light leak streaks across frame:1.4)"},
   {label:"🖤 ビネット",     value:"(vignette:1.4), (soft dark edge falloff around frame:1.4)"},
-  {label:"🎞️ フィルムグレイン強め", value:"(heavy film grain:1.5), (pronounced analog grain texture:1.5)"},
-  {label:"☀️ 自然光ハイライト", value:"(soft natural daylight:1.5), (soft highlight on nose bridge and forehead:1.4)"},
-  {label:"📱 スマホHDR", value:"(subtle smartphone HDR:1.4), (realistic smartphone rendering:1.5)"},
-  {label:"🤍 白肌オーバー露光", value:"(slight overexposure on fair skin:1.4), (clean pale skin rendering:1.5)"},
-  {label:"🫧 透明感カラー", value:"(light airy transparent color grading:1.4), (smooth but realistic skin texture:1.5)"},
-  {label:"🌤️ 低コントラスト影", value:"(low contrast facial shadows:1.4), (soft even daylight shadow t
+  {label:"🎞️ フィルムグレイン強め", value:"(heavy film
