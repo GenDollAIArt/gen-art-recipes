@@ -1,15 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-06T12:28:47+09:00
+modified: 2026-07-07T00:33:47+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.28.0-overcast-sparkle-lock
-  Updated: 2026-07-06
+  Version: 3.29.0-first-attached-face-reference
+  Updated: 2026-07-07
   Changelog:
+    v3.29.0 - チャットで最初に添付した画像をFace Reference画像として扱う指示を追加。顔ID固定は画像参照を優先
     v3.28.0 - 曇り系の天気でキラキラ粒子を禁止。曇天・雨・霧では晴れっぽい直射感/きらめきに引っ張られないよう整合性ロックを追加
     v3.27.0 - 腰だめを「腰のすぐ横から真上に撮る」定義へ修正。通常ローアングルと分離し、身体横・短い腕・ほぼ垂直上向きカメラを明示
     v3.26.0 - コメント内バージョン表記を修正。腰だめを「身体のそば・短く下げた腕・腰〜ヒップ横のスマホ位置」としてさらに明確化
@@ -251,7 +252,7 @@ modified: 2026-07-06T12:28:47+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.28</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.29</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -276,7 +277,7 @@ modified: 2026-07-06T12:28:47+09:00
       <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
       <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
     </div>
-    <div class="hint">デフォルトは Korean model woman ベース。細く縦長の輪郭、すっと通る鼻筋、大きめの目、色白で透けるような透明肌を固定。幸薄さは表情ではなく、低彩度・白肌・影の薄さとして扱います。口元・髪型は固定せず、髪型は月別HAIR設定だけで管理。</div>
+    <div class="hint">デフォルトは Korean model woman ベース。さらに、チャットで最初に添付した被写体画像をFace Reference画像として使う前提をプロンプトに追加します。顔IDは参照画像を優先し、服装・場所・ポーズだけ今回のシーンで変えます。</div>
     <textarea id="characterLock" rows="8"></textarea>
   </div>
 
@@ -478,5 +479,4 @@ const WEATHER_OPTIONS = [
   {label:"小雨 🌦️", value:"light drizzle rain, wet streets, soft grey ambient light, misty air"},
   {label:"雨 🌧️",   value:"steady rain, rain-soaked streets, dark moody wet atmosphere"},
   {label:"大雨 ⛈️", value:"heavy rain, dramatic downpour, dark stormy atmosphere"},
-  {label:"雪 ❄️",   value:"snow falling, winter white scenery, cold crisp air, soft white light"},
-  {label:"霧 🌫️",  value:
+  {label:"雪 ❄️",   value:"snow falling, winter
