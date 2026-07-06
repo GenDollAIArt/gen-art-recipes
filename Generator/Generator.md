@@ -1,15 +1,17 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-06T12:11:03+09:00
+modified: 2026-07-06T12:28:47+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.26.0-version-header-and-waist-level-detail
+  Version: 3.28.0-overcast-sparkle-lock
   Updated: 2026-07-06
   Changelog:
+    v3.28.0 - 曇り系の天気でキラキラ粒子を禁止。曇天・雨・霧では晴れっぽい直射感/きらめきに引っ張られないよう整合性ロックを追加
+    v3.27.0 - 腰だめを「腰のすぐ横から真上に撮る」定義へ修正。通常ローアングルと分離し、身体横・短い腕・ほぼ垂直上向きカメラを明示
     v3.26.0 - コメント内バージョン表記を修正。腰だめを「身体のそば・短く下げた腕・腰〜ヒップ横のスマホ位置」としてさらに明確化
     v3.21.0 - 矛盾チェック修正。曜日ムードの時間矛盾を解消し、透明感系/粒状フィルム系/暖色系/冷色系の相反選択をより厳密に整理
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
@@ -249,7 +251,7 @@ modified: 2026-07-06T12:11:03+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.26</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.28</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -315,14 +317,14 @@ modified: 2026-07-06T12:11:03+09:00
   <!-- ④ Bokeh & Effects -->
   <div class="card">
     <div class="slabel">⑥ エフェクト（複数選択可）</div>
-    <div class="hint">背景ボケ・光漏れ・グレイン・スマホHDRなどをはっきり効かせます。相反する効果は無効化されます</div>
+    <div class="hint">背景ボケ・光漏れ・グレイン・スマホHDRなどをはっきり効かせます。曇り・雨・霧ではキラキラ粒子を自動禁止します</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
   <!-- Camera angle -->
   <div class="card">
     <div class="slabel">⑦ カメラ位置 / アングル</div>
-    <div class="hint">スマホの持ち位置と撮影角度を指定します。「腰だめ」は腰位置の自然なスマホ持ち、「スーパーロー」は強い下から煽りとして分離しました</div>
+    <div class="hint">スマホの持ち位置と撮影角度を指定します。「腰だめ」は身体のすぐ横、腰〜ヒップ横からほぼ真上に撮る専用アングルです</div>
     <div class="chips" id="angleModeChips"></div>
   </div>
 
@@ -425,9 +427,9 @@ const ANGLES = [
   {name:"GOLDEN ANGLE",     prompt:"(camera above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes looking slightly upward:1.8), (flattering high selfie angle:1.8)"},
   {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (head slightly tilted up:1.7), (eyes directed upward to lens:1.8)"},
   {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7)"},
-  {name:"LOW ANGLE",        prompt:"(low-angle selfie:1.8), (phone held slightly below chest level:1.8), (camera below the face and angled upward:1.8), (viewer sees the subject from a lower hand position:1.7), (face looking slightly down toward the lens:1.7), (not overhead:1.9), (not golden angle:1.8)"},
-  {name:"WAIST LEVEL",      prompt:"(waist-level handheld selfie:1.9), (phone held close to her waist or hip near the side of her body:1.9), (short lowered arm position, not fully extended away from the body:1.8), (camera close to the torso and angled diagonally upward toward the face:1.8), (natural waist-held smartphone perspective, not an extreme low-angle shot:1.9), (torso and outfit line feel close to the lens:1.8), (face looking down slightly toward the phone:1.7), (not overhead:1.9), (not golden angle:1.9), (not dramatic super-low-angle:1.9)"},
-  {name:"SUPER LOW ANGLE",  prompt:"(dramatic super low-angle selfie:1.9), (phone held very low below the waist or near hip-to-thigh level:1.9), (strong upward perspective from far below the face:1.9), (camera looks up sharply with noticeable perspective distortion:1.8), (torso and jacket line strongly emphasized by low perspective:1.8), (face looking down toward the lens:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9)"},
+  {name:"LOW ANGLE",        prompt:"(ordinary low-angle selfie from in front of the body:1.8), (phone held slightly below chest level:1.8), (camera below the face and angled upward from the front:1.8), (viewer sees the subject from a lower front hand position:1.7), (face looking slightly down toward the lens:1.7), (not overhead:1.9), (not golden angle:1.8), (not waist-side vertical upshot:1.9)"},
+  {name:"WAIST-SIDE VERTICAL UPSHOT", prompt:"(waist-side vertical upshot selfie:1.95), (smartphone held immediately beside her waist or hip, almost touching the side of her body:1.95), (short lowered arm, elbow close to torso, phone not extended forward:1.9), (camera lens points almost straight upward from her waist-side position toward her face:1.95), (near-vertical upward camera axis from the side of her body:1.9), (viewpoint rises along the side of her torso from waist to face:1.9), (torso, shirt, skirt waistline, and side body line feel very close to the lens:1.85), (face looking down toward the phone beside her waist:1.8), (not an ordinary front low-angle selfie:1.95), (not diagonal low-angle from in front:1.95), (not golden angle:1.9), (not overhead:1.9)"},
+  {name:"SUPER LOW ANGLE",  prompt:"(dramatic super low-angle selfie:1.9), (phone held very low below the waist or near hip-to-thigh level:1.9), (strong upward perspective from far below the face:1.9), (camera looks up sharply with noticeable perspective distortion:1.8), (torso and jacket line strongly emphasized by low perspective:1.8), (face looking down toward the lens:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9), (not waist-side vertical upshot:1.8)"},
   {name:"DYNAMIC TILTED",   prompt:"(camera slightly rotated:1.8), (diagonal composition:1.8), (face tilted with camera:1.7), (snapshot atmosphere:1.8)"},
   {name:"OVER SHOULDER",    prompt:"(face partially turned away:1.7), (looking back toward lens:1.8), (shoulder line emphasized:1.7), (candid feel:1.7)"},
   {name:"WALKING",          prompt:"(captured mid-walk:1.8), (subtle body motion:1.7), (hair movement from motion:1.7), (face turned slightly to camera:1.7)"},
@@ -439,8 +441,8 @@ const ANGLE_UI_OPTIONS = [
   {label:"✨ GOLDEN ANGLE", key:"GOLDEN ANGLE", value:"GOLDEN ANGLE"},
   {label:"⬆️ HIGH ANGLE", key:"HIGH ANGLE", value:"HIGH ANGLE"},
   {label:"👁️ EYE LEVEL", key:"EYE LEVEL", value:"EYE LEVEL"},
-  {label:"⬇️ LOW ANGLE", key:"LOW ANGLE", value:"LOW ANGLE"},
-  {label:"📱 WAIST LEVEL / 腰だめ", key:"WAIST LEVEL", value:"WAIST LEVEL"},
+  {label:"⬇️ LOW ANGLE / 正面下から", key:"LOW ANGLE", value:"LOW ANGLE"},
+  {label:"📱 腰だめ / 腰横から真上", key:"WAIST-SIDE VERTICAL UPSHOT", value:"WAIST-SIDE VERTICAL UPSHOT"},
   {label:"📉 SUPER LOW / 強い煽り", key:"SUPER LOW ANGLE", value:"SUPER LOW ANGLE"},
   {label:"🌀 DYNAMIC TILTED", key:"DYNAMIC TILTED", value:"DYNAMIC TILTED"},
   {label:"↩️ OVER SHOULDER", key:"OVER SHOULDER", value:"OVER SHOULDER"},
@@ -472,16 +474,9 @@ const ACCESSORIES_MAP = {
 
 const WEATHER_OPTIONS = [
   {label:"晴れ ☀️",  value:"clear sunny sky, bright natural daylight"},
-  {label:"曇り ☁️",  value:"overcast cloudy sky, diffused soft light, muted atmosphere"},
+  {label:"曇り ☁️",  value:"overcast cloudy sky, cloud-filtered diffused daylight, muted atmosphere, no direct sunlight, no sparkling sun highlights"},
   {label:"小雨 🌦️", value:"light drizzle rain, wet streets, soft grey ambient light, misty air"},
   {label:"雨 🌧️",   value:"steady rain, rain-soaked streets, dark moody wet atmosphere"},
   {label:"大雨 ⛈️", value:"heavy rain, dramatic downpour, dark stormy atmosphere"},
   {label:"雪 ❄️",   value:"snow falling, winter white scenery, cold crisp air, soft white light"},
-  {label:"霧 🌫️",  value:"foggy misty atmosphere, dreamlike hazy soft light"},
-];
-
-const FILM_TONES = [
-  {label:"なし",              value:""},
-  {label:"コダック ゴールド 200", value:"Kodak Gold 200 film tone, clearly visible warm golden cast, noticeable analog warmth, lightly visible grain, unmistakable vintage print feel"},
-  {label:"フジ プロ 400H",       value:"Fuji Pro 400H film tone, clearly visible pastel palette, soft mint-cool shadows, airy film color separation, unmistakable film softness"},
-  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, clearly visible rich warm skin, creamy high
+  {label:"霧 🌫️",  value:
