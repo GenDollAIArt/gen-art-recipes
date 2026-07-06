@@ -1,15 +1,9 @@
----
-created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-07T00:33:47+09:00
----
-
-# Generator
-
 <!--
   Selfie Prompt Generator
-  Version: 3.29.0-first-attached-face-reference
+  Version: 3.30.0-selfie-mode-toggle
   Updated: 2026-07-07
   Changelog:
+    v3.30.0 - 自撮りON/OFF/自動切替を追加。OFF時は第三者撮影ポートレートとしてスマホ自撮り指示を抑制
     v3.29.0 - チャットで最初に添付した画像をFace Reference画像として扱う指示を追加。顔ID固定は画像参照を優先
     v3.28.0 - 曇り系の天気でキラキラ粒子を禁止。曇天・雨・霧では晴れっぽい直射感/きらめきに引っ張られないよう整合性ロックを追加
     v3.27.0 - 腰だめを「腰のすぐ横から真上に撮る」定義へ修正。通常ローアングルと分離し、身体横・短い腕・ほぼ垂直上向きカメラを明示
@@ -252,7 +246,7 @@ modified: 2026-07-07T00:33:47+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.29</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.30</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -322,51 +316,58 @@ modified: 2026-07-07T00:33:47+09:00
     <div class="chips" id="effectChips"></div>
   </div>
 
+  <!-- Selfie mode -->
+  <div class="card">
+    <div class="slabel">⑦ 自撮り / 第三者撮影</div>
+    <div class="hint">自撮りONならスマホ手持ちカメラ視点。OFFなら他人が撮った自然なポートレート/スナップ扱い。自動は「他撮り・非自撮り」などがシーンにあればOFF、それ以外はON寄りです。</div>
+    <div class="chips" id="selfieModeChips"></div>
+  </div>
+
   <!-- Camera angle -->
   <div class="card">
-    <div class="slabel">⑦ カメラ位置 / アングル</div>
+    <div class="slabel">⑧ カメラ位置 / アングル</div>
     <div class="hint">スマホの持ち位置と撮影角度を指定します。「腰だめ」は身体のすぐ横、腰〜ヒップ横からほぼ真上に撮る専用アングルです</div>
     <div class="chips" id="angleModeChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑧ 構図 / 被写体サイズ</div>
+    <div class="slabel">⑨ 構図 / 被写体サイズ</div>
     <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑨ 余白 / リーディングスペース</div>
+    <div class="slabel">⑩ 余白 / リーディングスペース</div>
     <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑩ 写真の自然さ / 演出度</div>
+    <div class="slabel">⑪ 写真の自然さ / 演出度</div>
     <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Tension -->
   <div class="card">
-    <div class="slabel">⑪ テンション（動きの強さ）</div>
+    <div class="slabel">⑫ テンション（動きの強さ）</div>
     <div class="hint">体の動きの強さや静止感を調整します</div>
     <div class="chips" id="tensionChips"></div>
   </div>
 
   <!-- Emotion -->
   <div class="card">
-    <div class="slabel">⑫ 感情（内面の気分）</div>
+    <div class="slabel">⑬ 感情（内面の気分）</div>
     <div class="hint">気分や心理状態を選びます。ポーズと表情の補助に使います</div>
     <div class="chips" id="emotionChips"></div>
   </div>
 
   <!-- Expression -->
   <div class="card">
-    <div class="slabel">⑬ 表情（顔の出力）</div>
+    <div class="slabel">⑭ 表情（顔の出力）</div>
     <div class="hint">未選択の場合はランダムで決定されます</div>
     <div class="chips" id="expressionChips"></div>
   </div>
@@ -450,6 +451,12 @@ const ANGLE_UI_OPTIONS = [
   {label:"🚶 WALKING", key:"WALKING", value:"WALKING"},
 ];
 
+const SELFIE_MODE_OPTIONS = [
+  {label:"🎲 自動", key:"auto", value:"auto"},
+  {label:"🤳 自撮り ON", key:"selfie_on", value:"on"},
+  {label:"📷 自撮り OFF / 第三者撮影", key:"selfie_off", value:"off"},
+];
+
 const EXPRESSIONS = [
   "neutral deadpan, calm, composed expression",
   "soft gentle smile, warm and approachable expression",
@@ -474,9 +481,4 @@ const ACCESSORIES_MAP = {
 };
 
 const WEATHER_OPTIONS = [
-  {label:"晴れ ☀️",  value:"clear sunny sky, bright natural daylight"},
-  {label:"曇り ☁️",  value:"overcast cloudy sky, cloud-filtered diffused daylight, muted atmosphere, no direct sunlight, no sparkling sun highlights"},
-  {label:"小雨 🌦️", value:"light drizzle rain, wet streets, soft grey ambient light, misty air"},
-  {label:"雨 🌧️",   value:"steady rain, rain-soaked streets, dark moody wet atmosphere"},
-  {label:"大雨 ⛈️", value:"heavy rain, dramatic downpour, dark stormy atmosphere"},
-  {label:"雪 ❄️",   value:"snow falling, winter
+  {label:"晴れ ☀️",  value:"
