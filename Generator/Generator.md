@@ -1,15 +1,16 @@
 ---
 created: 2026-07-02T07:53:36+09:00
-modified: 2026-07-03T16:23:52+09:00
+modified: 2026-07-06T12:11:03+09:00
 ---
 
 # Generator
 
 <!--
   Selfie Prompt Generator
-  Version: 3.21.0-contradiction-audit-fix
-  Updated: 2026-07-03
+  Version: 3.26.0-version-header-and-waist-level-detail
+  Updated: 2026-07-06
   Changelog:
+    v3.26.0 - コメント内バージョン表記を修正。腰だめを「身体のそば・短く下げた腕・腰〜ヒップ横のスマホ位置」としてさらに明確化
     v3.21.0 - 矛盾チェック修正。曜日ムードの時間矛盾を解消し、透明感系/粒状フィルム系/暖色系/冷色系の相反選択をより厳密に整理
     v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
     v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
@@ -248,7 +249,7 @@ modified: 2026-07-03T16:23:52+09:00
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.22</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.26</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -318,28 +319,51 @@ modified: 2026-07-03T16:23:52+09:00
     <div class="chips" id="effectChips"></div>
   </div>
 
-  <!-- Composition / naturalness -->
+  <!-- Camera angle -->
   <div class="card">
-    <div class="slabel">⑦ 構図 / 自然さ</div>
-    <div class="hint">顔固定はそのままに、構図とスマホの持ち位置を切り替えます。顔優先ではLOW系を選ばず、腰だめ/頭上などは専用プリセットで明確に指定します</div>
-    <div class="chips" id="compositionChips"></div>
+    <div class="slabel">⑦ カメラ位置 / アングル</div>
+    <div class="hint">スマホの持ち位置と撮影角度を指定します。「腰だめ」は腰位置の自然なスマホ持ち、「スーパーロー」は強い下から煽りとして分離しました</div>
+    <div class="chips" id="angleModeChips"></div>
   </div>
 
-  <!-- ⑤ Tension -->
+  <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑧ テンション（ポーズ/動きに反映）</div>
+    <div class="slabel">⑧ 構図 / 被写体サイズ</div>
+    <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます</div>
+    <div class="chips" id="subjectSizeChips"></div>
+  </div>
+
+  <!-- Framing space -->
+  <div class="card">
+    <div class="slabel">⑨ 余白 / リーディングスペース</div>
+    <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです</div>
+    <div class="chips" id="framingChips"></div>
+  </div>
+
+  <!-- Photo naturalness / staging -->
+  <div class="card">
+    <div class="slabel">⑩ 写真の自然さ / 演出度</div>
+    <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます</div>
+    <div class="chips" id="photoStyleChips"></div>
+  </div>
+
+  <!-- Tension -->
+  <div class="card">
+    <div class="slabel">⑪ テンション（動きの強さ）</div>
+    <div class="hint">体の動きの強さや静止感を調整します</div>
     <div class="chips" id="tensionChips"></div>
   </div>
 
-  <!-- ⑥ Emotion -->
+  <!-- Emotion -->
   <div class="card">
-    <div class="slabel">⑨ 感情（ポーズ/表情の補助）</div>
+    <div class="slabel">⑫ 感情（内面の気分）</div>
+    <div class="hint">気分や心理状態を選びます。ポーズと表情の補助に使います</div>
     <div class="chips" id="emotionChips"></div>
   </div>
 
-  <!-- ⑦ Expression -->
+  <!-- Expression -->
   <div class="card">
-    <div class="slabel">⑩ 表情</div>
+    <div class="slabel">⑬ 表情（顔の出力）</div>
     <div class="hint">未選択の場合はランダムで決定されます</div>
     <div class="chips" id="expressionChips"></div>
   </div>
@@ -397,15 +421,30 @@ const DAY_MOOD = {
 };
 
 const ANGLES = [
-  {name:"SUPER HIGH ANGLE", prompt:"(true overhead super high-angle selfie:1.9), (arm fully extended above head:1.9), (smartphone high over her head looking almost straight down:1.9), (bird\'s-eye framing of face, shoulders, outfit and surroundings:1.8), (face tilted up toward camera:1.8), (not eye-level:1.9), (not low-angle:1.9)"},
+  {name:"SUPER HIGH ANGLE", prompt:"(true overhead super high-angle selfie:1.9), (arm fully extended above head:1.9), (smartphone high over her head looking almost straight down:1.9), (bird's-eye framing of face, shoulders, outfit and surroundings:1.8), (face tilted up toward camera:1.8), (not eye-level:1.9), (not low-angle:1.9)"},
   {name:"GOLDEN ANGLE",     prompt:"(camera above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes looking slightly upward:1.8), (flattering high selfie angle:1.8)"},
   {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (head slightly tilted up:1.7), (eyes directed upward to lens:1.8)"},
   {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7)"},
-  {name:"LOW ANGLE",        prompt:"(true low-angle selfie:1.9), (phone held below chest level:1.9), (camera clearly below the face and angled upward:1.9), (viewer sees the subject from a lower hand position:1.8), (face looking slightly down toward the lens:1.8), (lower handheld perspective, not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9)"},
-  {name:"SUPER LOW ANGLE",  prompt:"(true super low-angle selfie:1.9), (phone held near waist or hip level:1.9), (strong upward perspective from below the torso:1.8), (camera far below the face looking up:1.9), (torso and jacket line emphasized by low perspective:1.8), (face looking down toward the lens:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9)"},
+  {name:"LOW ANGLE",        prompt:"(low-angle selfie:1.8), (phone held slightly below chest level:1.8), (camera below the face and angled upward:1.8), (viewer sees the subject from a lower hand position:1.7), (face looking slightly down toward the lens:1.7), (not overhead:1.9), (not golden angle:1.8)"},
+  {name:"WAIST LEVEL",      prompt:"(waist-level handheld selfie:1.9), (phone held close to her waist or hip near the side of her body:1.9), (short lowered arm position, not fully extended away from the body:1.8), (camera close to the torso and angled diagonally upward toward the face:1.8), (natural waist-held smartphone perspective, not an extreme low-angle shot:1.9), (torso and outfit line feel close to the lens:1.8), (face looking down slightly toward the phone:1.7), (not overhead:1.9), (not golden angle:1.9), (not dramatic super-low-angle:1.9)"},
+  {name:"SUPER LOW ANGLE",  prompt:"(dramatic super low-angle selfie:1.9), (phone held very low below the waist or near hip-to-thigh level:1.9), (strong upward perspective from far below the face:1.9), (camera looks up sharply with noticeable perspective distortion:1.8), (torso and jacket line strongly emphasized by low perspective:1.8), (face looking down toward the lens:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9)"},
   {name:"DYNAMIC TILTED",   prompt:"(camera slightly rotated:1.8), (diagonal composition:1.8), (face tilted with camera:1.7), (snapshot atmosphere:1.8)"},
   {name:"OVER SHOULDER",    prompt:"(face partially turned away:1.7), (looking back toward lens:1.8), (shoulder line emphasized:1.7), (candid feel:1.7)"},
   {name:"WALKING",          prompt:"(captured mid-walk:1.8), (subtle body motion:1.7), (hair movement from motion:1.7), (face turned slightly to camera:1.7)"},
+];
+
+const ANGLE_UI_OPTIONS = [
+  {label:"🎲 自動", key:"auto", value:"auto"},
+  {label:"🙆 SUPER HIGH / 頭上", key:"SUPER HIGH ANGLE", value:"SUPER HIGH ANGLE"},
+  {label:"✨ GOLDEN ANGLE", key:"GOLDEN ANGLE", value:"GOLDEN ANGLE"},
+  {label:"⬆️ HIGH ANGLE", key:"HIGH ANGLE", value:"HIGH ANGLE"},
+  {label:"👁️ EYE LEVEL", key:"EYE LEVEL", value:"EYE LEVEL"},
+  {label:"⬇️ LOW ANGLE", key:"LOW ANGLE", value:"LOW ANGLE"},
+  {label:"📱 WAIST LEVEL / 腰だめ", key:"WAIST LEVEL", value:"WAIST LEVEL"},
+  {label:"📉 SUPER LOW / 強い煽り", key:"SUPER LOW ANGLE", value:"SUPER LOW ANGLE"},
+  {label:"🌀 DYNAMIC TILTED", key:"DYNAMIC TILTED", value:"DYNAMIC TILTED"},
+  {label:"↩️ OVER SHOULDER", key:"OVER SHOULDER", value:"OVER SHOULDER"},
+  {label:"🚶 WALKING", key:"WALKING", value:"WALKING"},
 ];
 
 const EXPRESSIONS = [
@@ -445,21 +484,4 @@ const FILM_TONES = [
   {label:"なし",              value:""},
   {label:"コダック ゴールド 200", value:"Kodak Gold 200 film tone, clearly visible warm golden cast, noticeable analog warmth, lightly visible grain, unmistakable vintage print feel"},
   {label:"フジ プロ 400H",       value:"Fuji Pro 400H film tone, clearly visible pastel palette, soft mint-cool shadows, airy film color separation, unmistakable film softness"},
-  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, clearly visible rich warm skin, creamy highlight rolloff, noticeable film grain, unmistakable premium portrait film look"},
-  {label:"イルフォード HP5",      value:"Ilford HP5 black and white film, clearly visible monochrome rendering, strong classic contrast, obvious grain texture, unmistakable black-and-white film look"},
-  {label:"シネスコープ",          value:"CinemaScope film tone, clearly visible teal and orange grade, cinematic color separation, anamorphic blockbuster look, unmistakable movie-like grading"},
-  {label:"ローモ",               value:"Lomography vivid tone, clearly visible cross-processed colors, strong saturation shift, lo-fi contrast, vignette edges, unmistakable lomo look"},
-  {label:"ポラロイド",            value:"Polaroid instant film tone, clearly visible faded instant-film colors, nostalgic warm cast, soft bloom, unmistakable instant snapshot feel"},
-  {label:"ヴィンテージ 90s",      value:"1990s vintage film tone, clearly visible retro color shift, muted warm mid-tones, nostalgic softness, unmistakable 90s film-photo mood"},
-];
-
-const OVERALL_TONES = [
-  {label:"なし",          value:""},
-  {label:"クール / モダン",   value:"clearly visible cool modern aesthetic, crisp clean image design, urban sophisticated mood, unmistakably sleek and contemporary"},
-  {label:"キュート / 柔らか", value:"clearly visible cute soft aesthetic, gentle pastel atmosphere, soft warm friendliness, unmistakably sweet and tender"},
-  {label:"ダーク / ムーディ", value:"clearly visible dark moody aesthetic, deeper shadows, brooding emotional atmosphere, unmistakably heavy and cinematic"},
-  {label:"ナチュラル / 透明感",value:"clearly visible natural transparent beauty aesthetic, fresh clean look, airy brightness, unmistakably translucent and refined"},
-  {label:"エレガント / 上品", value:"clearly visible elegant refined aesthetic, graceful composition, polished sophistication, unmistakably classy and upscale"},
-  {label:"ストリート / エッジ",value:"clearly visible street edge aesthetic, raw urban energy, gritty authentic mood, unmistakably rough and street-styled"},
-  {label:"ロマンティック",    value:"clearly visible romantic dreamy aesthetic, soft warm glow, tender emotional atmosphere, unmistakably dreamy and sentimental"},
-  {label:"ミニマル / 静寂",   value:"clearly visible minimal quiet aesthetic, negative-
+  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, clearly visible rich warm skin, creamy high
