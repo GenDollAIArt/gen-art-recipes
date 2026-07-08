@@ -1,8 +1,9 @@
 <!--
   Selfie Prompt Generator
-  Version: 3.55.0-chest-hip-silhouette
+  Version: 3.56.0-effect-strength
   Updated: 2026-07-07
   Changelog:
+    v3.56.0 - エフェクト強度を追加。ChatGPT向けにエフェクトを強く出す/自然に抑える切り替えを実装
     v3.55.0 - ③ヒップ/下半身シルエットを追加。細身Iラインを維持しつつ、小尻プリ/小尻アップを選べるように変更
     v3.54.0 - ②胸シルエットを素直なプロンプト化。服装別の裏処理や追加変換をやめ、選択肢の意味がそのまま形に出るよう整理
     v3.53.0 - ②胸シルエットの服装別切り替えを廃止。水着/服装で変えず、選択したシルエットを常に同じ方針で反映
@@ -14,7 +15,7 @@
     v3.47.0 - チップ長押しヘルプを追加。フィルムトーン/作品トーン/エフェクトなどの選択肢を長押しすると、効き方・使いどころ・注意点を表示
     v3.46.0 - ② 胸シルエット に「立体感＋ライン」を追加。名称も 立体感 / ラインくっきり に整理し、単一選択のまま使いやすく調整
     v3.45.0 - ② 胸シルエット選択の名称と並び順を整理。控えめ/自然/前に出る/形くっきり/服装なり に変更し、選択結果が分かりやすい文言へ調整
-    v3.44.0 - ⑪ 背景の見せ方 を追加。指定なし / 控えめ / バランス / 足元 / 奥 / 上 の選択肢を実装し、プロンプトとサマリーに反映
+    v3.44.0 - ⑫ 背景の見せ方 を追加。指定なし / 控えめ / バランス / 足元 / 奥 / 上 の選択肢を実装し、プロンプトとサマリーに反映
     v3.43.0 - ⑧ カメラ位置/アングルの選択項目名と並び順を整理。説明文を短くし、通常系→低め系→動き系→特殊系の順番に変更
     v3.42.0 - ⑧ カメラ位置/アングルUIを見直し。腰だめとSUPER LOWの違いを明確化し、ラベル・説明文・自動選択ロジックを整理。SUPER LOWは明確に「別物/強い煽り」と表示
     v3.41.0 - 腰だめ/隠し持ち自撮りを強化。長く伸びた前腕・腕伸ばしセルフィー・画面手前に大きく写る腕を禁止し、肘を曲げて身体近くに隠したスマホ視点へ寄せる
@@ -300,7 +301,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.55</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.56</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -379,65 +380,72 @@
     <div class="chips" id="effectChips"></div>
   </div>
 
+  <!-- Effect strength -->
+  <div class="card">
+    <div class="slabel">⑧ エフェクト強度</div>
+    <div class="hint">ChatGPTで控えめになりやすい光・粒子・ボケの出方を調整します。Grokは標準でも強めに出やすいです。</div>
+    <div class="chips" id="effectStrengthChips"></div>
+  </div>
+
   <!-- Selfie mode -->
   <div class="card">
-    <div class="slabel">⑦ 自撮り / 第三者撮影</div>
+    <div class="slabel">⑨ 自撮り / 第三者撮影</div>
     <div class="hint">自撮りONならスマホ手持ちカメラ視点。OFFなら他人が撮った自然なポートレート/スナップ扱い。自動は「他撮り・非自撮り」などがシーンにあればOFF、それ以外はON寄りです。</div>
     <div class="chips" id="selfieModeChips"></div>
   </div>
 
   <!-- Camera angle -->
   <div class="card">
-    <div class="slabel">⑨ カメラ位置 / アングル</div>
+    <div class="slabel">⑩ カメラ位置 / アングル</div>
     <div class="hint">撮影の高さ・持ち方・向きを選びます。</div>
     <div class="chips" id="angleModeChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑩ 構図 / 被写体サイズ</div>
+    <div class="slabel">⑪ 構図 / 被写体サイズ</div>
     <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Background view -->
   <div class="card">
-    <div class="slabel">⑪ 背景の見せ方</div>
+    <div class="slabel">⑫ 背景の見せ方</div>
     <div class="hint">背景をどの方向で見せるかを選びます</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑫ 余白 / リーディングスペース</div>
+    <div class="slabel">⑬ 余白 / リーディングスペース</div>
     <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑬ 写真の自然さ / 演出度</div>
+    <div class="slabel">⑭ 写真の自然さ / 演出度</div>
     <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Tension -->
   <div class="card">
-    <div class="slabel">⑭ テンション（動きの強さ）</div>
+    <div class="slabel">⑮ テンション（動きの強さ）</div>
     <div class="hint">体の動きの強さや静止感を調整します</div>
     <div class="chips" id="tensionChips"></div>
   </div>
 
   <!-- Emotion -->
   <div class="card">
-    <div class="slabel">⑮ 感情（内面の気分）</div>
+    <div class="slabel">⑯ 感情（内面の気分）</div>
     <div class="hint">気分や心理状態を選びます。ポーズと表情の補助に使います</div>
     <div class="chips" id="emotionChips"></div>
   </div>
 
   <!-- Expression -->
   <div class="card">
-    <div class="slabel">⑯ 表情（顔の出力）</div>
+    <div class="slabel">⑰ 表情（顔の出力）</div>
     <div class="hint">未選択の場合はランダムで決定されます</div>
     <div class="chips" id="expressionChips"></div>
   </div>
@@ -502,7 +510,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v3.55.0-chest-hip-silhouette";
+const APP_VERSION = "v3.56.0-effect-strength";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -514,9 +522,4 @@ const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosph
 (very fair translucent skin with natural texture:1.6),
 (slim elongated face impression:1.45),
 (narrow jawline and delicate chin impression:1.45),
-(realistic balanced adult proportions:1.6),
-(face identity and detailed facial features are taken from the Face Reference image:1.95),
-(no different person:1.95),
-(no celebrity likeness:1.95)`;
-
-const CHIN_CONTROL = "(neutral chin position:1.95), (chin not thrust forward:1.95), (no jutting chin:1.95), (no p
+(realistic balanced adu
