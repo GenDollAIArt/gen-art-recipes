@@ -1,8 +1,10 @@
 <!--
   Selfie Prompt Generator
-  Version: 3.57.0-effect-help-expanded
+  Version: 3.59.0-startup-fix
   Updated: 2026-07-07
   Changelog:
+    v3.59.0 - 起動しない問題を修正。長押しヘルプ文字列内の改行をJS安全形式へ変換
+    v3.58.0 - 生成後に自動でクリップボードへコピーする機能を追加。Androidで失敗した場合は手動コピーへフォールバック
     v3.57.0 - エフェクト系の長押しヘルプを拡張。各エフェクト/エフェクト強度の「何が変わるか」「向く場面」「注意点」を表示
     v3.56.0 - エフェクト強度を追加。ChatGPT向けにエフェクトを強く出す/自然に抑える切り替えを実装
     v3.55.0 - ③ヒップ/下半身シルエットを追加。細身Iラインを維持しつつ、小尻プリ/小尻アップを選べるように変更
@@ -316,7 +318,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.57</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.59</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -486,6 +488,7 @@
     <textarea class="output-ta" id="outputArea" readonly
       onclick="this.select();this.setSelectionRange(0,this.value.length);"
       onfocus="this.select();this.setSelectionRange(0,this.value.length);"></textarea>
+    <div class="hint" id="copyStatus" style="margin-top:8px;">生成後に自動コピーします。失敗した場合は「コピー」ボタンを押してください。</div>
   </div>
 
 </div>
@@ -525,7 +528,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v3.57.0-effect-help-expanded";
+const APP_VERSION = "v3.59.0-startup-fix";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -643,185 +646,31 @@ const OVERALL_TONES = [
 
 // ── Effects (multi-select) ────────────────────────────────────────────────────
 const EFFECTS = [
-  {label:"🌫️ 背景ボケ", value:"(clearly visible background bokeh blur:1.8), (shallow depth of field with noticeably defocused background:1.8)", help:"何が変わる？
-背景が大きくぼけて、人物が前に出ます。
-
-向く場面
-駅・街・カフェ・ホームなど背景情報が多い場所。
-
-注意点
-背景の文字や場所感は読みにくくなります。場所を見せたい時は弱めか外すのがおすすめ。"},
-  {label:"✨ 光の玉ボケ", value:"(clearly visible light orb bokeh:1.8), (ambient light circles in background:1.8), (noticeable specular bokeh highlights:1.8)", help:"何が変わる？
-ライトが丸い玉ボケになり、映え感が出ます。
-
-向く場面
-夜景・駅の照明・カフェ・街灯・店内ライト。
-
-注意点
-昼の自然光だけだと出にくいです。背景に光源があるシーンほど効きます。"},
-  {label:"💧 水滴/結露感", value:"(clearly visible condensation droplets on glass or skin:1.7), (noticeable water droplet texture:1.7)", help:"何が変わる？
-ガラスや空気に湿度感が出ます。
-
-向く場面
-雨の日、窓際、駅のガラス・車内・夜の窓など。
-
-注意点
-晴れの屋外では不自然になりやすいです。肌の水滴に寄りすぎる場合は外してください。"},
-  {label:"✨ きらめき粒子", value:"(clearly visible sparkling glitter particles in air:1.7), (noticeable shimmering light particles:1.7)", help:"何が変わる？
-空気中に小さな光の粒が出ます。SNS加工っぽい可愛い演出になります。
-
-向く場面
-記念投稿、感謝テロップ、日差し、夜のライト、可愛い雰囲気。
-
-注意点
-リアル写真感は少し下がります。曇り・雨・霧では自動で選べないようにしています。"},
-  {label:"🌁 ソフトフォーカス", value:"(clearly visible soft focus haze:1.7), (gentle dreamy blur on edges:1.7), (noticeable diffused hazy atmosphere:1.7)", help:"何が変わる？
-輪郭や光が少し柔らかくなり、夢っぽくなります。
-
-向く場面
-やわらかい笑顔、夕方、白シャツ、透明感、可愛い投稿。
-
-注意点
-服の質感や顔のシャープさは弱まります。くっきり出したい時は外してください。"},
-  {label:"🌙 逆光/リムライト", value:"(clearly visible backlighting:1.8), (noticeable rim light on hair and shoulders:1.8), (silhouette-edge glow:1.7)", help:"何が変わる？
-髪や肩の輪郭に光が入り、立体感が出ます。
-
-向く場面
-駅ホーム、夕方、窓際、ビル街、後ろに明るい光があるシーン。
-
-注意点
-顔が暗くなることがあります。顔を明るくしたい時は自然光ハイライトやスマホHDRと相性が良いです。"},
-  {label:"📼 VHSノイズ", value:"(clearly visible VHS scan lines:1.7), (retro analog video noise:1.7), (noticeable chromatic aberration:1.7)", help:"何が変わる？
-古いビデオ風のノイズ、色ズレ、走査線が出ます。
-
-向く場面
-90s、深夜、レトロ、荒いSNS加工、少しクセのある絵。
-
-注意点
-顔・手・文字が崩れやすいです。リアル美人寄りなら弱めがおすすめ。"},
-  {label:"🔥 暖色フレア", value:"(clearly visible warm lens flare:1.8), (golden warm flare streaks across frame:1.8)", help:"何が変わる？
-暖かい光の筋やフレアが入ります。
-
-向く場面
-夕方、逆光、夏、駅ホーム、ロマンティックな雰囲気。
-
-注意点
-冷色フィルターとは反対方向です。顔にかかりすぎる場合があります。"},
-  {label:"❄️ 冷色フィルター", value:"(clearly visible cool blue color grading:1.8), (strong cold tone filter:1.8)", help:"何が変わる？
-全体が青く冷たい色味になります。
-
-向く場面
-夜、雨、クール、都会、静かな雰囲気。
-
-注意点
-肌の血色や可愛い明るさは弱まりやすいです。暖色フレアとは競合します。"},
-  {label:"🌈 光漏れ", value:"(clearly visible light leak effect:1.8), (film light leak streaks across frame:1.8)", help:"何が変わる？
-フィルム写真のような光の漏れ・色かぶりが入ります。
-
-向く場面
-エモい写真、夕方、レトロ、記念投稿。
-
-注意点
-顔の上に光が乗ると表情が読みにくくなる場合があります。"},
-  {label:"🖤 ビネット", value:"(clearly visible vignette:1.7), (noticeable dark edge falloff around frame:1.7)", help:"何が変わる？
-画面の端が暗くなり、中心に視線が集まります。
-
-向く場面
-ムーディ、夜、映画風、被写体を強調したい時。
-
-注意点
-明るい透明感や爽やかな昼写真とは相性が悪いことがあります。"},
-  {label:"🎞️ フィルムグレイン強め", value:"(clearly visible heavy film grain:1.8), (pronounced analog grain texture:1.8)", help:"何が変わる？
-粒状感が強くなり、フィルムっぽさが出ます。
-
-向く場面
-90s、ポートラ、コダック、駅、スナップ写真。
-
-注意点
-肌のなめらかさや顔の安定は少し落ちます。文字も荒れやすいです。"},
-  {label:"☀️ 自然光ハイライト", value:"(clearly visible soft natural daylight:1.7), (noticeable highlight on nose bridge and forehead:1.7)", help:"何が変わる？
-顔や鼻筋、白シャツに自然な明るさが出ます。
-
-向く場面
-昼、駅ホーム、窓際、屋外、爽やかな写真。
-
-注意点
-夜や暗い室内では不自然になる場合があります。白飛びが強い時は外してください。"},
-  {label:"📱 スマホHDR", value:"(clearly visible smartphone HDR rendering:1.8), (smartphone tonal lift and clean dynamic range:1.8)", help:"何が変わる？
-スマホ写真っぽく、暗部と明部が持ち上がります。
-
-向く場面
-自撮り、昼、駅、街、顔と背景の両方を見せたい時。
-
-注意点
-フィルムの渋さは少し弱くなります。加工っぽいHDRになる場合があります。"},
-  {label:"🤍 白肌オーバー露光", value:"(clearly visible slight overexposure on fair skin:1.8), (clean pale skin rendering:1.8)", help:"何が変わる？
-肌を少し明るく白めに見せます。
-
-向く場面
-白シャツ、透明感、昼、可愛い自撮り。
-
-注意点
-白飛びしすぎると顔の立体感や服の質感が薄くなります。"},
-  {label:"🫧 透明感カラー", value:"(clearly visible airy transparent color grading:1.8), (smooth but realistic translucent skin texture:1.7)", help:"何が変わる？
-色味が軽くなり、清潔感・透明感が出ます。
-
-向く場面
-白シャツ、曇り、カフェ、昼、柔らかい表情。
-
-注意点
-暗め・粒状・ストリート系とは方向が反対です。"},
-  {label:"🌤️ 低コントラスト影", value:"(clearly visible low-contrast facial shadows:1.8), (soft even daylight shadow transition:1.8)", help:"何が変わる？
-影が柔らかくなり、顔が優しく見えます。
-
-向く場面
-自然な美人写真、白シャツ、昼、透明感。
-
-注意点
-ドラマチックな光と影は弱まります。立体感が少し減ることがあります。"},
-  {label:"📐 自撮り広角感", value:"(clearly visible natural selfie wide-angle perspective:1.8), (noticeable perspective stretch from smartphone front camera:1.7)", help:"何が変わる？
-スマホ自撮りらしい近距離感・広角感が出ます。
-
-向く場面
-手持ち自撮り、駅、歩き、SNS投稿っぽい構図。
-
-注意点
-顔・腕・手が伸びすぎる時は外してください。腰だめや低角度では強く出すぎることがあります。"}
+  {label:"🌫️ 背景ボケ", value:"(clearly visible background bokeh blur:1.8), (shallow depth of field with noticeably defocused background:1.8)", help:"何が変わる？\n背景が大きくぼけて、人物が前に出ます。\n\n向く場面\n駅・街・カフェ・ホームなど背景情報が多い場所。\n\n注意点\n背景の文字や場所感は読みにくくなります。場所を見せたい時は弱めか外すのがおすすめ。"},
+  {label:"✨ 光の玉ボケ", value:"(clearly visible light orb bokeh:1.8), (ambient light circles in background:1.8), (noticeable specular bokeh highlights:1.8)", help:"何が変わる？\nライトが丸い玉ボケになり、映え感が出ます。\n\n向く場面\n夜景・駅の照明・カフェ・街灯・店内ライト。\n\n注意点\n昼の自然光だけだと出にくいです。背景に光源があるシーンほど効きます。"},
+  {label:"💧 水滴/結露感", value:"(clearly visible condensation droplets on glass or skin:1.7), (noticeable water droplet texture:1.7)", help:"何が変わる？\nガラスや空気に湿度感が出ます。\n\n向く場面\n雨の日、窓際、駅のガラス・車内・夜の窓など。\n\n注意点\n晴れの屋外では不自然になりやすいです。肌の水滴に寄りすぎる場合は外してください。"},
+  {label:"✨ きらめき粒子", value:"(clearly visible sparkling glitter particles in air:1.7), (noticeable shimmering light particles:1.7)", help:"何が変わる？\n空気中に小さな光の粒が出ます。SNS加工っぽい可愛い演出になります。\n\n向く場面\n記念投稿、感謝テロップ、日差し、夜のライト、可愛い雰囲気。\n\n注意点\nリアル写真感は少し下がります。曇り・雨・霧では自動で選べないようにしています。"},
+  {label:"🌁 ソフトフォーカス", value:"(clearly visible soft focus haze:1.7), (gentle dreamy blur on edges:1.7), (noticeable diffused hazy atmosphere:1.7)", help:"何が変わる？\n輪郭や光が少し柔らかくなり、夢っぽくなります。\n\n向く場面\nやわらかい笑顔、夕方、白シャツ、透明感、可愛い投稿。\n\n注意点\n服の質感や顔のシャープさは弱まります。くっきり出したい時は外してください。"},
+  {label:"🌙 逆光/リムライト", value:"(clearly visible backlighting:1.8), (noticeable rim light on hair and shoulders:1.8), (silhouette-edge glow:1.7)", help:"何が変わる？\n髪や肩の輪郭に光が入り、立体感が出ます。\n\n向く場面\n駅ホーム、夕方、窓際、ビル街、後ろに明るい光があるシーン。\n\n注意点\n顔が暗くなることがあります。顔を明るくしたい時は自然光ハイライトやスマホHDRと相性が良いです。"},
+  {label:"📼 VHSノイズ", value:"(clearly visible VHS scan lines:1.7), (retro analog video noise:1.7), (noticeable chromatic aberration:1.7)", help:"何が変わる？\n古いビデオ風のノイズ、色ズレ、走査線が出ます。\n\n向く場面\n90s、深夜、レトロ、荒いSNS加工、少しクセのある絵。\n\n注意点\n顔・手・文字が崩れやすいです。リアル美人寄りなら弱めがおすすめ。"},
+  {label:"🔥 暖色フレア", value:"(clearly visible warm lens flare:1.8), (golden warm flare streaks across frame:1.8)", help:"何が変わる？\n暖かい光の筋やフレアが入ります。\n\n向く場面\n夕方、逆光、夏、駅ホーム、ロマンティックな雰囲気。\n\n注意点\n冷色フィルターとは反対方向です。顔にかかりすぎる場合があります。"},
+  {label:"❄️ 冷色フィルター", value:"(clearly visible cool blue color grading:1.8), (strong cold tone filter:1.8)", help:"何が変わる？\n全体が青く冷たい色味になります。\n\n向く場面\n夜、雨、クール、都会、静かな雰囲気。\n\n注意点\n肌の血色や可愛い明るさは弱まりやすいです。暖色フレアとは競合します。"},
+  {label:"🌈 光漏れ", value:"(clearly visible light leak effect:1.8), (film light leak streaks across frame:1.8)", help:"何が変わる？\nフィルム写真のような光の漏れ・色かぶりが入ります。\n\n向く場面\nエモい写真、夕方、レトロ、記念投稿。\n\n注意点\n顔の上に光が乗ると表情が読みにくくなる場合があります。"},
+  {label:"🖤 ビネット", value:"(clearly visible vignette:1.7), (noticeable dark edge falloff around frame:1.7)", help:"何が変わる？\n画面の端が暗くなり、中心に視線が集まります。\n\n向く場面\nムーディ、夜、映画風、被写体を強調したい時。\n\n注意点\n明るい透明感や爽やかな昼写真とは相性が悪いことがあります。"},
+  {label:"🎞️ フィルムグレイン強め", value:"(clearly visible heavy film grain:1.8), (pronounced analog grain texture:1.8)", help:"何が変わる？\n粒状感が強くなり、フィルムっぽさが出ます。\n\n向く場面\n90s、ポートラ、コダック、駅、スナップ写真。\n\n注意点\n肌のなめらかさや顔の安定は少し落ちます。文字も荒れやすいです。"},
+  {label:"☀️ 自然光ハイライト", value:"(clearly visible soft natural daylight:1.7), (noticeable highlight on nose bridge and forehead:1.7)", help:"何が変わる？\n顔や鼻筋、白シャツに自然な明るさが出ます。\n\n向く場面\n昼、駅ホーム、窓際、屋外、爽やかな写真。\n\n注意点\n夜や暗い室内では不自然になる場合があります。白飛びが強い時は外してください。"},
+  {label:"📱 スマホHDR", value:"(clearly visible smartphone HDR rendering:1.8), (smartphone tonal lift and clean dynamic range:1.8)", help:"何が変わる？\nスマホ写真っぽく、暗部と明部が持ち上がります。\n\n向く場面\n自撮り、昼、駅、街、顔と背景の両方を見せたい時。\n\n注意点\nフィルムの渋さは少し弱くなります。加工っぽいHDRになる場合があります。"},
+  {label:"🤍 白肌オーバー露光", value:"(clearly visible slight overexposure on fair skin:1.8), (clean pale skin rendering:1.8)", help:"何が変わる？\n肌を少し明るく白めに見せます。\n\n向く場面\n白シャツ、透明感、昼、可愛い自撮り。\n\n注意点\n白飛びしすぎると顔の立体感や服の質感が薄くなります。"},
+  {label:"🫧 透明感カラー", value:"(clearly visible airy transparent color grading:1.8), (smooth but realistic translucent skin texture:1.7)", help:"何が変わる？\n色味が軽くなり、清潔感・透明感が出ます。\n\n向く場面\n白シャツ、曇り、カフェ、昼、柔らかい表情。\n\n注意点\n暗め・粒状・ストリート系とは方向が反対です。"},
+  {label:"🌤️ 低コントラスト影", value:"(clearly visible low-contrast facial shadows:1.8), (soft even daylight shadow transition:1.8)", help:"何が変わる？\n影が柔らかくなり、顔が優しく見えます。\n\n向く場面\n自然な美人写真、白シャツ、昼、透明感。\n\n注意点\nドラマチックな光と影は弱まります。立体感が少し減ることがあります。"},
+  {label:"📐 自撮り広角感", value:"(clearly visible natural selfie wide-angle perspective:1.8), (noticeable perspective stretch from smartphone front camera:1.7)", help:"何が変わる？\nスマホ自撮りらしい近距離感・広角感が出ます。\n\n向く場面\n手持ち自撮り、駅、歩き、SNS投稿っぽい構図。\n\n注意点\n顔・腕・手が伸びすぎる時は外してください。腰だめや低角度では強く出すぎることがあります。"}
 ];
 
 const EFFECT_STRENGTH_OPTIONS = [
-  {label:"🫧 控えめ", key:"subtle", value:"EFFECT STRENGTH — SUBTLE:\n(selected effects should stay natural and understated:1.65),\n(effects are visible only as gentle photographic flavor, not decorative overlay:1.65),\n(keep face, skin texture, and realistic station atmosphere stable:1.85)", help:"何が変わる？
-エフェクトを自然写真の範囲に抑えます。
-
-向く場面
-顔の安定、実写感、駅ホームのリアルさを優先したい時。
-
-注意点
-ChatGPTではかなり控えめになりやすいです。Grokでも少し自然寄りになります。"},
-  {label:"✨ 標準", key:"standard", value:"EFFECT STRENGTH — STANDARD:\n(selected effects should be clearly visible but still believable:1.75),\n(bokeh, grain, light particles, flares, and softness should be noticeable in the final image:1.75),\n(face and realistic photo quality remain stable:1.85)", help:"何が変わる？
-エフェクトを見える程度に出しつつ、写真として自然に保ちます。
-
-向く場面
-基本設定。Grokでは十分出やすく、ChatGPTでは自然寄り。
-
-注意点
-ChatGPTでもキラキラをはっきり見せたい場合は「強め」が向きます。"},
-  {label:"🌟 強め", key:"strong", value:"EFFECT STRENGTH — STRONG:\n(selected effects must be visibly present in the final image, not subtle:1.9),\n(decorative light particles, bokeh orbs, film grain, glow, haze, and lens effects should be easy to notice:1.9),\n(show effects in foreground and background where appropriate:1.82),\n(keep the face clean and realistic despite stronger effects:1.9)", help:"何が変わる？
-キラキラ、玉ボケ、粒状感、光、霞みを画面上で分かるように出します。
-
-向く場面
-ChatGPTでエフェクトが弱い時、SNS投稿っぽくしたい時。
-
-注意点
-顔・肌・文字が少し不安定になる場合があります。"},
-  {label:"💥 盛り盛り", key:"max", value:"EFFECT STRENGTH — MAXIMUM VISUAL EFFECTS:\n(selected effects should appear as obvious visual overlays in the final image:1.98),\n(strong decorative sparkle particles, large bokeh orbs, visible grain, glow, flare, haze, and analog artifacts:1.98),\n(effects are intentionally stylized and clearly visible, not natural-subtle:1.95),\n(avoid destroying face identity, eyes, hands, and skin texture:1.95)", help:"何が変わる？
-エフェクトを加工レベルで強く見せます。
-
-向く場面
-映え重視、Grok風の派手な加工、非日常感。
-
-注意点
-Grokだとかなり派手です。ChatGPTでも顔や手が崩れる場合は「強め」に戻してください。"}
+  {label:"🫧 控えめ", key:"subtle", value:"EFFECT STRENGTH — SUBTLE:\n(selected effects should stay natural and understated:1.65),\n(effects are visible only as gentle photographic flavor, not decorative overlay:1.65),\n(keep face, skin texture, and realistic station atmosphere stable:1.85)", help:"何が変わる？\nエフェクトを自然写真の範囲に抑えます。\n\n向く場面\n顔の安定、実写感、駅ホームのリアルさを優先したい時。\n\n注意点\nChatGPTではかなり控えめになりやすいです。Grokでも少し自然寄りになります。"},
+  {label:"✨ 標準", key:"standard", value:"EFFECT STRENGTH — STANDARD:\n(selected effects should be clearly visible but still believable:1.75),\n(bokeh, grain, light particles, flares, and softness should be noticeable in the final image:1.75),\n(face and realistic photo quality remain stable:1.85)", help:"何が変わる？\nエフェクトを見える程度に出しつつ、写真として自然に保ちます。\n\n向く場面\n基本設定。Grokでは十分出やすく、ChatGPTでは自然寄り。\n\n注意点\nChatGPTでもキラキラをはっきり見せたい場合は「強め」が向きます。"},
+  {label:"🌟 強め", key:"strong", value:"EFFECT STRENGTH — STRONG:\n(selected effects must be visibly present in the final image, not subtle:1.9),\n(decorative light particles, bokeh orbs, film grain, glow, haze, and lens effects should be easy to notice:1.9),\n(show effects in foreground and background where appropriate:1.82),\n(keep the face clean and realistic despite stronger effects:1.9)", help:"何が変わる？\nキラキラ、玉ボケ、粒状感、光、霞みを画面上で分かるように出します。\n\n向く場面\nChatGPTでエフェクトが弱い時、SNS投稿っぽくしたい時。\n\n注意点\n顔・肌・文字が少し不安定になる場合があります。"},
+  {label:"💥 盛り盛り", key:"max", value:"EFFECT STRENGTH — MAXIMUM VISUAL EFFECTS:\n(selected effects should appear as obvious visual overlays in the final image:1.98),\n(strong decorative sparkle particles, large bokeh orbs, visible grain, glow, flare, haze, and analog artifacts:1.98),\n(effects are intentionally stylized and clearly visible, not natural-subtle:1.95),\n(avoid destroying face identity, eyes, hands, and skin texture:1.95)", help:"何が変わる？\nエフェクトを加工レベルで強く見せます。\n\n向く場面\n映え重視、Grok風の派手な加工、非日常感。\n\n注意点\nGrokだとかなり派手です。ChatGPTでも顔や手が崩れる場合は「強め」に戻してください。"}
 ];
 
 const SUBJECT_SIZE_MODES = [
@@ -2130,6 +1979,7 @@ function handleGenerate() {
   // Show output
   document.getElementById("outputCard").classList.remove("hidden");
   document.getElementById("outputArea").value = prompt;
+  copyPromptToClipboard(true);
 
   btn.disabled = false;
   btn.innerHTML = "✦ プロンプト生成";
@@ -2140,31 +1990,56 @@ function handleGenerate() {
 
 // ── Copy ──────────────────────────────────────────────────────────────────────
 function handleCopy() {
+  copyPromptToClipboard(false);
+}
+
+function copyPromptToClipboard(auto = false) {
   const ta = document.getElementById("outputArea");
+  const status = document.getElementById("copyStatus");
+  if (!ta || !ta.value) return;
+
   ta.focus();
   ta.select();
   ta.setSelectionRange(0, ta.value.length);
 
-  let success = false;
+  const onSuccess = () => {
+    showCopied(auto);
+    if (status) status.textContent = auto ? "✓ 生成プロンプトを自動コピーしました。" : "✓ クリップボードにコピーしました。";
+  };
+
+  const onFail = () => {
+    fallbackCopy(ta, auto);
+  };
+
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(ta.value).then(() => showCopied()).catch(() => fallbackCopy(ta));
+    navigator.clipboard.writeText(ta.value).then(onSuccess).catch(onFail);
   } else {
-    fallbackCopy(ta);
+    onFail();
   }
 }
 
-function fallbackCopy(ta) {
+function fallbackCopy(ta, auto = false) {
+  const status = document.getElementById("copyStatus");
   try {
-    document.execCommand("copy");
-    showCopied();
+    const ok = document.execCommand("copy");
+    if (ok) {
+      showCopied(auto);
+      if (status) status.textContent = auto ? "✓ 生成プロンプトを自動コピーしました。" : "✓ クリップボードにコピーしました。";
+    } else {
+      throw new Error("copy command returned false");
+    }
   } catch {
-    alert("コピーできませんでした。テキストエリアを長押しして「すべてを選択」→「コピー」してください。");
+    if (status) status.textContent = auto
+      ? "自動コピーできませんでした。Androidの制限で失敗する場合があります。「コピー」ボタンを押してください。"
+      : "コピーできませんでした。テキストエリアを長押しして「すべてを選択」→「コピー」してください。";
+    if (!auto) alert("コピーできませんでした。テキストエリアを長押しして「すべてを選択」→「コピー」してください。");
   }
 }
 
-function showCopied() {
+function showCopied(auto = false) {
   const btn = document.getElementById("btnCopy");
-  btn.textContent = "✓ コピー済み";
+  if (!btn) return;
+  btn.textContent = auto ? "✓ 自動コピー済み" : "✓ コピー済み";
   btn.classList.add("copied");
   setTimeout(() => {
     btn.textContent = "コピー";
