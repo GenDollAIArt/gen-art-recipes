@@ -1,8 +1,33 @@
 <!--
   Selfie Prompt Generator
-  Version: 3.30.0-selfie-mode-toggle
+  Version: 3.55.0-chest-hip-silhouette
   Updated: 2026-07-07
   Changelog:
+    v3.55.0 - ③ヒップ/下半身シルエットを追加。細身Iラインを維持しつつ、小尻プリ/小尻アップを選べるように変更
+    v3.54.0 - ②胸シルエットを素直なプロンプト化。服装別の裏処理や追加変換をやめ、選択肢の意味がそのまま形に出るよう整理
+    v3.53.0 - ②胸シルエットの服装別切り替えを廃止。水着/服装で変えず、選択したシルエットを常に同じ方針で反映
+    v3.52.0 - 水着時も②胸シルエット選択を反映するように再調整。胸パーツ詳細ではなく、水着の自然な立体フィット感として表現
+    v3.51.0 - 水着時の胸指定を安全寄りに再整理。胸の詳細語を減らし、自然な上半身バランス/水着のフィット感として扱う。可愛い水着の重複変換も修正
+    v3.50.0 - 水着表現を「スイムウェア」だけにせず、可愛い水着/ビキニとして出るように修正。安全性は維持しつつ、sporty swimwearへ寄りすぎない文言へ変更
+    v3.49.0 - 水着/ビキニ入力用の安全モードを追加。場所おまかせ時はビーチ/プール/リゾートへ寄せ、下着扱い・ゴスロリ変換・街中水着の矛盾を回避
+    v3.48.0 - 安全変換を最小化。ゴスロリへの自動置換を削除し、下着/ランジェリー等の危険語だけを中立的な公共ファッション表現へ置換
+    v3.47.0 - チップ長押しヘルプを追加。フィルムトーン/作品トーン/エフェクトなどの選択肢を長押しすると、効き方・使いどころ・注意点を表示
+    v3.46.0 - ② 胸シルエット に「立体感＋ライン」を追加。名称も 立体感 / ラインくっきり に整理し、単一選択のまま使いやすく調整
+    v3.45.0 - ② 胸シルエット選択の名称と並び順を整理。控えめ/自然/前に出る/形くっきり/服装なり に変更し、選択結果が分かりやすい文言へ調整
+    v3.44.0 - ⑪ 背景の見せ方 を追加。指定なし / 控えめ / バランス / 足元 / 奥 / 上 の選択肢を実装し、プロンプトとサマリーに反映
+    v3.43.0 - ⑧ カメラ位置/アングルの選択項目名と並び順を整理。説明文を短くし、通常系→低め系→動き系→特殊系の順番に変更
+    v3.42.0 - ⑧ カメラ位置/アングルUIを見直し。腰だめとSUPER LOWの違いを明確化し、ラベル・説明文・自動選択ロジックを整理。SUPER LOWは明確に「別物/強い煽り」と表示
+    v3.41.0 - 腰だめ/隠し持ち自撮りを強化。長く伸びた前腕・腕伸ばしセルフィー・画面手前に大きく写る腕を禁止し、肘を曲げて身体近くに隠したスマホ視点へ寄せる
+    v3.40.0 - 固定キャラ設定モードを追加。写真参照ベースでは LIGHT を標準化し、OFF/LIGHT/FULL を切替可能に変更。Face Reference優先時の顔パーツ競合を軽減
+    v3.39.0 - 「ほろ酔い」を感情から削除。ほろ酔いは状態/表情側の要素として扱い、感情（内面の気分）は腹立つ/悲しい/嬉しい/楽しい/寂しい/不安/疲れた等に整理
+    v3.38.0 - 「感情（内面の気分）」を基本感情ベースに刷新。腹立つ/悲しい/嬉しい/楽しい/寂しい/不安/疲れた/照れ/ほろ酔い/ニュートラル等へ変更し、表情生成にも直接反映
+    v3.37.0 - 安全設定をさらに短縮し、胸元を小さく見せる「no cleavage/no chest-focused」の過剰抑制を緩和。非性的・公共安全は維持しつつ、服越しの自然な立体感と選択したBust設定を優先
+    v3.36.0 - 生成プロンプトを短縮。重複する顔ID/固定キャラ/安全/構図ブロックを統合し、ChatGPTへ貼りやすいCOMPACT PROMPT出力へ変更。髪型は月別設定優先を維持
+    v3.35.0 - Face Reference画像の髪型コピーを抑制。髪型はアプリの月別設定を優先するHAIR CONTROLを追加。参照画像の髪の長さ・シルエット・分け目をそのまま引き継がないネガティブ指示を生成プロンプトに追加
+    v3.34.0 - 生成プロンプト内にアプリバージョンを埋め込み。Face Referenceを顔ID参照のみに制限するROLE CONTROLを追加。腰だめ自撮りではarm's-length/腕伸ばし指示を抑制し、旧・腰横真上煽りモードをUIから外した
+    v3.33.0 - 顎突き出し抑制CHIN_CONTROLを追加。High/Super High/Goldenの上向き顔・上目線指定を削除し、腰だめを「隠し持ち低め自撮り」と「腰横から真上/強い煽り」に分離
+    v3.32.0 - Face Reference使用時に危険な衣装/ポーズ語を安全なファッション表現へ置換。実在人物参照でポリシー停止しやすい語をプロンプト出力前に整理
+    v3.31.0 - Face Reference使用時の安全ロックを追加。実在人物参照＋下着/性的強調に見える組み合わせを避ける指示を追加
     v3.30.0 - 自撮りON/OFF/自動切替を追加。OFF時は第三者撮影ポートレートとしてスマホ自撮り指示を抑制
     v3.29.0 - チャットで最初に添付した画像をFace Reference画像として扱う指示を追加。顔ID固定は画像参照を優先
     v3.28.0 - 曇り系の天気でキラキラ粒子を禁止。曇天・雨・霧では晴れっぽい直射感/きらめきに引っ張られないよう整合性ロックを追加
@@ -237,6 +262,35 @@
   }
   .hidden { display: none; }
   .hint { font-size: 11px; color: var(--text-hint); margin-bottom: 8px; }
+  .help-overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 14px;
+  }
+  .help-overlay.hidden { display: none; }
+  .help-sheet {
+    width: 100%; max-width: 520px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-pu);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.35);
+  }
+  .help-title {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    margin-bottom: 8px;
+  }
+  .help-body {
+    font-size: 13px; line-height: 1.75; color: var(--text-sub);
+    white-space: pre-line;
+  }
+  .help-close {
+    margin-top: 14px; width: 100%;
+    padding: 12px 0; border-radius: 12px;
+    border: 1px solid #7c3aed; background: transparent;
+    color: #c4b5fd; font-weight: 700; font-size: 14px;
+  }
 </style>
 </head>
 <body>
@@ -246,7 +300,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v3.30</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v3.55</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -271,8 +325,10 @@
       <div class="slabel" style="margin-bottom:0;">固定キャラ設定 — 毎回先頭に入る</div>
       <button class="btn-copy" onclick="resetCharacterLock()">初期化</button>
     </div>
-    <div class="hint">デフォルトは Korean model woman ベース。さらに、チャットで最初に添付した被写体画像をFace Reference画像として使う前提をプロンプトに追加します。顔IDは参照画像を優先し、服装・場所・ポーズだけ今回のシーンで変えます。</div>
-    <textarea id="characterLock" rows="8"></textarea>
+    <div class="hint">写真参照ベースでは LIGHT 推奨。顔IDはFace Reference画像を優先し、固定キャラは雰囲気の補助だけにします。FULLは写真なしで固定キャラを作る時向けです。</div>
+    <div class="slabel" style="margin-top:10px;">固定キャラモード</div>
+    <div class="chips" id="characterModeChips"></div>
+    <textarea id="characterLock" rows="8" style="margin-top:10px;"></textarea>
   </div>
 
   <!-- ① Scene only -->
@@ -282,37 +338,44 @@
     <textarea id="situation" rows="4" placeholder="例：&#10;薄い紺色のワイシャツ、紺色のビジネスパンツ。西中島南方のラーメン店でラーメンをすすっている。"></textarea>
   </div>
 
-  <!-- Body silhouette -->
+  <!-- Chest silhouette -->
   <div class="card">
-    <div class="slabel">② 体型・胸シルエットの固定</div>
-    <div class="hint">服越しでも「筋肉質な土台があり、前にしっかり出る立体感。高めの位置で、柔らかさもある」。西洋人寄りの前方投影を自然な範囲で固定できます。</div>
+    <div class="slabel">② 胸シルエット</div>
+    <div class="hint">選択した内容をそのままプロンプトに反映します。立体感（前後の厚み）とライン（輪郭）の出方を素直に変えます。</div>
     <div class="chips" id="bustChips"></div>
+  </div>
+
+  <!-- Hip silhouette -->
+  <div class="card">
+    <div class="slabel">③ ヒップ / 下半身シルエット</div>
+    <div class="hint">細身Iラインを維持したまま、ヒップの丸み・上向き感を調整します。</div>
+    <div class="chips" id="hipChips"></div>
   </div>
 
   <!-- Weather -->
   <div class="card">
-    <div class="slabel">③ 天気を選択</div>
+    <div class="slabel">④ 天気を選択</div>
     <div class="chips" id="weatherChips"></div>
   </div>
 
   <!-- ④ Film tone -->
   <div class="card">
-    <div class="slabel">④ フィルムトーン / 質感</div>
-    <div class="hint">選択したフィルムトーンは以前より強く出ます。相反するものは自動で選べません</div>
+    <div class="slabel">⑤ フィルムトーン / 質感</div>
+    <div class="hint">長押しでヘルプ表示。色味・質感・雰囲気を選びます。相反するものは自動で選べません</div>
     <div class="chips" id="filmChips"></div>
   </div>
 
   <!-- ③ Overall tone -->
   <div class="card">
-    <div class="slabel">⑤ 作品トーン</div>
-    <div class="hint">作品トーンは一目で分かるくらい強く出ます。透明感系とストリート/ダーク系など反対方向は自動整理</div>
+    <div class="slabel">⑥ 作品トーン</div>
+    <div class="hint">長押しでヘルプ表示。写真全体の印象を選びます。反対方向の組み合わせは自動整理</div>
     <div class="chips" id="toneChips"></div>
   </div>
 
   <!-- ④ Bokeh & Effects -->
   <div class="card">
-    <div class="slabel">⑥ エフェクト（複数選択可）</div>
-    <div class="hint">背景ボケ・光漏れ・グレイン・スマホHDRなどをはっきり効かせます。曇り・雨・霧ではキラキラ粒子を自動禁止します</div>
+    <div class="slabel">⑦ エフェクト（複数選択可）</div>
+    <div class="hint">長押しでヘルプ表示。重ねすぎると顔や肌が不安定になりやすいので、まずは3〜5個がおすすめ</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
@@ -325,49 +388,56 @@
 
   <!-- Camera angle -->
   <div class="card">
-    <div class="slabel">⑧ カメラ位置 / アングル</div>
-    <div class="hint">スマホの持ち位置と撮影角度を指定します。「腰だめ」は身体のすぐ横、腰〜ヒップ横からほぼ真上に撮る専用アングルです</div>
+    <div class="slabel">⑨ カメラ位置 / アングル</div>
+    <div class="hint">撮影の高さ・持ち方・向きを選びます。</div>
     <div class="chips" id="angleModeChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑨ 構図 / 被写体サイズ</div>
+    <div class="slabel">⑩ 構図 / 被写体サイズ</div>
     <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
+  <!-- Background view -->
+  <div class="card">
+    <div class="slabel">⑪ 背景の見せ方</div>
+    <div class="hint">背景をどの方向で見せるかを選びます</div>
+    <div class="chips" id="backgroundViewChips"></div>
+  </div>
+
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑩ 余白 / リーディングスペース</div>
+    <div class="slabel">⑫ 余白 / リーディングスペース</div>
     <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑪ 写真の自然さ / 演出度</div>
+    <div class="slabel">⑬ 写真の自然さ / 演出度</div>
     <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Tension -->
   <div class="card">
-    <div class="slabel">⑫ テンション（動きの強さ）</div>
+    <div class="slabel">⑭ テンション（動きの強さ）</div>
     <div class="hint">体の動きの強さや静止感を調整します</div>
     <div class="chips" id="tensionChips"></div>
   </div>
 
   <!-- Emotion -->
   <div class="card">
-    <div class="slabel">⑬ 感情（内面の気分）</div>
+    <div class="slabel">⑮ 感情（内面の気分）</div>
     <div class="hint">気分や心理状態を選びます。ポーズと表情の補助に使います</div>
     <div class="chips" id="emotionChips"></div>
   </div>
 
   <!-- Expression -->
   <div class="card">
-    <div class="slabel">⑭ 表情（顔の出力）</div>
+    <div class="slabel">⑯ 表情（顔の出力）</div>
     <div class="hint">未選択の場合はランダムで決定されます</div>
     <div class="chips" id="expressionChips"></div>
   </div>
@@ -397,21 +467,29 @@
 
 </div>
 
+<div class="help-overlay hidden" id="chipHelpOverlay" onclick="hideChipHelp()">
+  <div class="help-sheet" onclick="event.stopPropagation()">
+    <div class="help-title" id="chipHelpTitle">ヘルプ</div>
+    <div class="help-body" id="chipHelpBody"></div>
+    <button class="help-close" onclick="hideChipHelp()">閉じる</button>
+  </div>
+</div>
+
 <script>
 // ── Data ─────────────────────────────────────────────────────────────────────
 const HAIR_BY_MONTH = {
-  1:"(long straight, dark brown hair:1.2)",
-  2:"(long wave, dark brown to chestnut brown gradient hair:1.2)",
-  3:"(long soft wave, chestnut brown hair:1.2)",
-  4:"(medium straight, chestnut brown hair:1.2)",
-  5:"(medium wave, light chestnut brown hair:1.2)",
-  6:"(soft bob, ash brown hair:1.2)",
-  7:"(airy bob, ash brown hair:1.2)",
-  8:"(short bob, light ash brown hair:1.2)",
-  9:"(medium bob, ash brown to dark brown hair:1.2)",
-  10:"(inner-color straight, dark brown with caramel inner highlight:1.2)",
-  11:"(inner-color wave, dark brown with rose-beige inner highlight:1.2)",
-  12:"(long straight, dark brown with subtle inner highlight:1.2)",
+  1:"(long straight, dark brown hair:1.65), (hair falls below the shoulders:1.55)",
+  2:"(long wave, dark brown to chestnut brown gradient hair:1.65), (hair falls below the shoulders:1.55)",
+  3:"(long soft wave, chestnut brown hair:1.65), (hair falls below the shoulders:1.55)",
+  4:"(medium straight, chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",
+  5:"(medium wave, light chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",
+  6:"(soft bob, ash brown hair:1.78), (jaw-to-neck length bob:1.88), (not long hair:1.95)",
+  7:"(airy bob, ash brown hair:1.8), (short-to-medium airy bob length around jaw to neck:1.9), (not long hair:1.98)",
+  8:"(short bob, light ash brown hair:1.8), (clear short bob length above or around jaw:1.9), (not long hair:1.98)",
+  9:"(medium bob, ash brown to dark brown hair:1.75), (shoulder-grazing medium bob length:1.82), (not chest-length hair:1.95)",
+  10:"(inner-color straight, dark brown with caramel inner highlight:1.65), (long hair below shoulders:1.55)",
+  11:"(inner-color wave, dark brown with rose-beige inner highlight:1.65), (long hair below shoulders:1.55)",
+  12:"(long straight, dark brown with subtle inner highlight:1.65), (long hair below shoulders:1.55)",
 };
 
 const DAY_MOOD = {
@@ -424,61 +502,21 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const ANGLES = [
-  {name:"SUPER HIGH ANGLE", prompt:"(true overhead super high-angle selfie:1.9), (arm fully extended above head:1.9), (smartphone high over her head looking almost straight down:1.9), (bird's-eye framing of face, shoulders, outfit and surroundings:1.8), (face tilted up toward camera:1.8), (not eye-level:1.9), (not low-angle:1.9)"},
-  {name:"GOLDEN ANGLE",     prompt:"(camera above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes looking slightly upward:1.8), (flattering high selfie angle:1.8)"},
-  {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (head slightly tilted up:1.7), (eyes directed upward to lens:1.8)"},
-  {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7)"},
-  {name:"LOW ANGLE",        prompt:"(ordinary low-angle selfie from in front of the body:1.8), (phone held slightly below chest level:1.8), (camera below the face and angled upward from the front:1.8), (viewer sees the subject from a lower front hand position:1.7), (face looking slightly down toward the lens:1.7), (not overhead:1.9), (not golden angle:1.8), (not waist-side vertical upshot:1.9)"},
-  {name:"WAIST-SIDE VERTICAL UPSHOT", prompt:"(waist-side vertical upshot selfie:1.95), (smartphone held immediately beside her waist or hip, almost touching the side of her body:1.95), (short lowered arm, elbow close to torso, phone not extended forward:1.9), (camera lens points almost straight upward from her waist-side position toward her face:1.95), (near-vertical upward camera axis from the side of her body:1.9), (viewpoint rises along the side of her torso from waist to face:1.9), (torso, shirt, skirt waistline, and side body line feel very close to the lens:1.85), (face looking down toward the phone beside her waist:1.8), (not an ordinary front low-angle selfie:1.95), (not diagonal low-angle from in front:1.95), (not golden angle:1.9), (not overhead:1.9)"},
-  {name:"SUPER LOW ANGLE",  prompt:"(dramatic super low-angle selfie:1.9), (phone held very low below the waist or near hip-to-thigh level:1.9), (strong upward perspective from far below the face:1.9), (camera looks up sharply with noticeable perspective distortion:1.8), (torso and jacket line strongly emphasized by low perspective:1.8), (face looking down toward the lens:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9), (not waist-side vertical upshot:1.8)"},
-  {name:"DYNAMIC TILTED",   prompt:"(camera slightly rotated:1.8), (diagonal composition:1.8), (face tilted with camera:1.7), (snapshot atmosphere:1.8)"},
-  {name:"OVER SHOULDER",    prompt:"(face partially turned away:1.7), (looking back toward lens:1.8), (shoulder line emphasized:1.7), (candid feel:1.7)"},
-  {name:"WALKING",          prompt:"(captured mid-walk:1.8), (subtle body motion:1.7), (hair movement from motion:1.7), (face turned slightly to camera:1.7)"},
+const APP_VERSION = "v3.55.0-chest-hip-silhouette";
+const CHARACTER_MODE_OPTIONS = [
+  {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
+  {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
+  {label:"🔒 FULL / 従来の固定キャラ", key:"full", value:"full"},
 ];
 
-const ANGLE_UI_OPTIONS = [
-  {label:"🎲 自動", key:"auto", value:"auto"},
-  {label:"🙆 SUPER HIGH / 頭上", key:"SUPER HIGH ANGLE", value:"SUPER HIGH ANGLE"},
-  {label:"✨ GOLDEN ANGLE", key:"GOLDEN ANGLE", value:"GOLDEN ANGLE"},
-  {label:"⬆️ HIGH ANGLE", key:"HIGH ANGLE", value:"HIGH ANGLE"},
-  {label:"👁️ EYE LEVEL", key:"EYE LEVEL", value:"EYE LEVEL"},
-  {label:"⬇️ LOW ANGLE / 正面下から", key:"LOW ANGLE", value:"LOW ANGLE"},
-  {label:"📱 腰だめ / 腰横から真上", key:"WAIST-SIDE VERTICAL UPSHOT", value:"WAIST-SIDE VERTICAL UPSHOT"},
-  {label:"📉 SUPER LOW / 強い煽り", key:"SUPER LOW ANGLE", value:"SUPER LOW ANGLE"},
-  {label:"🌀 DYNAMIC TILTED", key:"DYNAMIC TILTED", value:"DYNAMIC TILTED"},
-  {label:"↩️ OVER SHOULDER", key:"OVER SHOULDER", value:"OVER SHOULDER"},
-  {label:"🚶 WALKING", key:"WALKING", value:"WALKING"},
-];
+const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosphere:1.5),
+(mature adult woman, never younger-looking:1.8),
+(very fair translucent skin with natural texture:1.6),
+(slim elongated face impression:1.45),
+(narrow jawline and delicate chin impression:1.45),
+(realistic balanced adult proportions:1.6),
+(face identity and detailed facial features are taken from the Face Reference image:1.95),
+(no different person:1.95),
+(no celebrity likeness:1.95)`;
 
-const SELFIE_MODE_OPTIONS = [
-  {label:"🎲 自動", key:"auto", value:"auto"},
-  {label:"🤳 自撮り ON", key:"selfie_on", value:"on"},
-  {label:"📷 自撮り OFF / 第三者撮影", key:"selfie_off", value:"off"},
-];
-
-const EXPRESSIONS = [
-  "neutral deadpan, calm, composed expression",
-  "soft gentle smile, warm and approachable expression",
-  "bright happy, lively cheerful expression",
-  "sweet, slightly clingy, affectionate expression",
-  "cute charming, playful expression",
-  "teasing, mischievous smirk expression",
-  "melancholic, reflective, subtle loneliness in expression",
-  "tired but gentle, quiet fatigue expression",
-  "tipsy warm relaxed expression",
-  "thoughtful faraway gaze expression",
-  "shy blushing expression",
-  "surprised slightly startled expression",
-];
-
-const ACCESSORIES_MAP = {
-  "night out":"(gold earrings:1.5), (layered necklaces:1.5), (rings:1.5), (elegant night-out accessories:1.5)",
-  "home":     "(minimal accessories or none:1.4), (no jewelry, casual home look:1.4)",
-  "after work":"(subtle elegant jewelry:1.4), (delicate earrings:1.4), (refined after-work accessories:1.4)",
-  "date":     "(soft feminine accessories:1.4), (delicate necklace:1.4), (romantic accessory styling:1.4)",
-  "casual":   "(simple casual accessories:1.3), (minimal jewelry:1.3)",
-};
-
-const WEATHER_OPTIONS = [
-  {label:"晴れ ☀️",  value:"
+const CHIN_CONTROL = "(neutral chin position:1.95), (chin not thrust forward:1.95), (no jutting chin:1.95), (no p
