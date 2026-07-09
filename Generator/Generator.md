@@ -1,61 +1,13 @@
 <!--
   Selfie Prompt Generator
-  Version: 4.0.3-more-effects
+  Version: 4.0.7-cleanup-refactor
   Updated: 2026-07-09
   Changelog:
-    v4.0.6 - 背中から/斜め後ろ/肩越し後ろ/窓際後ろ姿を追加。自撮りOFF専用アングルガード、逆光布の安全ガード、顔アップ時の体型ブロック弱化、角度メタ情報のリファクタリングを実装
+    v4.0.7 - Changelogを直近5件に整理。不要な空行・コメントを削減し、ファイル全体を軽量化
+    v4.0.6 - 背中/斜め後ろ/肩越し/窓際後ろ姿、自撮りOFF専用アングルガード、逆光布安全ガード、顔アップ時の体型ブロック弱化を追加
     v4.0.5 - 真横から/寝転び横、顔アップ/顔どアップを追加
     v4.0.4 - 肌の見え方/肌質感を追加
-    v4.0.3 - エフェクトを追加。ネオン反射、ガラス反射、夕方斜光、モーションブラー、コンデジ感、低彩度を追加し、既存の相反ガードへ必要分を統合
-    v4.0.1 - エフェクト強度を補助プロンプト追加方式から、選択エフェクト内weightの倍率補正方式へ変更。強度チップの選択状態もkey/value整合に修正
-    v4.0.2 - エフェクト相反ガードを追加。直フラッシュ/白飛びフラッシュと背景ボケ・光の玉ボケ・自然光/逆光系などを同時選択不可にし、硬い影と低コントラスト影/ソフトフォーカスの競合も整理
-    v4.0.1 - エフェクト強度を補助文追加方式から、選択エフェクト内のweight数値を倍率補正する方式へ変更
-    v4.0.0 - メジャーアップデート。フィルムトーンに「ガサつき」、エフェクトに「直フラッシュ」「硬い影」「白飛びフラッシュ」を追加。エフェクト長押しヘルプ対応を維持し、フラッシュ系の質感を個別に選べるように整理
-    v3.61.0 - ②を「逆光時の布の見え方」に変更。服素材分類を削除し、長押しヘルプ表示も全削除
-    v3.60.0 - ②服の質感 / 素材感を追加。通常生地・薄手ニット・リブ編み・やわ布・とろみ/サテン・光を通す薄布を選択可能に変更
-    v3.59.0 - 起動しない問題を修正。長押しヘルプ文字列内の改行をJS安全形式へ変換
-    v3.58.0 - 生成後に自動でクリップボードへコピーする機能を追加。Androidで失敗した場合は手動コピーへフォールバック
-    v3.57.0 - エフェクト系の長押しヘルプを拡張。各エフェクト/エフェクト強度の「何が変わるか」「向く場面」「注意点」を表示
-    v3.56.0 - エフェクト強度を追加。ChatGPT向けにエフェクトを強く出す/自然に抑える切り替えを実装
-    v3.55.0 - ③ヒップ/下半身シルエットを追加。細身Iラインを維持しつつ、小尻プリ/小尻アップを選べるように変更
-    v3.54.0 - ②胸シルエットを素直なプロンプト化。服装別の裏処理や追加変換をやめ、選択肢の意味がそのまま形に出るよう整理
-    v3.53.0 - ②胸シルエットの服装別切り替えを廃止。水着/服装で変えず、選択したシルエットを常に同じ方針で反映
-    v3.52.0 - 水着時も②胸シルエット選択を反映するように再調整。胸パーツ詳細ではなく、水着の自然な立体フィット感として表現
-    v3.51.0 - 水着時の胸指定を安全寄りに再整理。胸の詳細語を減らし、自然な上半身バランス/水着のフィット感として扱う。可愛い水着の重複変換も修正
-    v3.50.0 - 水着表現を「スイムウェア」だけにせず、可愛い水着/ビキニとして出るように修正。安全性は維持しつつ、sporty swimwearへ寄りすぎない文言へ変更
-    v3.49.0 - 水着/ビキニ入力用の安全モードを追加。場所おまかせ時はビーチ/プール/リゾートへ寄せ、下着扱い・ゴスロリ変換・街中水着の矛盾を回避
-    v3.48.0 - 安全変換を最小化。ゴスロリへの自動置換を削除し、下着/ランジェリー等の危険語だけを中立的な公共ファッション表現へ置換
-    v3.47.0 - チップ長押しヘルプを追加。フィルムトーン/作品トーン/エフェクトなどの選択肢を長押しすると、効き方・使いどころ・注意点を表示
-    v3.46.0 - ③ 胸シルエット に「立体感＋ライン」を追加。名称も 立体感 / ラインくっきり に整理し、単一選択のまま使いやすく調整
-    v3.45.0 - ③ 胸シルエット選択の名称と並び順を整理。控えめ/自然/前に出る/形くっきり/服装なり に変更し、選択結果が分かりやすい文言へ調整
-    v3.44.0 - ⑬ 背景の見せ方 を追加。指定なし / 控えめ / バランス / 足元 / 奥 / 上 の選択肢を実装し、プロンプトとサマリーに反映
-    v3.43.0 - ⑧ カメラ位置/アングルの選択項目名と並び順を整理。説明文を短くし、通常系→低め系→動き系→特殊系の順番に変更
-    v3.42.0 - ⑧ カメラ位置/アングルUIを見直し。腰だめとSUPER LOWの違いを明確化し、ラベル・説明文・自動選択ロジックを整理。SUPER LOWは明確に「別物/強い煽り」と表示
-    v3.41.0 - 腰だめ/隠し持ち自撮りを強化。長く伸びた前腕・腕伸ばしセルフィー・画面手前に大きく写る腕を禁止し、肘を曲げて身体近くに隠したスマホ視点へ寄せる
-    v3.40.0 - 固定キャラ設定モードを追加。写真参照ベースでは LIGHT を標準化し、OFF/LIGHT/FULL を切替可能に変更。Face Reference優先時の顔パーツ競合を軽減
-    v3.39.0 - 「ほろ酔い」を感情から削除。ほろ酔いは状態/表情側の要素として扱い、感情（内面の気分）は腹立つ/悲しい/嬉しい/楽しい/寂しい/不安/疲れた等に整理
-    v3.38.0 - 「感情（内面の気分）」を基本感情ベースに刷新。腹立つ/悲しい/嬉しい/楽しい/寂しい/不安/疲れた/照れ/ほろ酔い/ニュートラル等へ変更し、表情生成にも直接反映
-    v3.37.0 - 安全設定をさらに短縮し、胸元を小さく見せる「no cleavage/no chest-focused」の過剰抑制を緩和。非性的・公共安全は維持しつつ、服越しの自然な立体感と選択したBust設定を優先
-    v3.36.0 - 生成プロンプトを短縮。重複する顔ID/固定キャラ/安全/構図ブロックを統合し、ChatGPTへ貼りやすいCOMPACT PROMPT出力へ変更。髪型は月別設定優先を維持
-    v3.35.0 - Face Reference画像の髪型コピーを抑制。髪型はアプリの月別設定を優先するHAIR CONTROLを追加。参照画像の髪の長さ・シルエット・分け目をそのまま引き継がないネガティブ指示を生成プロンプトに追加
-    v3.34.0 - 生成プロンプト内にアプリバージョンを埋め込み。Face Referenceを顔ID参照のみに制限するROLE CONTROLを追加。腰だめ自撮りではarm's-length/腕伸ばし指示を抑制し、旧・腰横真上煽りモードをUIから外した
-    v3.33.0 - 顎突き出し抑制CHIN_CONTROLを追加。High/Super High/Goldenの上向き顔・上目線指定を削除し、腰だめを「隠し持ち低め自撮り」と「腰横から真上/強い煽り」に分離
-    v3.32.0 - Face Reference使用時に危険な衣装/ポーズ語を安全なファッション表現へ置換。実在人物参照でポリシー停止しやすい語をプロンプト出力前に整理
-    v3.31.0 - Face Reference使用時の安全ロックを追加。実在人物参照＋下着/性的強調に見える組み合わせを避ける指示を追加
-    v3.30.0 - 自撮りON/OFF/自動切替を追加。OFF時は第三者撮影ポートレートとしてスマホ自撮り指示を抑制
-    v3.29.0 - チャットで最初に添付した画像をFace Reference画像として扱う指示を追加。顔ID固定は画像参照を優先
-    v3.28.0 - 曇り系の天気でキラキラ粒子を禁止。曇天・雨・霧では晴れっぽい直射感/きらめきに引っ張られないよう整合性ロックを追加
-    v3.27.0 - 腰だめを「腰のすぐ横から真上に撮る」定義へ修正。通常ローアングルと分離し、身体横・短い腕・ほぼ垂直上向きカメラを明示
-    v3.26.0 - コメント内バージョン表記を修正。腰だめを「身体のそば・短く下げた腕・腰〜ヒップ横のスマホ位置」としてさらに明確化
-    v3.21.0 - 矛盾チェック修正。曜日ムードの時間矛盾を解消し、透明感系/粒状フィルム系/暖色系/冷色系の相反選択をより厳密に整理
-    v3.1.0 - 胸シルエットを「筋肉質で構造感があるが柔らかい服越し形状」へ調整。服装に応じた自然な谷間許可モードを追加
-    v3.0.0 - 固定キャラ設定ブロック、実在人物名削除、服越しシルエット安定化
-
-    v2.2.0 - 表情の手動選択（⑦）を追加。未選択時は従来通りランダム
-    v2.1.0 - エフェクト複数選択・テンション/感情の手動選択チップを追加
-    v2.0.0 - Claude API依存を廃止、完全オフライン化（キーワード判定ロジック）
-    v1.1.0 - モバイルコピー対応（execCommandフォールバック）、出力をtextarea化
-    v1.0.0 - 初期版（React/JSXプロトタイプからHTML単体化）
+    v4.0.3 - ネオン反射、ガラス反射、夕方斜光、モーションブラー、コンデジ感、低彩度を追加
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -64,8 +16,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Stable Character Prompt Generator</title>
 <style>
-  /* ── CSS Variables: Dark (default) ── */
-  :root {
+:root {
     --bg:        #09090b;
     --bg-card:   #18181b;
     --bg-dark:   #0d0d14;
@@ -99,7 +50,6 @@
     --placeholder: #3f3f46;
   }
 
-  /* ── CSS Variables: Light ── */
   @media (prefers-color-scheme: light) {
     :root {
       --bg:        #f4f4f5;
@@ -321,7 +271,6 @@
     border: 1px solid #7c3aed; background: transparent;
     color: #c4b5fd; font-weight: 700; font-size: 14px;
   }
-
 </style>
 </head>
 <body>
@@ -331,7 +280,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v4.0.6</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v4.0.7</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -520,8 +469,6 @@
 
 </div>
 
-
-
 <div class="help-overlay hidden" id="chipHelpOverlay" onclick="hideChipHelp()">
   <div class="help-sheet" onclick="event.stopPropagation()">
     <div class="help-title" id="chipHelpTitle">ヘルプ</div>
@@ -529,11 +476,53 @@
     <button class="help-close" onclick="hideChipHelp()">閉じる</button>
   </div>
 </div>
-
-<script>
-// ── Data ─────────────────────────────────────────────────────────────────────
-const HAIR_BY_MONTH = {
+<script>const HAIR_BY_MONTH = {
   1:"(long straight, dark brown hair:1.65), (hair falls below the shoulders:1.55)",
   2:"(long wave, dark brown to chestnut brown gradient hair:1.65), (hair falls below the shoulders:1.55)",
   3:"(long soft wave, chestnut brown hair:1.65), (hair falls below the shoulders:1.55)",
-  4:"(medium straight, chestnut brown
+  4:"(medium straight, chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",
+  5:"(medium wave, light chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",
+  6:"(soft bob, ash brown hair:1.78), (jaw-to-neck length bob:1.88), (not long hair:1.95)",
+  7:"(airy bob, ash brown hair:1.8), (short-to-medium airy bob length around jaw to neck:1.9), (not long hair:1.98)",
+  8:"(short bob, light ash brown hair:1.8), (clear short bob length above or around jaw:1.9), (not long hair:1.98)",
+  9:"(medium bob, ash brown to dark brown hair:1.75), (shoulder-grazing medium bob length:1.82), (not chest-length hair:1.95)",
+  10:"(inner-color straight, dark brown with caramel inner highlight:1.65), (long hair below shoulders:1.55)",
+  11:"(inner-color wave, dark brown with rose-beige inner highlight:1.65), (long hair below shoulders:1.55)",
+  12:"(long straight, dark brown with subtle inner highlight:1.65), (long hair below shoulders:1.55)",
+};
+
+const DAY_MOOD = {
+  Sun:"Quiet reflective Sunday mood, gentle weekend loneliness",
+  Mon:"Tired but composed Monday mood",
+  Tue:"Focused stable neutral Tuesday calm",
+  Wed:"Midweek fatigue, quiet weariness",
+  Thu:"Slight pre-weekend anticipation",
+  Fri:"Friday pre-weekend energy, lively but time-neutral mood",
+  Sat:"Relaxed confident Saturday energy",
+};
+
+const APP_VERSION = "v4.0.7-cleanup-refactor";
+const CHARACTER_MODE_OPTIONS = [
+  {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
+  {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
+  {label:"🔒 FULL / 従来の固定キャラ", key:"full", value:"full"},
+];
+
+const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosphere:1.5),
+(mature adult woman, never younger-looking:1.8),
+(very fair translucent skin with natural texture:1.6),
+(slim elongated face impression:1.45),
+(narrow jawline and delicate chin impression:1.45),
+(realistic balanced adult proportions:1.6),
+(face identity and detailed facial features are taken from the Face Reference image:1.95),
+(no different person:1.95),
+(no celebrity likeness:1.95)`;
+
+const CHIN_CONTROL = "(neutral chin position:1.95), (chin not thrust forward:1.95), (no jutting chin:1.95), (no projected jaw:1.95), (no raised chin:1.9), (face kept level or only very slightly tilted:1.9), (neck relaxed and not stretched:1.85), (mouth and jaw relaxed naturally:1.85), (natural jaw posture:1.85)";
+
+const ANGLES = [
+  {name:"SUPER HIGH ANGLE", prompt:"(true overhead super high-angle selfie:1.9), (arm fully extended above head:1.9), (smartphone high over her head looking almost straight down:1.9), (bird's-eye framing of face, shoulders, outfit and surroundings:1.8), (subject keeps a natural face angle without looking up excessively:1.9), (eyes gently meet the lens without forcing an upward gaze:1.8), (do not copy any reference-image chin lift or arm-extension pose:1.9), (not eye-level:1.9), (not low-angle:1.9), " + CHIN_CONTROL},
+  {name:"GOLDEN ANGLE",     prompt:"(camera slightly above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes naturally meet the lens:1.8), (flattering high selfie angle without exaggerated upward face tilt:1.9), (do not copy reference-image chin posture:1.9), " + CHIN_CONTROL},
+  {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (natural relaxed face angle:1.8), (eyes looking naturally toward the lens without lifting the chin:1.9), (do not copy reference-image upward face tilt:1.9), " + CHIN_CONTROL},
+  {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7), (do not copy reference-image arm extension or chin posture:1.9), " + CHIN_CONTROL},
+  {name:"SIDE PROFILE",     prompt:"(camera positioned
