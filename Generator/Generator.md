@@ -1,13 +1,13 @@
 <!--
   Selfie Prompt Generator
-  Version: 4.0.7-cleanup-refactor
-  Updated: 2026-07-09
+  Version: 5.0.0-pose-camera-logic
+  Updated: 2026-07-10
   Changelog:
+    v5.0.0 - メジャーアップデート。POSE/MOTIONを足し算式から、姿勢・支え・自撮りON/OFF・カメラ意図を解釈して自然な構図へ導出するロジックに変更。顔/体型/バスト/ヒップ指定を優先保持
     v4.0.7 - Changelogを直近5件に整理。不要な空行・コメントを削減し、ファイル全体を軽量化
     v4.0.6 - 背中/斜め後ろ/肩越し/窓際後ろ姿、自撮りOFF専用アングルガード、逆光布安全ガード、顔アップ時の体型ブロック弱化を追加
     v4.0.5 - 真横から/寝転び横、顔アップ/顔どアップを追加
     v4.0.4 - 肌の見え方/肌質感を追加
-    v4.0.3 - ネオン反射、ガラス反射、夕方斜光、モーションブラー、コンデジ感、低彩度を追加
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -280,7 +280,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v4.0.7</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v5.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -501,7 +501,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v4.0.7-cleanup-refactor";
+const APP_VERSION = "v5.0.0-pose-camera-logic";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -525,4 +525,3 @@ const ANGLES = [
   {name:"GOLDEN ANGLE",     prompt:"(camera slightly above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes naturally meet the lens:1.8), (flattering high selfie angle without exaggerated upward face tilt:1.9), (do not copy reference-image chin posture:1.9), " + CHIN_CONTROL},
   {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (natural relaxed face angle:1.8), (eyes looking naturally toward the lens without lifting the chin:1.9), (do not copy reference-image upward face tilt:1.9), " + CHIN_CONTROL},
   {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7), (do not copy reference-image arm extension or chin posture:1.9), " + CHIN_CONTROL},
-  {name:"SIDE PROFILE",     prompt:"(camera positioned
