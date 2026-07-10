@@ -1,13 +1,14 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.0.0-pose-camera-logic
+  Version: 5.1.1-bust-option-sizing
   Updated: 2026-07-10
   Changelog:
-    v5.0.0 - メジャーアップデート。POSE/MOTIONを足し算式から、姿勢・支え・自撮りON/OFF・カメラ意図を解釈して自然な構図へ導出するロジックに変更。顔/体型/バスト/ヒップ指定を優先保持
+    v5.1.1 - 胸シルエット選択肢の効き方を調整。控えめ=普通サイズ寄り、立体感/ラインくっきり=少し大きめ、立体感＋ライン=最も強く自然に反映
+    v5.1.0 - 被写体画像とコーディネート画像の役割分離を追加。1枚目を顔ID、2枚目を服装/配色/シルエット参照として扱うOUTFIT REFERENCEモードを実装
+    v5.0.0 - メジャーアップデート。POSE/MOTIONを姿勢・支え・自撮りON/OFF・カメラ意図から自然な構図へ導出するロジックに変更
     v4.0.7 - Changelogを直近5件に整理。不要な空行・コメントを削減し、ファイル全体を軽量化
-    v4.0.6 - 背中/斜め後ろ/肩越し/窓際後ろ姿、自撮りOFF専用アングルガード、逆光布安全ガード、顔アップ時の体型ブロック弱化を追加
+    v4.0.6 - 背中/斜め後ろ/肩越し/窓際後ろ姿、自撮りOFF専用アングルガード、逆光布安全ガードを追加
     v4.0.5 - 真横から/寝転び横、顔アップ/顔どアップを追加
-    v4.0.4 - 肌の見え方/肌質感を追加
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -280,7 +281,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v5.0</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v5.1.1</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -311,6 +312,13 @@
     <textarea id="characterLock" rows="8" style="margin-top:10px;"></textarea>
   </div>
 
+  <!-- Outfit reference -->
+  <div class="card card-dark">
+    <div class="slabel">コーディネート画像参照 — 2枚目の添付画像</div>
+    <div class="hint">1枚目は被写体/顔ID、2枚目は服装・配色・シルエット参照として扱います。コーデ画像の顔・髪型・体型・ポーズ・背景はコピーしません。</div>
+    <div class="chips" id="outfitReferenceModeChips"></div>
+  </div>
+
   <!-- ① Scene only -->
   <div class="card">
     <div class="slabel">① 今回のシーンだけ（日本語で入力）</div>
@@ -328,7 +336,7 @@
   <!-- Chest silhouette -->
   <div class="card">
     <div class="slabel">③ 胸シルエット</div>
-    <div class="hint">選択した内容をそのままプロンプトに反映します。立体感（前後の厚み）とライン（輪郭）の出方を素直に変えます。</div>
+    <div class="hint">選択した内容をそのままプロンプトに反映します。控えめ＝普通サイズ寄り、立体感/ラインくっきり＝少し大きめ、立体感＋ライン＝最も強めに自然反映します。</div>
     <div class="chips" id="bustChips"></div>
   </div>
 
@@ -501,11 +509,17 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.0.0-pose-camera-logic";
+const APP_VERSION = "v5.1.1-bust-option-sizing";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
   {label:"🔒 FULL / 従来の固定キャラ", key:"full", value:"full"},
+];
+
+const OUTFIT_REFERENCE_MODE_OPTIONS = [
+  {label:"🚫 OFF / 使わない", key:"off", value:"off"},
+  {label:"✨ LIGHT / 色・雰囲気", key:"light", value:"light"},
+  {label:"👗 FULL / 服装を強めに参照", key:"full", value:"full"},
 ];
 
 const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosphere:1.5),
@@ -1139,6 +1153,8 @@ function normalizeCompatibleState(changedKey) {
 
 function renderAllOptionChips() {
   renderChips("characterModeChips", CHARACTER_MODE_OPTIONS, "characterMode");
+  renderChips("outfitReferenceModeChips", OUTFIT_REFERENCE_MODE_OPTIONS, "outfitReferenceMode");
+  renderChips("outfitReferenceModeChips", OUTFIT_REFERENCE_MODE_OPTIONS, "outfitReferenceMode");
   renderChips("bustChips", BUST_OPTIONS, "bust");
   renderChips("garmentLightChips", GARMENT_BACKLIGHT_OPTIONS, "garmentLight");
   renderChips("hipChips", HIP_OPTIONS, "hip");
@@ -1260,11 +1276,11 @@ const DEFAULT_CHARACTER_LOCK = `(same original adult Korean model woman in every
 (no exaggerated body proportions:1.9), (no artificial body shape:1.9)`;
 
 const BUST_OPTIONS = [
-  {label:"🫧 控えめ", value:"(subtle upper-body garment contour:1.58), (gentle compact bust silhouette through clothing:1.58), (outfit drapes naturally without strong projection:1.65), (slender I-line body remains stable:1.86), (face remains the main focal point:1.88)"},
-  {label:"🌿 自然", value:"(natural balanced upper-body garment contour:1.72), (natural bust volume and body line through clothing:1.72), (realistic adult proportions without exaggeration:1.78), (outfit fit looks natural and believable:1.76), (slender I-line body remains stable:1.86), (face remains the main focal point:1.88)"},
-  {label:"⬆️ 立体感", value:"(high-set lifted bust position through clothing:1.88), (firm structured upper-body garment contour:1.86), (forward-projecting but natural upper-body silhouette:1.86), (non-sagging lifted shape:1.88), (slender I-line body remains narrow and elegant:1.88), (face remains the main focal point:1.9)"},
-  {label:"🧱 ラインくっきり", value:"(clean readable bust line through opaque clothing:1.88), (defined structured garment contour around the upper body:1.88), (clear silhouette edges without exaggeration:1.84), (fabric fit shows shape while remaining public-safe fashion clothing:1.9), (slender I-line body remains stable:1.88), (face remains the main focal point:1.9)"},
-  {label:"⬆️🧱 立体感＋ライン", value:"(high-set lifted bust position through clothing:1.92), (firm forward-projecting upper-body garment contour:1.9), (rounded lower bust curve through the outfit:1.86), (gently arched upper-bust line through clothing:1.84), (non-sagging structured bust silhouette:1.92), (clean defined opaque garment fit around the upper body:1.88), (slender I-line body stays narrow and elegant:1.9), (face remains the main focal point:1.9)"},
+  {label:"🫧 控えめ", value:"(normal-size upper-body silhouette through clothing:1.68), (restrained natural bust contour with ordinary adult proportions:1.68), (gentle compact projection without enlargement emphasis:1.7), (outfit drapes naturally with a neat everyday fit:1.72), (slender I-line body remains stable:1.86), (face remains the main focal point:1.88)"},
+  {label:"🌿 自然", value:"(natural balanced upper-body garment contour:1.78), (natural bust volume and body line through clothing:1.78), (realistic adult proportions with soft readable structure:1.8), (outfit fit looks natural and believable:1.78), (slender I-line body remains stable:1.86), (face remains the main focal point:1.88)"},
+  {label:"⬆️ 立体感", value:"(slightly fuller upper-body silhouette through clothing:1.88), (high-set lifted bust position through clothing:1.9), (firm structured upper-body garment contour:1.88), (forward-projecting slightly larger-looking upper-body silhouette:1.9), (non-sagging lifted shape:1.9), (slender I-line body remains narrow and elegant:1.88), (face remains the main focal point:1.9)"},
+  {label:"🧱 ラインくっきり", value:"(slightly fuller readable bust line through opaque clothing:1.88), (defined structured garment contour around the upper body:1.9), (clear silhouette edges with slightly larger-looking definition:1.88), (fabric fit shows shape while remaining public-safe fashion clothing:1.9), (clean visible upper-body contour:1.88), (slender I-line body remains stable:1.88), (face remains the main focal point:1.9)"},
+  {label:"⬆️🧱 立体感＋ライン", value:"(slightly fuller and more dimensional upper-body silhouette through clothing:1.92), (high-set lifted bust position through clothing:1.94), (firm forward-projecting upper-body garment contour:1.92), (rounded lower bust curve through the outfit:1.88), (gently arched upper-bust line through clothing:1.86), (non-sagging structured bust silhouette:1.94), (clean defined opaque garment fit around the upper body:1.9), (slender I-line body stays narrow and elegant:1.9), (face remains the main focal point:1.9)"},
   {label:"👚 服装なり", value:"(upper-body silhouette follows the selected outfit naturally:1.8), (loose clothing hides the line, fitted clothing reveals it naturally through opaque fabric:1.8), (fabric thickness, cut, and neckline decide how much shape is visible:1.76), (no forced silhouette beyond the outfit design:1.76), (slender I-line body remains stable:1.86), (face remains the main focal point:1.88)"}
 ];
 
@@ -1291,7 +1307,7 @@ const HIP_OPTIONS = [
 ];
 
 let state = {
-  characterMode: "light",
+  characterMode: "light", outfitReferenceMode: "off",
   bust: "", garmentLight: "", hip: "", weather: "", film: "", tone: "",
   effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, selfieMode: "", angleMode: "", subjectSize: "", backgroundView: "", framing: "", photoStyle: "", tension: "", emotion: "", expression: "",
 };
@@ -1646,6 +1662,29 @@ function normalizeWeatherForTime(weatherVal = "", t = {}) {
     .replace(/soft natural daylight/g, "soft practical room or street light");
 }
 
+function getOutfitReferenceMode() {
+  return OUTFIT_REFERENCE_MODE_OPTIONS.find(m => m.value === state.outfitReferenceMode) || OUTFIT_REFERENCE_MODE_OPTIONS[0];
+}
+
+function buildOutfitReferenceBlock() {
+  const mode = getOutfitReferenceMode().key;
+  if (mode === "off") return "";
+  const base = `OUTFIT / COORDINATE REFERENCE:
+(use the second attached image as outfit and coordinate reference only:1.98),
+(apply the referenced outfit to the locked subject identity from the first image:1.98),
+(do not copy the outfit reference person's face, identity, hair, body type, pose, camera angle, framing, background, or lighting:1.96),
+(keep the subject face and bodyline from the character lock while borrowing clothing design from the outfit reference:1.95)`;
+  if (mode === "light") {
+    return base + `,
+(reference only the outfit mood, color palette, rough garment category, and styling atmosphere:1.88),
+(scene text and manual clothing description may override small outfit details:1.9)`;
+  }
+  return base + `,
+(copy the clothing coordination, garment types, layering, color balance, fabric impression, silhouette balance, shoes, bag, and accessories from the outfit reference:1.92),
+(preserve the outfit reference styling strongly while adapting it to the locked subject's slender I-line body:1.9),
+(scene text may override location, pose, camera, mood, and action but should not erase the referenced outfit unless explicitly stated:1.88)`;
+}
+
 function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, expression, scene, accessories, motionResult) {
   const overviewParts = [];
   overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
@@ -1677,6 +1716,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const bodySilhouetteBlock = buildBodySilhouetteBlock(subjectSizeMode, effectiveBustPrompt, effectiveHipPrompt, angle.name, sceneText);
   const effectiveMotionText = motionText;
   const fixedCharacter = characterLock.trim();
+  const outfitReferenceBlock = buildOutfitReferenceBlock();
   const characterModeLabel = state.characterMode === "off" ? "OFF / face reference only" : state.characterMode === "full" ? "FULL / legacy fixed character" : "LIGHT / face reference + atmosphere";
 
   return `APP_VERSION: ${APP_VERSION}
@@ -1702,7 +1742,7 @@ FACE REFERENCE ROLE CONTROL:
 (do not copy reference camera angle, selfie arm extension, chin posture, facial tilt, body pose, crop, framing, background, hair length, hairstyle, hair silhouette, parting, or hair volume shape:1.98),
 (create a new pose, camera position, scene, outfit, and app-priority hairstyle from this prompt:1.95)
 
-HAIR — APP MONTHLY PRIORITY:
+${outfitReferenceBlock ? outfitReferenceBlock + "\n\n" : ""}HAIR — APP MONTHLY PRIORITY:
 ${getMonthlyHairBlock(t.month)}
 
 SAFETY / REALISM:
@@ -2171,6 +2211,7 @@ function handleGenerate() {
   const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, expression, scene, accessories, motionResult);
 
   document.getElementById("metaCard").classList.remove("hidden");
+  const selectedOutfitReferenceLabel = getLabelByValue(OUTFIT_REFERENCE_MODE_OPTIONS, state.outfitReferenceMode);
   const selectedWeatherLabel = getLabelByValue(WEATHER_OPTIONS, state.weather);
   const selectedFilmLabel = getLabelByValue(FILM_TONES, state.film);
   const selectedToneLabel = getLabelByValue(OVERALL_TONES, state.tone);
@@ -2194,6 +2235,7 @@ function handleGenerate() {
     "🧩 <b style='color:#c4b5fd'>App</b>：" + APP_VERSION + "<br>" +
     "🕐 <b style='color:#c4b5fd'>時間帯</b>：" + t.timeCtx.label + " / " + t.timeCtx.en + "<br>" +
     "🔒 <b style='color:#c4b5fd'>固定キャラモード</b>：" + getLabelByValue(CHARACTER_MODE_OPTIONS, state.characterMode) + "<br>" +
+    "👗 <b style='color:#c4b5fd'>コーデ参照</b>：" + selectedOutfitReferenceLabel + "<br>" +
     "📅 <b style='color:#c4b5fd'>曜日 mood</b>：" + DAY_MOOD[t.day] + "<br>" +
     "☀️ <b style='color:#c4b5fd'>天気</b>：" + selectedWeatherLabel + "<br>" +
     "🎞️ <b style='color:#c4b5fd'>フィルムトーン</b>：" + selectedFilmLabel + "<br>" +
@@ -2217,6 +2259,7 @@ function handleGenerate() {
     "👚 <b style='color:#c4b5fd'>胸シルエット</b>：" + selectedBustLabel + "<br>" +
     "🍑 <b style='color:#c4b5fd'>ヒップ/下半身</b>：" + selectedHipLabel + "<br>" +
     "🖼️ <b style='color:#c4b5fd'>Face Reference</b>：チャット冒頭の最初の添付画像<br>" +
+    (state.outfitReferenceMode !== "off" ? "👗 <b style='color:#c4b5fd'>Outfit Reference</b>：2枚目の添付画像を服装参照<br>" : "") +
     "📷 <b style='color:#c4b5fd'>撮影モード</b>：" + getSelfieModeLabel(getSelfieMode(document.getElementById("situation").value || "")) + "<br>" +
     "🔒 <b style='color:#c4b5fd'>Face Reference安全ロック</b>：ON<br>" +
     (detectFaceReferenceSensitiveScene(document.getElementById("situation").value || "") ? "🧹 <b style='color:#c4b5fd'>危険語サニタイズ</b>：ON<br>" : "") +
@@ -2312,7 +2355,7 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, tension:"", emotion:"", expression:"" };
+  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, tension:"", emotion:"", expression:"" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
@@ -2337,6 +2380,7 @@ function handleReset() {
 document.addEventListener("DOMContentLoaded", () => {
   const characterLockEl = document.getElementById("characterLock");
   state.characterMode = "light";
+  state.outfitReferenceMode = OUTFIT_REFERENCE_MODE_OPTIONS[0].value;
   if (characterLockEl) characterLockEl.value = LIGHT_CHARACTER_LOCK;
   state.selfieMode = SELFIE_MODE_OPTIONS[0].value;
   state.angleMode = ANGLE_UI_OPTIONS[0].value;
