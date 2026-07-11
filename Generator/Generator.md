@@ -1,15 +1,13 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.2.0-body-reference-lock
-  Updated: 2026-07-10
+  Version: 5.2.1-night-portrait-balance
+  Updated: 2026-07-11
   Changelog:
+    v5.2.1 - 夜景ポートレート用の背景なじみ/露出バランスを追加。背景ボケを中程度に調整し、フラッシュ感を抑えつつ胸シルエット維持ロックを追加。前ボケ効果も追加
     v5.2.0 - 被写体参照を顔IDだけでなく体型/胸/腰幅/ヒップ幅の基準にも使うBODY REFERENCE LOCKを追加。2枚目コーデ画像の体型コピーは禁止
     v5.1.1 - 胸シルエット選択肢の効き方を調整。控えめ=普通サイズ寄り、立体感/ラインくっきり=少し大きめ、立体感＋ライン=最も強く自然に反映
     v5.1.0 - 被写体画像とコーディネート画像の役割分離を追加。1枚目を顔ID、2枚目を服装/配色/シルエット参照として扱うOUTFIT REFERENCEモードを実装
     v5.0.0 - メジャーアップデート。POSE/MOTIONを姿勢・支え・自撮りON/OFF・カメラ意図から自然な構図へ導出するロジックに変更
-    v4.0.7 - Changelogを直近5件に整理。不要な空行・コメントを削減し、ファイル全体を軽量化
-    v4.0.6 - 背中/斜め後ろ/肩越し/窓際後ろ姿、自撮りOFF専用アングルガード、逆光布安全ガードを追加
-    v4.0.5 - 真横から/寝転び横、顔アップ/顔どアップを追加
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -282,7 +280,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v5.2</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v5.2.1</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -413,7 +411,7 @@
   <!-- Background view -->
   <div class="card">
     <div class="slabel">⑭ 背景の見せ方</div>
-    <div class="hint">背景をどの方向で見せるかを選びます</div>
+    <div class="hint">背景の見せ方を決めます。夜景ポートレートでは背景を主張させすぎず、被写体となじませます。</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
@@ -510,7 +508,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.2.0-body-reference-lock";
+const APP_VERSION = "v5.2.1-night-portrait-balance";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -688,8 +686,9 @@ const OVERALL_TONES = [
 ];
 
 const EFFECTS = [
-  {label:"🌫️ 背景ボケ", value:"(clearly visible background bokeh blur:1.8), (shallow depth of field with noticeably defocused background:1.8)", help:"何が変わる？\n背景がやわらかくぼけて、被写体が目立ちやすくなります。\n\n向く場面\nカフェ、駅、街スナップ、人物を主役にしたい時。\n\n注意\n背景紹介を重視したい時は効かせすぎない方が自然です。"},
+  {label:"🌫️ 背景ボケ", value:"(portrait-safe moderate background blur:1.66), (background is softly blurred but still readable as a real place:1.68), (moderate depth separation without cutout look:1.7)", help:"何が変わる？\n背景をほどよくぼかして被写体を主役にします。場所感は残し、切り抜きっぽい分離を避けます。\n\n向く場面\n夜景ポートレート、街スナップ、カフェ、駅、人物中心の写真。\n\n注意\n強くぼかしすぎると背景から浮くため、ポートレート用に中程度へ調整しています。"},
   {label:"✨ 光の玉ボケ", value:"(clearly visible light orb bokeh:1.8), (ambient light circles in background:1.8), (noticeable specular bokeh highlights:1.8)", help:"何が変わる？\n背景の光が丸い玉ボケとして出やすくなります。\n\n向く場面\n夜景、イルミネーション、駅ホーム、逆光のキラキラ。\n\n注意\n光源が少ない場面では効きが弱めです。"},
+  {label:"✨ 前ボケ", value:"(soft out-of-focus foreground bokeh in front of the subject:1.78), (near-lens blurred light orbs crossing the frame lightly:1.74), (layered depth with foreground bokeh, subject, and readable background:1.76)", help:"何が変わる？\n被写体の手前に、レンズ近くの光粒や水滴のような前ボケが入ります。\n\n向く場面\n夜景、イルミ、海辺の水しぶき、ガラス越し、花や光を手前に置いた写真。\n\n注意\n顔を隠しすぎない程度に使うのが自然です。"},
   {label:"💧 水滴/結露感", value:"(clearly visible condensation droplets on glass or skin:1.7), (noticeable water droplet texture:1.7)", help:"何が変わる？\nガラスや前景、空気感に水滴っぽい質感が乗ります。\n\n向く場面\n雨の日、窓辺、ドリンク越し、湿度感を出したい時。\n\n注意\n乾いた晴天シーンでは不自然になりやすいです。"},
   {label:"✨ きらめき粒子", value:"(clearly visible sparkling glitter particles in air:1.7), (noticeable shimmering light particles:1.7)", help:"何が変わる？\n空気中に小さなキラキラ粒子が見えるようになります。\n\n向く場面\n午後の光、かわいい雰囲気、夢っぽい写真。\n\n注意\n曇り・雨・霧では使わない方が自然です。"},
   {label:"🌁 ソフトフォーカス", value:"(clearly visible soft focus haze:1.7), (gentle dreamy blur on edges:1.7), (noticeable diffused hazy atmosphere:1.7)", help:"何が変わる？\n輪郭が少しやわらぎ、ふんわりした写りになります。\n\n向く場面\nやさしいポートレート、窓辺、ロマンティック系。\n\n注意\nシャープさや細かい質感は少し弱くなります。"},
@@ -877,6 +876,7 @@ function softDepthLightEffectValues() {
   return [
     currentEffectValue("背景ボケ"),
     currentEffectValue("光の玉ボケ"),
+    currentEffectValue("前ボケ"),
     currentEffectValue("ソフトフォーカス"),
     currentEffectValue("逆光/リムライト"),
     currentEffectValue("暖色フレア"),
@@ -1699,6 +1699,50 @@ function buildOutfitReferenceBlock() {
 (scene text may override location, pose, camera, mood, and action but should not erase the referenced outfit unless explicitly stated:1.88)`;
 }
 
+
+function isNightLikeScene(sceneText = "", t = {}) {
+  const hour = typeof t.hour === "number" ? t.hour : 12;
+  return hour >= 18 || hour < 5 || /夜|夜景|星|街灯|店明かり|ネオン|イルミ|海岸|港|水面|繁華街|バー|居酒屋|night|nightscape|streetlight|neon|shore|beach|harbor|promenade/i.test(sceneText || "");
+}
+
+function hasFlashEffectSelected(effectsArr = []) {
+  const flashValues = flashSnapshotEffectValues();
+  return Array.isArray(effectsArr) && effectsArr.some(v => flashValues.includes(v));
+}
+
+function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
+  const nightLike = isNightLikeScene(sceneText, t);
+  const flashSelected = hasFlashEffectSelected(effectsArr);
+  const portraitBase = [
+    "(portrait-first composition:1.92)",
+    "(subject is the clear main focus:1.95)",
+    "(background supports the portrait without dominating:1.9)",
+    "(background is softly separated but still readable as a real place:1.86)",
+    "(moderate background blur only, not heavy cutout separation:1.9)",
+    "(face, expression, hair, outfit, and upper-body silhouette are prioritized:1.92)",
+    "(selected bust silhouette must not shrink during background or exposure balancing:1.9)",
+    "(soft side highlights keep the upper-body garment contour readable:1.88)"
+  ];
+  if (!nightLike) return "PORTRAIT / BACKGROUND BALANCE:\n" + portraitBase.join(", ");
+  const nightBase = [
+    "(night background is present but secondary to the subject:1.9)",
+    "(street lights, shop lights, and water or pavement reflections support the portrait:1.9)",
+    "(subject and background share the same nighttime exposure feeling:1.92)",
+    "(ambient warm streetlight spill subtly affects hair, cheek, shoulder, and outfit edges:1.9)",
+    "(face remains visible but not overly bright or studio-lit:1.9)",
+    "(realistic smartphone night portrait exposure:1.88)",
+    "(background lights stay soft and supportive, not overpowering:1.86)",
+    "(no pasted-on subject look, no isolated cutout look:1.95)",
+    "(night exposure balancing must not flatten or reduce the selected bust silhouette:1.9)"
+  ];
+  if (!flashSelected) {
+    nightBase.push("(no direct flash look:1.95)");
+    nightBase.push("(no front-facing flash illumination:1.95)");
+    nightBase.push("(no flat bright facial lighting disconnected from the environment:1.92)");
+  }
+  return "PORTRAIT / NIGHTSCAPE BALANCE:\n" + portraitBase.concat(nightBase).join(", ");
+}
+
 function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, expression, scene, accessories, motionResult) {
   const overviewParts = [];
   overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
@@ -1733,6 +1777,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const outfitReferenceBlock = buildOutfitReferenceBlock();
   const bodyReferenceLockBlock = buildBodyReferenceLockBlock();
   const characterModeLabel = state.characterMode === "off" ? "OFF / face reference only" : state.characterMode === "full" ? "FULL / legacy fixed character" : "LIGHT / face reference + atmosphere";
+  const portraitBackgroundBalanceBlock = buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr);
 
   return `APP_VERSION: ${APP_VERSION}
 ANGLE_ENGINE: chin-control + face-reference-role-control + hidden-waist-held-selfie
@@ -1774,6 +1819,8 @@ ${sceneText}
 CONTEXT / STYLE:
 ${overviewParts.join(", ")}
 ${stylePriorityInstruction}
+
+${portraitBackgroundBalanceBlock}
 
 ASPECT / ENVIRONMENT:
 (aspect ratio 9:16:1.6), (vertical smartphone framing:1.6),
@@ -1823,10 +1870,10 @@ function getEffectWarning(values) {
 
 function getCompatibilityHint() {
   if (hasFlashSnapshotEffectActive()) {
-    return "<br>🔒 <b style='color:#93c5fd'>フラッシュ整合性ロック</b>：直フラッシュ/白飛びフラッシュ中は、背景ボケ・玉ボケ・自然光/逆光/夕方斜光系は選択不可。";
+    return "<br>🔒 <b style='color:#93c5fd'>フラッシュ整合性ロック</b>：直フラッシュ/白飛びフラッシュ中は、背景ボケ・玉ボケ・前ボケ・自然光/逆光/夕方斜光系は選択不可。";
   }
   if (hasSoftDepthLightEffectActive()) {
-    return "<br>🔒 <b style='color:#93c5fd'>背景/自然光整合性ロック</b>：背景ボケ・玉ボケ・自然光/逆光/夕方斜光系の選択中は、直フラッシュ/白飛びフラッシュは選択不可。";
+    return "<br>🔒 <b style='color:#93c5fd'>背景/自然光整合性ロック</b>：背景ボケ・玉ボケ・前ボケ・自然光/逆光/夕方斜光系の選択中は、直フラッシュ/白飛びフラッシュは選択不可。";
   }
   if (hasHardShadowEffectActive()) {
     return "<br>🔒 <b style='color:#93c5fd'>影質ロック</b>：硬い影の選択中は、低コントラスト影/ソフトフォーカスは選択不可。";
