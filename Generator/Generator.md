@@ -1,8 +1,9 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.3.0-scene-mood-auto-expression
+  Version: 5.3.1-gaze-profile-closeup
   Updated: 2026-07-12
   Changelog:
+    v5.3.1 - 視線・顔向き・接写質感を追加。表情/ポーズ/動きはAI自動導出のまま、横顔アップ・非カメラ目線・質感寄り接写を軽く指定できるよう改善
     v5.3.0 - テンション/感情/表情の3項目を「雰囲気・気分」に統合。表情・視線・ポーズ・動きはシチュエーションと雰囲気からAIが自動導出する仕様へ変更
     v5.2.2 - シーン文中の「もたれる / 寄りかかる / 前向き / 後ろ向き / 横向き / シンク / 柵 / カウンター / 壁 / ガラス」から、自動でもたれ方と接触点を導くLEAN SUPPORT AUTO-REFLECTIONを追加
     v5.2.1 - 夜景ポートレート用の背景なじみ/露出バランスを追加。背景ボケを中程度に調整し、フラッシュ感を抑えつつ胸シルエット維持ロックを追加。前ボケ効果も追加
@@ -280,7 +281,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v5.3.0</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v5.3.1</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -387,52 +388,73 @@
     <div class="chips" id="skinFinishChips"></div>
   </div>
 
+  <!-- Closeup texture -->
+  <div class="card">
+    <div class="slabel">⑪ 接写質感</div>
+    <div class="hint">顔アップや横顔アップで効きやすい近接描写の質感です。まつ毛・唇・肌のきめなどの描写密度を調整します。</div>
+    <div class="chips" id="closeupTextureChips"></div>
+  </div>
+
   <!-- Selfie mode -->
   <div class="card">
-    <div class="slabel">⑪ 自撮り / 第三者撮影</div>
+    <div class="slabel">⑫ 自撮り / 第三者撮影</div>
     <div class="hint">自撮りONならスマホ手持ちカメラ視点。OFFなら他人が撮った自然なポートレート/スナップ扱い。自動は「他撮り・非自撮り」などがシーンにあればOFF、それ以外はON寄りです。</div>
     <div class="chips" id="selfieModeChips"></div>
   </div>
 
   <!-- Camera angle -->
   <div class="card">
-    <div class="slabel">⑫ カメラ位置 / アングル</div>
+    <div class="slabel">⑬ カメラ位置 / アングル</div>
     <div class="hint">撮影の高さ・持ち方・向きを選びます。</div>
     <div class="chips" id="angleModeChips"></div>
   </div>
 
+  <!-- Gaze -->
+  <div class="card">
+    <div class="slabel">⑭ 視線</div>
+    <div class="hint">カメラ目線にするか、少し外すか、遠くを見るかを軽く指定できます。未指定ならシーンと雰囲気からAIが導きます。</div>
+    <div class="chips" id="gazeChips"></div>
+  </div>
+
+  <!-- Face direction -->
+  <div class="card">
+    <div class="slabel">⑮ 顔向き</div>
+    <div class="hint">正面・斜め・横顔・振り向きなどの顔の向きだけを指定します。カメラ位置そのものは⑬で決めます。</div>
+    <div class="chips" id="faceDirectionChips"></div>
+  </div>
+
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑬ 構図 / 被写体サイズ</div>
-    <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます</div>
+    <div class="slabel">⑯ 構図 / 被写体サイズ</div>
+    <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます。横顔アップや超接写もここで選べます。</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Background view -->
   <div class="card">
-    <div class="slabel">⑭ 背景の見せ方</div>
+    <div class="slabel">⑰ 背景の見せ方</div>
     <div class="hint">背景の見せ方を決めます。夜景ポートレートでは背景を主張させすぎず、被写体となじませます。</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑮ 余白 / リーディングスペース</div>
+    <div class="slabel">⑱ 余白 / リーディングスペース</div>
     <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑯ 写真の自然さ / 演出度</div>
+    <div class="slabel">⑲ 写真の自然さ / 演出度</div>
     <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Mood / expression auto-derivation -->
   <div class="card">
-    <div class="slabel">⑰ 雰囲気・気分</div>
-    <div class="hint">表情・視線・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します</div>
+    <div class="slabel">⑳ 雰囲気・気分</div>
+    <div class="hint">表情・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します。視線と顔向きは必要な時だけ⑭⑮で軽く指定できます。</div>
     <div class="chips" id="moodChips"></div>
   </div>
 
@@ -494,7 +516,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.3.0-scene-mood-auto-expression";
+const APP_VERSION = "v5.3.1-gaze-profile-closeup";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -572,7 +594,7 @@ const ANGLE_META = {
   "RECLINING SIDE EYE LEVEL": { side:true, reclining:true, safeBacklight:true }
 };
 
-const FACE_CLOSEUP_SUBJECT_KEYS = ["headClose", "faceCloseup", "extremeFace"];
+const FACE_CLOSEUP_SUBJECT_KEYS = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
 
 function getAngleMeta(angleName = "") {
   return ANGLE_META[angleName] || {};
@@ -741,7 +763,8 @@ const SUBJECT_SIZE_MODES = [
   {label:"✨ 顔優先 / 盛れ重視", key:"face", value:"(face-priority selfie composition:1.8), (clean flattering framing centered on face and upper body:1.8), (beauty-focused composition with less environment emphasis:1.7), (visually refined selfie balance:1.7)"},
   {label:"🙂 顔アップ", key:"headClose", value:"(head-dominant face close-up composition:1.9), (forehead-to-chin or forehead-to-neck framing:1.88), (little shoulder or neckline visible:1.75), (background is minimal and softly secondary:1.6), (eyes, lips, and skin are easy to read:1.85)"},
   {label:"🔍 顔ズームアップ", key:"faceCloseup", value:"(close-up face selfie composition:1.9), (face fills most of the frame:1.9), (forehead-to-collarbone or face-to-neck framing:1.8), (background exists but is secondary and softly readable:1.5), (eyes and skin texture are the main focus:1.8)"},
-  {label:"🧿 顔どアップ", key:"extremeFace", value:"(extreme close-up portrait composition:1.95), (the face fills almost the entire frame:1.95), (partial crop on hair, cheek, forehead, or chin is allowed:1.88), (eyes, nose, lips, and skin texture dominate the image:1.9), (background is barely visible and heavily de-emphasized:1.65), (intimate close-up like the attached sample style:1.82)"},
+  {label:"↔️ 横顔アップ", key:"profileCloseup", value:"(profile close-up composition:1.92), (side face or near-profile fills most of the frame:1.9), (eye, nose bridge, lips, and cheek line are clearly readable:1.9), (background stays soft and secondary:1.7), (close-up side-view portrait with elegant profile emphasis:1.84)"},
+  {label:"🧿 超接写 / 顔どアップ", key:"extremeFace", value:"(extreme close-up portrait composition:1.95), (the face fills almost the entire frame:1.95), (partial crop on hair, cheek, forehead, or chin is allowed:1.88), (eyes, nose, lips, and skin texture dominate the image:1.9), (background is barely visible and heavily de-emphasized:1.65), (intimate close-up like the attached sample style:1.82)"},
   {label:"🧥 上半身メイン", key:"upperBody", value:"(upper-body selfie composition:1.8), (head-to-waist or head-to-upper-hip framing:1.8), (face, shirt, jacket line, and upper silhouette are clearly readable:1.8), (balanced emphasis on face and outfit:1.8)"},
   {label:"🧍 服や体も広めに", key:"widerBody", value:"(wider body framing selfie composition:1.8), (more of the outfit and body line are included:1.8), (subject appears slightly smaller within the frame than a face-first selfie:1.7), (body silhouette and location readability both matter:1.7)"},
 ];
@@ -1154,7 +1177,10 @@ function renderAllOptionChips() {
   renderMultiChips("effectChips", EFFECTS, "effects");
   renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
   renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
+  renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
   renderChips("angleModeChips", ANGLE_UI_OPTIONS, "angleMode");
+  renderChips("gazeChips", GAZE_OPTIONS, "gaze");
+  renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
   renderChips("subjectSizeChips", SUBJECT_SIZE_MODES, "subjectSize");
   renderChips("backgroundViewChips", BACKGROUND_VIEW_MODES, "backgroundView");
   renderChips("framingChips", FRAMING_MODES, "framing");
@@ -1299,6 +1325,29 @@ const SKIN_FINISH_OPTIONS = [
   {label:"✨ ツヤあり", key:"dewy", value:"(real skin texture:1.82), (noticeable dewy skin finish:1.86), (soft glossy highlights on skin:1.82), (healthy luminous skin sheen:1.8)", note:"頬・鼻筋・肩・鎖骨にハイライトが乗りやすい方向。盛れやすい反面、強いフラッシュではテカりが強く出やすいです"}
 ];
 
+const CLOSEUP_TEXTURE_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(close-up texture detail is derived naturally from the scene, light, and composition:1.8), (do not overprocess the skin or facial detail:1.78)"},
+  {label:"🌿 自然", key:"natural", value:"natural", prompt:"(natural realistic close-up detail balance:1.8), (skin detail is clear without overprocessing:1.78), (eyes, lashes, and lips stay readable in a realistic way:1.78)"},
+  {label:"💧 しっとり", key:"moist", value:"moist", prompt:"(close-up skin looks softly moisturized and realistic:1.84), (lips and skin retain a subtle hydrated softness:1.82), (fine facial texture remains natural and smooth:1.8)"},
+  {label:"🔬 高精細", key:"detailed", value:"detailed", prompt:"(high-detail close-up rendering of eyelashes, lips, pores, and fine skin texture:1.88), (macro-like facial detail while keeping realism:1.86), (clean realistic close-up sharpness on eyes, lips, and skin surface:1.86)"}
+];
+
+const GAZE_OPTIONS = [
+  {label:"🎲 AIにおまかせ", key:"auto", value:"auto", prompt:"(gaze direction is naturally derived from the scene, mood, and camera setup:1.82), (do not force direct eye contact unless it suits the scene:1.78)"},
+  {label:"👀 カメラ目線", key:"camera", value:"camera", prompt:"(eyes naturally meet the lens:1.84), (clear camera-aware gaze:1.82), (eye contact with the viewer feels natural and not forced:1.8)"},
+  {label:"↗️ 少し視線を外す", key:"offCamera", value:"offCamera", prompt:"(gaze is slightly off-camera:1.84), (eyes do not stare directly into the lens:1.82), (natural off-axis eye line:1.8)"},
+  {label:"🌌 遠くを見る", key:"far", value:"far", prompt:"(gaze is directed into the distance, not at the camera:1.88), (faraway eye line:1.86), (thoughtful off-camera gaze:1.84)"},
+  {label:"😌 伏し目", key:"down", value:"down", prompt:"(downward or lowered gaze:1.86), (soft eyelids and lowered eye line:1.84), (not looking directly at the camera:1.82)"}
+];
+
+const FACE_DIRECTION_OPTIONS = [
+  {label:"🎲 AIにおまかせ", key:"auto", value:"auto", prompt:"(face orientation is naturally derived from the scene, camera setup, and composition:1.8)"},
+  {label:"🙂 正面", key:"front", value:"front", prompt:"(front-facing or near-front facial orientation:1.84), (face plane mostly toward the camera:1.82)"},
+  {label:"◢ 斜め向き", key:"threeQuarter", value:"threeQuarter", prompt:"(three-quarter facial angle:1.86), (face turned about 20 to 45 degrees from camera:1.84), (natural diagonal face orientation:1.82)"},
+  {label:"➡️ 横顔", key:"profile", value:"profile", prompt:"(true side-profile or near-profile facial orientation:1.9), (lateral face line clearly readable:1.88), (one eye dominant in frame:1.82)"},
+  {label:"↩️ 振り向き", key:"turnBack", value:"turnBack", prompt:"(looking back over shoulder or gentle turned-back facial orientation:1.86), (face partially turned back in a natural way:1.84), (turn-back angle remains physically believable:1.82)"}
+];
+
 const HIP_OPTIONS = [
   {label:"🫧 控えめ", value:"(subtle compact lower-body silhouette:1.6), (straight narrow waist-to-hip line:1.82), (hips remain small and not laterally wide:1.88), (slim I-line body remains clean and narrow:1.86), (realistic mature proportions without exaggeration:1.86)"},
   {label:"🌿 自然", value:"(natural compact lower-body silhouette:1.72), (clean narrow waist-to-hip line:1.84), (hips stay compact, not wide or bulky:1.9), (slim I-line body with believable lower-body balance:1.86), (realistic mature proportions without exaggeration:1.86)"},
@@ -1310,7 +1359,7 @@ const HIP_OPTIONS = [
 let state = {
   characterMode: "light", outfitReferenceMode: "off",
   bust: "", garmentLight: "", hip: "", weather: "", film: "", tone: "",
-  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, selfieMode: "", angleMode: "", subjectSize: "", backgroundView: "", framing: "", photoStyle: "", mood: "auto",
+  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode: "", angleMode: "", gaze: GAZE_OPTIONS[0].value, faceDirection: FACE_DIRECTION_OPTIONS[0].value, subjectSize: "", backgroundView: "", framing: "", photoStyle: "", mood: "auto",
 };
 let tokyoNow = {};
 
@@ -1679,6 +1728,7 @@ function resolveMotion(situation, dayMood, timeCtx, manualTension, manualEmotion
     face:"face-forward flattering composition, stable head and shoulder relationship, face stays dominant while body line remains consistent",
     headClose:"head-dominant close-up composition, eyes, lips, hair, and skin are easy to read while visible upper-body silhouette remains consistent",
     faceCloseup:"close-up composition, face fills most of the frame, visible upper-body garment contour should preserve the selected bust shape when included",
+    profileCloseup:"profile close-up composition, side face line, eye, nose bridge, lips, and cheek contour are clearly readable while the crop stays elegant and close",
     extremeFace:"extreme face close-up composition, crop may be tight but identity, hair, and any visible neckline stay consistent",
     upperBody:"upper-body composition, face, shirt line, waist direction, and torso balance clearly readable",
     widerBody:"wider-body composition, more outfit and body line visible while the slender I-line body stays stable",
@@ -1875,7 +1925,7 @@ function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
   return "PORTRAIT / NIGHTSCAPE BALANCE:\n" + portraitBase.concat(nightBase).join(", ");
 }
 
-function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, expression, scene, accessories, motionResult) {
+function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult) {
   const overviewParts = [];
   overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
   overviewParts.push("day: " + t.day + " — " + DAY_MOOD[t.day]);
@@ -1901,6 +1951,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const isSwimwear = detectSwimwearScene(rawSceneText);
   const garmentLightPrompt = getGarmentBacklightPrompt(state.garmentLight || "", sceneText, angle.name, selfieMode, subjectSizeMode.key);
   const effectiveSkinFinishPrompt = skinFinishPrompt || "";
+  const effectiveCloseupTexturePrompt = closeupTextureMode && closeupTextureMode.prompt ? closeupTextureMode.prompt : CLOSEUP_TEXTURE_OPTIONS[0].prompt;
   const effectiveBustPrompt = bustPrompt;
   const effectiveHipPrompt = hipPrompt;
   const bodySilhouetteBlock = buildBodySilhouetteBlock(subjectSizeMode, effectiveBustPrompt, effectiveHipPrompt, angle.name, sceneText);
@@ -1973,11 +2024,15 @@ ${subjectSizeMode.value}
 ${backgroundViewMode.value ? backgroundViewMode.value + "\n" : ""}${framingMode.value}
 ${photoStyleMode.value}
 
+VIEW / FACE ORIENTATION:
+${gazeMode && gazeMode.prompt ? gazeMode.prompt : GAZE_OPTIONS[0].prompt}
+${faceDirectionMode && faceDirectionMode.prompt ? faceDirectionMode.prompt : FACE_DIRECTION_OPTIONS[0].prompt}
+
 EXPRESSION / MOOD:
 (${safeExpression}:1.9),
 (${getMoodProfile(state.mood || "auto", sceneText).cue}:1.88),
 (context-driven natural micro-expression matching the situation, time, weather, and atmosphere:1.82),
-(expression, gaze, posture energy, and movement are automatically derived from the scene and mood, not manually preset:1.9),
+(expression, posture energy, and movement are automatically derived from the scene and mood; gaze direction and face orientation should follow the selected controls when provided:1.9),
 (keep cheek volume restrained even when smiling:1.85)
 
 POSE / MOTION:
@@ -1985,7 +2040,7 @@ POSE / MOTION:
 
 ${garmentLightPrompt ? "GARMENT BACKLIGHT RESPONSE:\n" + garmentLightPrompt + "\n\n" : ""}${bodySilhouetteBlock}
 
-${effectiveSkinFinishPrompt ? "SKIN FINISH:\n" + effectiveSkinFinishPrompt + ",\n(the selected skin finish option should be reflected clearly but realistically:1.82),\n(keep skin texture real and not plastic even when dewy:1.88)\n\n" : ""}ACCESSORIES / HAIR / LIGHTING:
+${effectiveSkinFinishPrompt ? "SKIN FINISH:\n" + effectiveSkinFinishPrompt + ",\n(the selected skin finish option should be reflected clearly but realistically:1.82),\n(keep skin texture real and not plastic even when dewy:1.88)\n\n" : ""}${effectiveCloseupTexturePrompt ? "CLOSE-UP DETAIL / TEXTURE:\n" + effectiveCloseupTexturePrompt + ",\n(when the composition is a close-up or profile close-up, keep the facial detail crisp, realistic, and consistent with the selected texture mode:1.84),\n(do not turn skin into plastic blur or artificial beauty-filter smoothness:1.88)\n\n" : ""}ACCESSORIES / HAIR / LIGHTING:
 ${accessories}
 (realistic ambient lighting:1.7), (real smartphone rendering:1.75), (natural handheld micro-shake:1.5)`;
 }
@@ -2316,6 +2371,18 @@ function getAngleMode() {
   return ANGLE_UI_OPTIONS.find(m => m.value === state.angleMode) || ANGLE_UI_OPTIONS[0];
 }
 
+function getGazeMode() {
+  return GAZE_OPTIONS.find(m => m.value === state.gaze) || GAZE_OPTIONS[0];
+}
+
+function getFaceDirectionMode() {
+  return FACE_DIRECTION_OPTIONS.find(m => m.value === state.faceDirection) || FACE_DIRECTION_OPTIONS[0];
+}
+
+function getCloseupTextureMode() {
+  return CLOSEUP_TEXTURE_OPTIONS.find(m => m.value === state.closeupTexture) || CLOSEUP_TEXTURE_OPTIONS[0];
+}
+
 function getSubjectSizeMode() {
   return SUBJECT_SIZE_MODES.find(m => m.value === state.subjectSize) || SUBJECT_SIZE_MODES[0];
 }
@@ -2332,11 +2399,24 @@ function getPhotoStyleMode() {
   return PHOTO_STYLE_MODES.find(m => m.value === state.photoStyle) || PHOTO_STYLE_MODES[0];
 }
 
-function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "auto") {
+function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "auto", faceDirectionKey = "auto") {
+  if (faceDirectionKey === "profile") {
+    return ANGLES.find(a => a.name === "SIDE PROFILE") || ANGLES[0];
+  }
+  if (faceDirectionKey === "turnBack") {
+    const target = selfieMode === "off" ? "BACK OVER SHOULDER" : "OVER SHOULDER";
+    return ANGLES.find(a => a.name === target) || ANGLES[0];
+  }
+  if (faceDirectionKey === "front") {
+    return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
+  }
+
   let weightedNames = [];
 
   if (subjectSizeKey === "extremeFace") {
     weightedNames = ["EYE LEVEL", "EYE LEVEL", "SIDE PROFILE", "SIDE PROFILE", "DYNAMIC TILTED"];
+  } else if (subjectSizeKey === "profileCloseup") {
+    weightedNames = ["SIDE PROFILE", "SIDE PROFILE", "SIDE PROFILE", "OVER SHOULDER", "EYE LEVEL"];
   } else if (subjectSizeKey === "headClose") {
     weightedNames = ["EYE LEVEL", "EYE LEVEL", "SIDE PROFILE", "HIDDEN WAIST-HELD SELFIE"];
   } else if (subjectSizeKey === "faceCloseup") {
@@ -2344,18 +2424,11 @@ function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "au
   } else if (subjectSizeKey === "face") {
     weightedNames = ["EYE LEVEL", "EYE LEVEL", "EYE LEVEL", "HIDDEN WAIST-HELD SELFIE", "WALKING"];
   } else if (subjectSizeKey === "upperBody") {
-    weightedNames = ["EYE LEVEL", "EYE LEVEL", "HIDDEN WAIST-HELD SELFIE", "LOW ANGLE", "WALKING", "DYNAMIC TILTED"];
+    weightedNames = ["EYE LEVEL", "HIGH ANGLE", "LOW ANGLE", "OVER SHOULDER"];
   } else if (subjectSizeKey === "widerBody") {
-    weightedNames = ["EYE LEVEL", "LOW ANGLE", "HIDDEN WAIST-HELD SELFIE", "WALKING", "DYNAMIC TILTED", "OVER SHOULDER"];
+    weightedNames = ["EYE LEVEL", "LOW ANGLE", "WALKING", "DYNAMIC TILTED", "OVER SHOULDER"];
   } else {
-    weightedNames = ["EYE LEVEL", "EYE LEVEL", "HIDDEN WAIST-HELD SELFIE", "LOW ANGLE", "WALKING", "DYNAMIC TILTED"];
-  }
-
-  if (selfieMode === "off") {
-    weightedNames.push("BACK VIEW", "DIAGONAL BACK VIEW", "BACK OVER SHOULDER", "WINDOW BACK VIEW", "SIDE PROFILE");
-    if (photoStyleKey === "editorial" || photoStyleKey === "strong") {
-      weightedNames.push("WINDOW BACK VIEW", "DIAGONAL BACK VIEW", "RECLINING SIDE EYE LEVEL");
-    }
+    weightedNames = ["EYE LEVEL", "EYE LEVEL", "HIGH ANGLE", "SIDE PROFILE", "OVER SHOULDER", "HIDDEN WAIST-HELD SELFIE"];
   }
 
   if (photoStyleKey === "daily") {
@@ -2368,6 +2441,10 @@ function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "au
     weightedNames.push("EYE LEVEL", "SIDE PROFILE", "LOW ANGLE", "OVER SHOULDER", "DYNAMIC TILTED", "RECLINING SIDE EYE LEVEL");
   } else if (photoStyleKey === "strong") {
     weightedNames.push("LOW ANGLE", "HIDDEN WAIST-HELD SELFIE", "DYNAMIC TILTED", "RECLINING SIDE EYE LEVEL");
+  }
+
+  if (faceDirectionKey === "threeQuarter") {
+    weightedNames.push("GOLDEN ANGLE", "EYE LEVEL", "HIGH ANGLE");
   }
 
   const weightedPool = weightedNames
@@ -2397,9 +2474,12 @@ function handleGenerate() {
   const photoStyleMode = getPhotoStyleMode();
   const effectStrengthMode = getEffectStrengthMode();
   const angleMode = getAngleMode();
+  const gazeMode = getGazeMode();
+  const faceDirectionMode = getFaceDirectionMode();
+  const closeupTextureMode = getCloseupTextureMode();
   const expectedSelfieMode = getSelfieMode(situation);
   const angle = angleMode.key === "auto"
-    ? pickAngleForComposition(subjectSizeMode.key, photoStyleMode.key, expectedSelfieMode)
+    ? pickAngleForComposition(subjectSizeMode.key, photoStyleMode.key, expectedSelfieMode, faceDirectionMode.key)
     : (ANGLES.find(a => a.name === angleMode.key) || ANGLES[0]);
   const moodProfile = getMoodProfile(state.mood || "auto", situation);
   const expression = buildAIDerivedExpressionPrompt(situation, state.mood || "auto");
@@ -2410,7 +2490,7 @@ function handleGenerate() {
   const hipPrompt = state.hip || HIP_OPTIONS[2].value;
   const skinFinishPrompt = state.skinFinish || "";
 
-  const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, expression, scene, accessories, motionResult);
+  const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult);
 
   document.getElementById("metaCard").classList.remove("hidden");
   const selectedOutfitReferenceLabel = getLabelByValue(OUTFIT_REFERENCE_MODE_OPTIONS, state.outfitReferenceMode);
@@ -2430,6 +2510,9 @@ function handleGenerate() {
   const selectedBustLabel = (BUST_OPTIONS.find(b => b.value === (state.bust || BUST_OPTIONS[4].value))?.label || "⬆️🧱 立体感＋ライン");
   const selectedHipLabel = (HIP_OPTIONS.find(h => h.value === (state.hip || HIP_OPTIONS[2].value))?.label || "🍑 小尻プリ");
   const selectedSkinFinishLabel = (SKIN_FINISH_OPTIONS.find(s => s.value === (state.skinFinish || ""))?.label || "🎲 おまかせ");
+  const selectedCloseupTextureLabel = (CLOSEUP_TEXTURE_OPTIONS.find(s => s.value === (state.closeupTexture || CLOSEUP_TEXTURE_OPTIONS[0].value))?.label || "🎲 おまかせ");
+  const selectedGazeLabel = (GAZE_OPTIONS.find(g => g.value === (state.gaze || GAZE_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
+  const selectedFaceDirectionLabel = (FACE_DIRECTION_OPTIONS.find(f => f.value === (state.faceDirection || FACE_DIRECTION_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
   const effectWarning = getEffectWarning(state.effects);
   const transparentPresetHint = getTransparentSmartphonePresetHint(state.effects);
   const compatibilityHint = getCompatibilityHint();
@@ -2446,7 +2529,10 @@ function handleGenerate() {
     "✨ <b style='color:#c4b5fd'>エフェクト</b>：" + selectedEffectLabels + "<br>" +
     "🌟 <b style='color:#c4b5fd'>エフェクト強度</b>：" + selectedEffectStrengthLabel + "<br>" +
     "🫧 <b style='color:#c4b5fd'>肌の見え方</b>：" + selectedSkinFinishLabel + "<br>" +
+    "🔬 <b style='color:#c4b5fd'>接写質感</b>：" + selectedCloseupTextureLabel + "<br>" +
     "📸 <b style='color:#c4b5fd'>カメラ位置/アングル</b>：" + selectedAngleModeLabel + " → " + angle.name + "<br>" +
+    "👀 <b style='color:#c4b5fd'>視線</b>：" + selectedGazeLabel + "<br>" +
+    "🙂 <b style='color:#c4b5fd'>顔向き</b>：" + selectedFaceDirectionLabel + "<br>" +
     "🧍 <b style='color:#c4b5fd'>構図/被写体サイズ</b>：" + selectedSubjectSizeLabel + "<br>" +
     "🌆 <b style='color:#c4b5fd'>背景の見せ方</b>：" + selectedBackgroundViewLabel + "<br>" +
     "🖼️ <b style='color:#c4b5fd'>余白/リーディングスペース</b>：" + selectedFramingLabel + "<br>" +
@@ -2558,7 +2644,7 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
+  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
@@ -2570,7 +2656,10 @@ function handleReset() {
   renderMultiChips("effectChips", EFFECTS, "effects");
   renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
   renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
+  renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
   renderChips("angleModeChips", ANGLE_UI_OPTIONS, "angleMode");
+  renderChips("gazeChips", GAZE_OPTIONS, "gaze");
+  renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
   renderChips("subjectSizeChips", SUBJECT_SIZE_MODES, "subjectSize");
   renderChips("backgroundViewChips", BACKGROUND_VIEW_MODES, "backgroundView");
   renderChips("framingChips", FRAMING_MODES, "framing");
@@ -2587,6 +2676,9 @@ document.addEventListener("DOMContentLoaded", () => {
   state.angleMode = ANGLE_UI_OPTIONS[0].value;
   state.subjectSize = SUBJECT_SIZE_MODES[0].value;
   state.skinFinish = SKIN_FINISH_OPTIONS[0].value;
+  state.closeupTexture = CLOSEUP_TEXTURE_OPTIONS[0].value;
+  state.gaze = GAZE_OPTIONS[0].value;
+  state.faceDirection = FACE_DIRECTION_OPTIONS[0].value;
   state.framing = FRAMING_MODES[0].value;
   state.photoStyle = PHOTO_STYLE_MODES[0].value;
   updateClock();
