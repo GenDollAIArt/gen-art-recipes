@@ -1,14 +1,13 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.2.2-auto-lean-support
-  Updated: 2026-07-11
+  Version: 5.3.0-scene-mood-auto-expression
+  Updated: 2026-07-12
   Changelog:
+    v5.3.0 - テンション/感情/表情の3項目を「雰囲気・気分」に統合。表情・視線・ポーズ・動きはシチュエーションと雰囲気からAIが自動導出する仕様へ変更
     v5.2.2 - シーン文中の「もたれる / 寄りかかる / 前向き / 後ろ向き / 横向き / シンク / 柵 / カウンター / 壁 / ガラス」から、自動でもたれ方と接触点を導くLEAN SUPPORT AUTO-REFLECTIONを追加
     v5.2.1 - 夜景ポートレート用の背景なじみ/露出バランスを追加。背景ボケを中程度に調整し、フラッシュ感を抑えつつ胸シルエット維持ロックを追加。前ボケ効果も追加
     v5.2.0 - 被写体参照を顔IDだけでなく体型/胸/腰幅/ヒップ幅の基準にも使うBODY REFERENCE LOCKを追加。2枚目コーデ画像の体型コピーは禁止
     v5.1.1 - 胸シルエット選択肢の効き方を調整。控えめ=普通サイズ寄り、立体感/ラインくっきり=少し大きめ、立体感＋ライン=最も強く自然に反映
-    v5.1.0 - 被写体画像とコーディネート画像の役割分離を追加。1枚目を顔ID、2枚目を服装/配色/シルエット参照として扱うOUTFIT REFERENCEモードを実装
-    v5.0.0 - メジャーアップデート。POSE/MOTIONを姿勢・支え・自撮りON/OFF・カメラ意図から自然な構図へ導出するロジックに変更
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -281,7 +280,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v5.2.1</div>
+    <div class="header-sub">固定キャラ + 今回のシーン v5.3.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -322,7 +321,7 @@
   <!-- ① Scene only -->
   <div class="card">
     <div class="slabel">① 今回のシーンだけ（日本語で入力）</div>
-    <div class="hint">ここだけ毎回変更：場所・服装・ポーズ・表情・何してるか</div>
+    <div class="hint">ここだけ毎回変更：場所・服装・何をしているか。表情・ポーズ・動きはシーンからAIが自然に導きます</div>
     <textarea id="situation" rows="4" placeholder="例：&#10;薄い紺色のワイシャツ、紺色のビジネスパンツ。西中島南方のラーメン店でラーメンをすすっている。&#10;キッチンのシンク前。後ろ向きでもたれる。&#10;ベランダの柵に前向きでもたれる。"></textarea>
   </div>
 
@@ -430,25 +429,11 @@
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
-  <!-- Tension -->
+  <!-- Mood / expression auto-derivation -->
   <div class="card">
-    <div class="slabel">⑰ テンション（動きの強さ）</div>
-    <div class="hint">体の動きの強さや静止感を調整します</div>
-    <div class="chips" id="tensionChips"></div>
-  </div>
-
-  <!-- Emotion -->
-  <div class="card">
-    <div class="slabel">⑱ 感情（内面の気分）</div>
-    <div class="hint">気分や心理状態を選びます。ポーズと表情の補助に使います</div>
-    <div class="chips" id="emotionChips"></div>
-  </div>
-
-  <!-- Expression -->
-  <div class="card">
-    <div class="slabel">⑲ 表情（顔の出力）</div>
-    <div class="hint">未選択の場合はランダムで決定されます</div>
-    <div class="chips" id="expressionChips"></div>
+    <div class="slabel">⑰ 雰囲気・気分</div>
+    <div class="hint">表情・視線・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します</div>
+    <div class="chips" id="moodChips"></div>
   </div>
 
   <!-- Buttons -->
@@ -509,7 +494,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.2.2-auto-lean-support";
+const APP_VERSION = "v5.3.0-scene-mood-auto-expression";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -1174,10 +1159,22 @@ function renderAllOptionChips() {
   renderChips("backgroundViewChips", BACKGROUND_VIEW_MODES, "backgroundView");
   renderChips("framingChips", FRAMING_MODES, "framing");
   renderChips("photoStyleChips", PHOTO_STYLE_MODES, "photoStyle");
-  renderChips("tensionChips", TENSIONS, "tension");
-  renderChips("emotionChips", EMOTIONS, "emotion");
-  renderChips("expressionChips", EXPRESSION_OPTIONS, "expression");
+  renderChips("moodChips", MOOD_OPTIONS, "mood");
 }
+
+const MOOD_OPTIONS = [
+  {label:"🎲 AIにおまかせ", value:"auto"},
+  {label:"😐 ニュートラル", value:"neutral"},
+  {label:"😌 落ち着き", value:"calm"},
+  {label:"🙂 やさしい", value:"gentle"},
+  {label:"😄 楽しい", value:"joyful"},
+  {label:"🥱 眠そう / 気だるげ", value:"sleepy"},
+  {label:"🌙 寂しい / 物憂げ", value:"melancholic"},
+  {label:"😳 照れ / はにかみ", value:"shy"},
+  {label:"😟 不安 / 緊張", value:"anxious"},
+  {label:"😎 クール / 強め", value:"cool"},
+  {label:"🚶 動きあり", value:"motion"},
+];
 
 const TENSIONS = [
   {label:"😌 低め（落ち着き）", value:"low"},
@@ -1313,7 +1310,7 @@ const HIP_OPTIONS = [
 let state = {
   characterMode: "light", outfitReferenceMode: "off",
   bust: "", garmentLight: "", hip: "", weather: "", film: "", tone: "",
-  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, selfieMode: "", angleMode: "", subjectSize: "", backgroundView: "", framing: "", photoStyle: "", tension: "", emotion: "", expression: "",
+  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, selfieMode: "", angleMode: "", subjectSize: "", backgroundView: "", framing: "", photoStyle: "", mood: "auto",
 };
 let tokyoNow = {};
 
@@ -1618,6 +1615,39 @@ function normalizeExpressionForContext(expression = "", poseCtx = {}, angleName 
     return "warm relaxed night expression, not intoxicated";
   }
   return expression;
+}
+
+function getMoodProfile(mood = "auto", sceneText = "") {
+  const t = sceneText || "";
+  const autoMood = /眠|寝起き|ベッド|布団|朝|深夜|sleepy|bed|tired/i.test(t) ? "sleepy"
+    : /飲み|居酒屋|バー|ビール|ワイン|乾杯|bar|drink|beer|wine/i.test(t) ? "calm"
+    : /寂し|孤独|海|夜|雨|lonely|melancholic|rain/i.test(t) ? "melancholic"
+    : /楽しい|友達|笑|デート|party|fun|happy|date/i.test(t) ? "joyful"
+    : /不安|緊張|心配|anxious|nervous/i.test(t) ? "anxious"
+    : "neutral";
+  const key = !mood || mood === "auto" ? autoMood : mood;
+  const map = {
+    neutral:{emotion:"neutral", tension:"medium", cue:"neutral natural mood, relaxed readable face and posture"},
+    calm:{emotion:"calm", tension:"low", cue:"calm quiet mood, relaxed eyes, soft mouth, minimal movement"},
+    gentle:{emotion:"happy", tension:"medium", cue:"gentle soft mood, warm eyes, mild smile only when the scene supports it"},
+    joyful:{emotion:"joyful", tension:"medium-high", cue:"joyful lively mood, brighter eyes, natural smile and light movement"},
+    sleepy:{emotion:"tired", tension:"low", cue:"sleepy or languid mood, heavy eyelids, relaxed mouth, loose shoulders, slow small movement"},
+    melancholic:{emotion:"lonely", tension:"low", cue:"melancholic quiet mood, distant eyes, restrained mouth, still posture"},
+    shy:{emotion:"shy", tension:"medium", cue:"shy hesitant mood, gentle eyes, small bashful smile only if natural"},
+    anxious:{emotion:"anxious", tension:"low", cue:"slightly tense mood, uncertain eyes, compact posture, controlled movement"},
+    cool:{emotion:"neutral", tension:"medium", cue:"cool composed mood, controlled gaze, restrained mouth, deliberate posture"},
+    motion:{emotion:"neutral", tension:"medium-high", cue:"more active mood, realistic body movement and hair motion while preserving physical plausibility"}
+  };
+  return {key, ...(map[key] || map.neutral)};
+}
+
+function buildAIDerivedExpressionPrompt(sceneText = "", mood = "auto") {
+  const profile = getMoodProfile(mood, sceneText);
+  return `AI-derived expression from scene and mood: ${profile.cue}; derive facial expression, gaze direction, eyelid tension, mouth shape, shoulders, posture energy, and small motion naturally from the situation; do not use a separate fixed expression preset; do not force a smile or emotion that conflicts with the scene`;
+}
+
+function getMoodLabel(value = "auto") {
+  return getLabelByValue(MOOD_OPTIONS, value || "auto", "🎲 AIにおまかせ");
 }
 
 function resolveMotion(situation, dayMood, timeCtx, manualTension, manualEmotion, scene, angleName, subjectSizeKey, photoStyleKey, selfieMode = "on") {
@@ -1945,8 +1975,9 @@ ${photoStyleMode.value}
 
 EXPRESSION / MOOD:
 (${safeExpression}:1.9),
-(${getEmotionExpressionCue(state.emotion || "neutral")}:1.9),
-(context-driven natural micro-expression matching the situation, time, weather, and atmosphere:1.75),
+(${getMoodProfile(state.mood || "auto", sceneText).cue}:1.88),
+(context-driven natural micro-expression matching the situation, time, weather, and atmosphere:1.82),
+(expression, gaze, posture energy, and movement are automatically derived from the scene and mood, not manually preset:1.9),
 (keep cheek volume restrained even when smiling:1.85)
 
 POSE / MOTION:
@@ -2370,9 +2401,10 @@ function handleGenerate() {
   const angle = angleMode.key === "auto"
     ? pickAngleForComposition(subjectSizeMode.key, photoStyleMode.key, expectedSelfieMode)
     : (ANGLES.find(a => a.name === angleMode.key) || ANGLES[0]);
-  const expression = state.expression || EXPRESSIONS[Math.floor(Math.random() * EXPRESSIONS.length)];
+  const moodProfile = getMoodProfile(state.mood || "auto", situation);
+  const expression = buildAIDerivedExpressionPrompt(situation, state.mood || "auto");
 
-  const motionResult = resolveMotion(situation, DAY_MOOD[t.day], t.timeCtx, state.tension, state.emotion, scene, angle.name, subjectSizeMode.key, photoStyleMode.key, expectedSelfieMode);
+  const motionResult = resolveMotion(situation, DAY_MOOD[t.day], t.timeCtx, moodProfile.tension, moodProfile.emotion, scene, angle.name, subjectSizeMode.key, photoStyleMode.key, expectedSelfieMode);
   const motionText = motionResult.motionText;
   const bustPrompt = state.bust || BUST_OPTIONS[4].value;
   const hipPrompt = state.hip || HIP_OPTIONS[2].value;
@@ -2393,6 +2425,7 @@ function handleGenerate() {
   const selectedBackgroundViewLabel = getBackgroundViewMode().label;
   const selectedFramingLabel = getFramingMode().label;
   const selectedPhotoStyleLabel = getPhotoStyleMode().label;
+  const selectedMoodLabel = getMoodLabel(state.mood || "auto");
   const selectedGarmentLightLabel = (GARMENT_BACKLIGHT_OPTIONS.find(g => g.value === (state.garmentLight || ""))?.label || "🚫 指定なし");
   const selectedBustLabel = (BUST_OPTIONS.find(b => b.value === (state.bust || BUST_OPTIONS[4].value))?.label || "⬆️🧱 立体感＋ライン");
   const selectedHipLabel = (HIP_OPTIONS.find(h => h.value === (state.hip || HIP_OPTIONS[2].value))?.label || "🍑 小尻プリ");
@@ -2419,13 +2452,12 @@ function handleGenerate() {
     "🖼️ <b style='color:#c4b5fd'>余白/リーディングスペース</b>：" + selectedFramingLabel + "<br>" +
     "🎭 <b style='color:#c4b5fd'>写真の自然さ/演出度</b>：" + selectedPhotoStyleLabel + "<br>" +
     "✂️ <b style='color:#c4b5fd'>ヘア</b>：" + HAIR_BY_MONTH[t.month] + "<br>" +
-    "😊 <b style='color:#c4b5fd'>表情</b>：" + expression + "<br>" +
     "👜 <b style='color:#c4b5fd'>アクセ</b>：" + scene + "<br>" +
     "☀️ <b style='color:#c4b5fd'>逆光時の布</b>：" + selectedGarmentLightLabel + "<br>" +
-    "🎯 <b style='color:#c4b5fd'>テンション（動き）</b>：" + motionResult.tension + "<br>" +
-    "💭 <b style='color:#c4b5fd'>感情（気分）</b>：" + motionResult.emotion + "<br>" +
+    "💭 <b style='color:#c4b5fd'>雰囲気・気分</b>：" + selectedMoodLabel + "<br>" +
+    "😊 <b style='color:#c4b5fd'>表情</b>：シチュエーションと雰囲気からAIが自動導出<br>" +
     "🧠 <b style='color:#c4b5fd'>導出カメラ</b>：" + (motionResult.cameraScenario ? motionResult.cameraScenario.key : "base") + "<br>" +
-    "🧍 <b style='color:#c4b5fd'>ポーズ/モーション</b>：" + motionText + "<br>" +
+    "🧍 <b style='color:#c4b5fd'>ポーズ/モーション</b>：シチュエーションと雰囲気からAIが自動導出<br>" +
     "🧱 <b style='color:#c4b5fd'>もたれ自動反映</b>：" + getLeanAutoSummary(document.getElementById("situation").value || "") + "<br>" +
     "👚 <b style='color:#c4b5fd'>胸シルエット</b>：" + selectedBustLabel + "<br>" +
     "🍑 <b style='color:#c4b5fd'>ヒップ/下半身</b>：" + selectedHipLabel + "<br>" +
@@ -2526,7 +2558,7 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, tension:"", emotion:"", expression:"" };
+  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
@@ -2543,9 +2575,7 @@ function handleReset() {
   renderChips("backgroundViewChips", BACKGROUND_VIEW_MODES, "backgroundView");
   renderChips("framingChips", FRAMING_MODES, "framing");
   renderChips("photoStyleChips", PHOTO_STYLE_MODES, "photoStyle");
-  renderChips("tensionChips", TENSIONS, "tension");
-  renderChips("emotionChips", EMOTIONS, "emotion");
-  renderChips("expressionChips", EXPRESSION_OPTIONS, "expression");
+  renderChips("moodChips", MOOD_OPTIONS, "mood");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
