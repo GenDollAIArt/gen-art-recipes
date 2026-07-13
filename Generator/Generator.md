@@ -1,13 +1,13 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.3.1-gaze-profile-closeup
-  Updated: 2026-07-12
+  Version: 5.3.2-camera-ui-lightmode
+  Updated: 2026-07-14
   Changelog:
+    v5.3.2 - カメラ操作UIを「高さ」「距離 / 寄り方」「撮影アングル / 体の向き」に分解。背景の見せ方も「上 / 下 / 奥 / 手前」基準へ整理し、UIはライトモード固定に変更
     v5.3.1 - 視線・顔向き・接写質感を追加。表情/ポーズ/動きはAI自動導出のまま、横顔アップ・非カメラ目線・質感寄り接写を軽く指定できるよう改善
     v5.3.0 - テンション/感情/表情の3項目を「雰囲気・気分」に統合。表情・視線・ポーズ・動きはシチュエーションと雰囲気からAIが自動導出する仕様へ変更
     v5.2.2 - シーン文中の「もたれる / 寄りかかる / 前向き / 後ろ向き / 横向き / シンク / 柵 / カウンター / 壁 / ガラス」から、自動でもたれ方と接触点を導くLEAN SUPPORT AUTO-REFLECTIONを追加
     v5.2.1 - 夜景ポートレート用の背景なじみ/露出バランスを追加。背景ボケを中程度に調整し、フラッシュ感を抑えつつ胸シルエット維持ロックを追加。前ボケ効果も追加
-    v5.2.0 - 被写体参照を顔IDだけでなく体型/胸/腰幅/ヒップ幅の基準にも使うBODY REFERENCE LOCKを追加。2枚目コーデ画像の体型コピーは禁止
     v5.1.1 - 胸シルエット選択肢の効き方を調整。控えめ=普通サイズ寄り、立体感/ラインくっきり=少し大きめ、立体感＋ライン=最も強く自然に反映
 -->
 <!DOCTYPE html>
@@ -18,77 +18,42 @@
 <title>Stable Character Prompt Generator</title>
 <style>
 :root {
-    --bg:        #09090b;
-    --bg-card:   #18181b;
-    --bg-dark:   #0d0d14;
-    --bg-out:    #0a0a0d;
-    --bg-input:  #09090b;
-    --bg-ta:     #06060a;
-    --border:    #27272a;
-    --border-m:  #3f3f46;
-    --border-pu: #3b1d6b;
-    --text:      #fafafa;
-    --text-sub:  #a1a1aa;
-    --text-dim:  #71717a;
-    --text-hint: #52525b;
-    --text-pu:   #c4b5fd;
-    --chip-bg:   #18181b;
-    --chip-col:  #a1a1aa;
-    --chip-abg:  #581c87;
-    --chip-acol: #f0e6ff;
-    --chip-abdr: #c084fc;
-    --tog-bg:    #18181b;
-    --tog-col:   #71717a;
-    --tog-abg:   #3b0764;
-    --tog-acol:  #e9d5ff;
-    --pill-off:  #3f3f46;
-    --hdr-bg:    linear-gradient(135deg, #1e1b2e 0%, #0d0d14 100%);
-    --reset-col: #71717a;
-    --reset-bdr: #3f3f46;
-    --info-val:  #c4b5fd;
-    --copy-done-bg: #581c87;
-    --copy-done-col: #e9d5ff;
-    --placeholder: #3f3f46;
-  }
-
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg:        #f4f4f5;
-      --bg-card:   #ffffff;
-      --bg-dark:   #ede9fe;
-      --bg-out:    #f8f7ff;
-      --bg-input:  #f4f4f5;
-      --bg-ta:     #f8f8f8;
-      --border:    #e4e4e7;
-      --border-m:  #d4d4d8;
-      --border-pu: #c4b5fd;
-      --text:      #18181b;
-      --text-sub:  #52525b;
-      --text-dim:  #71717a;
-      --text-hint: #a1a1aa;
-      --text-pu:   #7c3aed;
-      --chip-bg:   #f4f4f5;
-      --chip-col:  #52525b;
-      --chip-abg:  #7c3aed;
-      --chip-acol: #ffffff;
-      --chip-abdr: #7c3aed;
-      --tog-bg:    #f4f4f5;
-      --tog-col:   #71717a;
-      --tog-abg:   #ede9fe;
-      --tog-acol:  #6d28d9;
-      --pill-off:  #d4d4d8;
-      --hdr-bg:    linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
-      --reset-col: #71717a;
-      --reset-bdr: #d4d4d8;
-      --info-val:  #6d28d9;
-      --copy-done-bg: #7c3aed;
-      --copy-done-col: #ffffff;
-      --placeholder: #d4d4d8;
-    }
+    --bg:        #f4f4f5;
+    --bg-card:   #ffffff;
+    --bg-dark:   #ede9fe;
+    --bg-out:    #f8f7ff;
+    --bg-input:  #f4f4f5;
+    --bg-ta:     #f8f8f8;
+    --border:    #e4e4e7;
+    --border-m:  #d4d4d8;
+    --border-pu: #c4b5fd;
+    --text:      #18181b;
+    --text-sub:  #3f3f46;
+    --text-dim:  #5b21b6;
+    --text-hint: #6b7280;
+    --text-pu:   #6d28d9;
+    --chip-bg:   #f4f4f5;
+    --chip-col:  #3f3f46;
+    --chip-abg:  #7c3aed;
+    --chip-acol: #ffffff;
+    --chip-abdr: #7c3aed;
+    --tog-bg:    #f4f4f5;
+    --tog-col:   #52525b;
+    --tog-abg:   #ede9fe;
+    --tog-acol:  #6d28d9;
+    --pill-off:  #d4d4d8;
+    --hdr-bg:    linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);
+    --reset-col: #52525b;
+    --reset-bdr: #d4d4d8;
+    --info-val:  #6d28d9;
+    --copy-done-bg: #7c3aed;
+    --copy-done-col: #ffffff;
+    --placeholder: #9ca3af;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
+    color-scheme: light;
     background: var(--bg);
     color: var(--text);
     font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
@@ -125,7 +90,7 @@
   .card-out  { background: var(--bg-out);  border-color: var(--border-pu); }
 
   .slabel {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.12em;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
     color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px;
   }
 
@@ -226,7 +191,7 @@
     align-items: center; margin-bottom: 10px;
   }
   .hidden { display: none; }
-  .hint { font-size: 11px; color: var(--text-hint); margin-bottom: 8px; }
+  .hint { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; }
 
   .chip.has-help::after {
     content: "？";
@@ -402,59 +367,73 @@
     <div class="chips" id="selfieModeChips"></div>
   </div>
 
-  <!-- Camera angle -->
+  <!-- Camera height -->
   <div class="card">
-    <div class="slabel">⑬ カメラ位置 / アングル</div>
-    <div class="hint">撮影の高さ・持ち方・向きを選びます。</div>
-    <div class="chips" id="angleModeChips"></div>
+    <div class="slabel">⑬ カメラの高さ</div>
+    <div class="hint">まずはカメラがどの高さにあるかを決めます。床座り・足元・星空・見下ろしなどの基準になります。</div>
+    <div class="chips" id="cameraHeightChips"></div>
+  </div>
+
+  <!-- Camera distance -->
+  <div class="card">
+    <div class="slabel">⑭ 距離 / 寄り方</div>
+    <div class="hint">マクロ・かなり近め・近め・標準・少し引きなど、被写体への近さを決めます。顔どアップにしたい時もここが効きます。</div>
+    <div class="chips" id="proximityChips"></div>
+  </div>
+
+  <!-- Shot angle / body relation -->
+  <div class="card">
+    <div class="slabel">⑮ 撮影アングル / 体の向き</div>
+    <div class="hint">正面・真横・見返り・背中から・寝転び横など、体に対してどこから撮るかを指定します。ポーズ自体はシチュエーションからAIが自然に導きます。</div>
+    <div class="chips" id="shotAngleChips"></div>
   </div>
 
   <!-- Gaze -->
   <div class="card">
-    <div class="slabel">⑭ 視線</div>
+    <div class="slabel">⑯ 視線</div>
     <div class="hint">カメラ目線にするか、少し外すか、遠くを見るかを軽く指定できます。未指定ならシーンと雰囲気からAIが導きます。</div>
     <div class="chips" id="gazeChips"></div>
   </div>
 
   <!-- Face direction -->
   <div class="card">
-    <div class="slabel">⑮ 顔向き</div>
-    <div class="hint">正面・斜め・横顔・振り向きなどの顔の向きだけを指定します。カメラ位置そのものは⑬で決めます。</div>
+    <div class="slabel">⑰ 顔向き</div>
+    <div class="hint">正面・斜め・横顔・振り向きなどの顔の向きだけを指定します。カメラ高さや体に対する位置は⑬〜⑮で決めます。</div>
     <div class="chips" id="faceDirectionChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑯ 構図 / 被写体サイズ</div>
+    <div class="slabel">⑱ 構図 / 被写体サイズ</div>
     <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます。横顔アップや超接写もここで選べます。</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Background view -->
   <div class="card">
-    <div class="slabel">⑰ 背景の見せ方</div>
-    <div class="hint">背景の見せ方を決めます。夜景ポートレートでは背景を主張させすぎず、被写体となじませます。</div>
+    <div class="slabel">⑲ 背景の見せ方 / 方向</div>
+    <div class="hint">背景を上・下・奥・手前のどこに寄せるかを決めます。足元の花を入れたいなら「下」、夜空なら「上」、景色や街並みなら「奥」が基本です。</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑱ 余白 / リーディングスペース</div>
-    <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです</div>
+    <div class="slabel">⑳ 余白 / リーディングスペース</div>
+    <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです。</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑲ 写真の自然さ / 演出度</div>
-    <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます</div>
+    <div class="slabel">㉑ 写真の自然さ / 演出度</div>
+    <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます。</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Mood / expression auto-derivation -->
   <div class="card">
-    <div class="slabel">⑳ 雰囲気・気分</div>
-    <div class="hint">表情・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します。視線と顔向きは必要な時だけ⑭⑮で軽く指定できます。</div>
+    <div class="slabel">㉒ 雰囲気・気分</div>
+    <div class="hint">表情・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します。視線と顔向きは必要な時だけ⑯⑰で軽く指定できます。</div>
     <div class="chips" id="moodChips"></div>
   </div>
 
@@ -516,7 +495,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.3.1-gaze-profile-closeup";
+const APP_VERSION = "v5.3.2-camera-ui-lightmode";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -583,6 +562,46 @@ const ANGLE_UI_OPTIONS = [
   {label:"🚶 歩き", key:"WALKING", value:"WALKING"},
   {label:"🌀 斜め", key:"DYNAMIC TILTED", value:"DYNAMIC TILTED"},
   {label:"↩️ 振り向き", key:"OVER SHOULDER", value:"OVER SHOULDER"},
+];
+
+const CAMERA_HEIGHT_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera height is automatically derived from the scene, support, and intended framing:1.82), (camera placement should feel physically natural for the situation:1.84)"},
+  {label:"📉 かなり下", key:"veryLow", value:"veryLow", prompt:"(camera positioned very low relative to the body:1.86), (strong low placement near thigh-to-knee level when plausible:1.82)"},
+  {label:"🤫 腰だめ寄り", key:"hiddenLow", value:"hiddenLow", prompt:"(camera carried low and close to the body:1.84), (waist-held or hidden-low camera placement when plausible:1.82)"},
+  {label:"🪑 座りで膝あたり", key:"knee", value:"knee", prompt:"(for seated or floor-level scenes, camera height sits around knee level:1.84), (the low seated camera placement stays physically believable:1.84)"},
+  {label:"⬇️ 少し下", key:"low", value:"low", prompt:"(camera is slightly below face level:1.82), (a mild low camera placement creates gentle upward perspective:1.8)"},
+  {label:"🧍 腰", key:"waist", value:"waist", prompt:"(camera height is around waist level:1.82), (mid-low viewpoint with believable body-scale perspective:1.8)"},
+  {label:"🫁 胸", key:"chest", value:"chest", prompt:"(camera height is around chest level:1.82), (natural upper-body level viewpoint:1.8)"},
+  {label:"👁️ 目線", key:"eye", value:"eye", prompt:"(camera sits around eye height:1.84), (balanced everyday viewpoint with minimal distortion:1.82)"},
+  {label:"⬆️ 少し上", key:"high", value:"high", prompt:"(camera is slightly above eye level:1.84), (gentle downward viewpoint while keeping proportions natural:1.82)"},
+  {label:"🙆 かなり上", key:"veryHigh", value:"veryHigh", prompt:"(camera is clearly above the head line:1.86), (high lifted viewpoint with believable arm or photographer position:1.82)"},
+  {label:"🔝 真上", key:"topDown", value:"topDown", prompt:"(camera looks from directly overhead or near-overhead:1.88), (top-down viewpoint is only used when the pose and support make it physically possible:1.84)"}
+];
+
+const PROXIMITY_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera distance is automatically derived from the scene and chosen framing:1.82), (distance should feel intentional but natural:1.82)"},
+  {label:"🔬 マクロ", key:"macro", value:"macro", prompt:"(macro-like camera distance for extreme close detail:1.88), (very near lens distance focusing on skin, lashes, lips, or small facial detail when appropriate:1.84)"},
+  {label:"🧿 かなり近め", key:"veryClose", value:"veryClose", prompt:"(camera is held very close to the subject:1.86), (intimate near-lens proximity with strong face presence:1.84)"},
+  {label:"🙂 近め", key:"close", value:"close", prompt:"(camera is close to the subject:1.84), (face and upper body feel near and readable:1.82)"},
+  {label:"⚖️ 標準", key:"standard", value:"standard", prompt:"(camera distance is standard and balanced:1.82), (neither too near nor too far:1.8)"},
+  {label:"↔️ 少し引き", key:"slightlyWide", value:"slightlyWide", prompt:"(camera is slightly pulled back:1.82), (a bit more room is left around the subject while keeping portrait priority:1.8)"},
+  {label:"🧍 引き", key:"wide", value:"wide", prompt:"(camera is pulled back enough to show more body or place:1.82), (the subject appears smaller within a still-readable scene:1.8)"},
+  {label:"🤳 体の近くで持つ", key:"bodyNear", value:"bodyNear", prompt:"(the device is held close to the body rather than fully extended:1.84), (short arm distance or compact hold when in selfie mode:1.82)"},
+  {label:"🫱 腕を伸ばす", key:"armExtended", value:"armExtended", prompt:"(the device is held with a clearly extended arm or more open camera distance when in selfie mode:1.84), (extended reach helps show more surroundings naturally:1.82)"}
+];
+
+const SHOT_ANGLE_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(the shooting angle relative to the body is automatically derived from the scene and framing:1.82), (body relation and camera path should feel physically plausible:1.84)"},
+  {label:"↔️ 正面", key:"front", value:"front", prompt:"(camera approaches the subject mainly from the front:1.84), (front-facing composition while keeping pose natural:1.82)"},
+  {label:"🌀 斜め前", key:"diagonalFront", value:"diagonalFront", prompt:"(camera approaches from a front-diagonal angle:1.84), (slight diagonal body relation gives depth without breaking realism:1.82)"},
+  {label:"➡️ 真横", key:"side", value:"side", prompt:"(camera approaches from the true side or near-profile side:1.86), (side relation between subject and camera is clearly readable:1.84)"},
+  {label:"↩️ 見返り", key:"lookBack", value:"lookBack", prompt:"(body line suggests a look-back or over-shoulder relation:1.86), (the person turns back naturally toward the camera without impossible twisting:1.84)"},
+  {label:"⬅️ 背中から", key:"back", value:"back", prompt:"(camera approaches from behind the subject:1.86), (rear-view relation is clear while posture stays natural:1.84)"},
+  {label:"↖️ 斜め後ろ", key:"diagBack", value:"diagBack", prompt:"(camera approaches from a diagonal rear angle:1.86), (rear-diagonal relation is visible while body balance stays believable:1.84)"},
+  {label:"🧥 肩越し", key:"overShoulder", value:"overShoulder", prompt:"(camera reads as an over-shoulder composition:1.84), (the shoulder line helps guide the framing naturally:1.82)"},
+  {label:"🛋️ 寝転び横", key:"reclining", value:"reclining", prompt:"(the camera angle suits a reclining or lying posture from the side:1.86), (support, gravity, and body contact stay believable:1.84)"},
+  {label:"🚶 歩き / 動き", key:"walking", value:"walking", prompt:"(camera angle suits walking or moving candid capture:1.84), (motion direction and camera relation stay realistic:1.82)"},
+  {label:"🌀 少しひねる", key:"dynamic", value:"dynamic", prompt:"(camera uses a lightly dynamic or tilted relation to the body:1.82), (the pose remains physically possible and not over-twisted:1.84)"}
 ];
 
 const ANGLE_META = {
@@ -770,12 +789,13 @@ const SUBJECT_SIZE_MODES = [
 ];
 
 const BACKGROUND_VIEW_MODES = [
-  {label:"🚫 指定なし", key:"none", value:""},
+  {label:"🎲 おまかせ", key:"auto", value:"(background emphasis is automatically balanced from the scene and portrait intent:1.76), (the most relevant part of the place is shown naturally:1.76)"},
   {label:"🫧 控えめ", key:"subtle", value:"(background remains secondary and understated:1.7), (subject stays visually dominant over the background:1.8), (background details are present but restrained:1.7)"},
-  {label:"🌆 バランス", key:"balanced", value:"(background is shown in a balanced natural way:1.75), (location readability is clear without overemphasizing top or bottom:1.75), (subject and place are both easy to read:1.75)"},
-  {label:"🌸 足元", key:"lower", value:"(lower background is clearly visible:1.8), (show the ground, pavement, flowers, water, or details near her feet:1.8), (background emphasis is directed downward below the subject:1.75)"},
-  {label:"☕ 奥", key:"depth", value:"(horizontal background behind her is clearly visible:1.8), (show the café, street, station, storefront, or scenery behind the subject:1.8), (background emphasis is directed into the depth behind her:1.75)"},
-  {label:"🌙 上", key:"upper", value:"(upper background is clearly visible:1.8), (show the sky, ceiling, signs, tree canopy, or upper part of buildings:1.8), (background emphasis is directed upward above the subject:1.75)"},
+  {label:"⚖️ バランス", key:"balanced", value:"(background is shown in a balanced natural way:1.75), (location readability is clear without forcing any one direction too strongly:1.75), (subject and place are both easy to read:1.75)"},
+  {label:"⬇️ 下", key:"lower", value:"(lower background is clearly visible:1.8), (show the ground, pavement, flowers, water, blanket, or details near her feet or lower side:1.8), (background emphasis is directed downward below the subject:1.75)"},
+  {label:"↔️ 奥", key:"depth", value:"(depth background behind the subject is clearly visible:1.8), (show the street, room, poolside, café, storefront, or scenery behind the subject:1.8), (background emphasis is directed into the distance behind her:1.75)"},
+  {label:"⬆️ 上", key:"upper", value:"(upper background is clearly visible:1.8), (show the sky, ceiling, signs, stars, tree canopy, or upper part of buildings:1.8), (background emphasis is directed upward above the subject:1.75)"},
+  {label:"🫧 手前", key:"foreground", value:"(foreground elements near the lens are clearly readable when appropriate:1.78), (show flowers, glass, railings, table edges, or other near objects in front of the subject:1.78), (background layering includes visible foreground depth:1.74)"}
 ];
 
 const FRAMING_MODES = [
@@ -1073,6 +1093,10 @@ function isIncompatibleOption(stateKey, itemValue) {
 }
 
 function normalizeCompatibleState(changedKey) {
+  if (["cameraHeight", "proximity", "shotAngle", "faceDirection", "subjectSize", "photoStyle", "selfieMode"].includes(changedKey)) {
+    syncDerivedAngleState(document.getElementById("situation") ? document.getElementById("situation").value || "" : "");
+  }
+
   if (changedKey === "weather" && isOvercastLikeWeatherActive()) {
     state.effects = state.effects.filter(v => v !== sparkleEffectValue());
   }
@@ -1178,6 +1202,9 @@ function renderAllOptionChips() {
   renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
   renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
   renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
+  renderChips("cameraHeightChips", CAMERA_HEIGHT_OPTIONS, "cameraHeight");
+  renderChips("proximityChips", PROXIMITY_OPTIONS, "proximity");
+  renderChips("shotAngleChips", SHOT_ANGLE_OPTIONS, "shotAngle");
   renderChips("angleModeChips", ANGLE_UI_OPTIONS, "angleMode");
   renderChips("gazeChips", GAZE_OPTIONS, "gaze");
   renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
@@ -1925,7 +1952,7 @@ function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
   return "PORTRAIT / NIGHTSCAPE BALANCE:\n" + portraitBase.concat(nightBase).join(", ");
 }
 
-function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult) {
+function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, shotAngleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult) {
   const overviewParts = [];
   overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
   overviewParts.push("day: " + t.day + " — " + DAY_MOOD[t.day]);
@@ -2015,6 +2042,15 @@ ASPECT / ENVIRONMENT:
 
 CAMERA MODE:
 ${cameraModePrompt}
+
+CAMERA HEIGHT:
+${cameraHeightMode && cameraHeightMode.prompt ? cameraHeightMode.prompt : CAMERA_HEIGHT_OPTIONS[0].prompt}
+
+CAMERA DISTANCE / PROXIMITY:
+${proximityMode && proximityMode.prompt ? proximityMode.prompt : PROXIMITY_OPTIONS[0].prompt}
+
+SHOT ANGLE / BODY RELATION:
+${shotAngleMode && shotAngleMode.prompt ? shotAngleMode.prompt : SHOT_ANGLE_OPTIONS[0].prompt}
 
 CAMERA POSITION / ANGLE — ${angle.name}:
 ${cameraAnglePrompt}
@@ -2399,6 +2435,53 @@ function getPhotoStyleMode() {
   return PHOTO_STYLE_MODES.find(m => m.value === state.photoStyle) || PHOTO_STYLE_MODES[0];
 }
 
+function deriveAngleFromCameraSelections(cameraHeightKey, shotAngleKey, sceneText = "", selfieMode = "auto", faceDirectionKey = "auto", subjectSizeKey = "balanced", photoStyleKey = "daily") {
+  const recliningHint = /寝転|横にな|横たわ|ベッド|ソファ|床に座|reclining|lying/i.test(sceneText || "");
+
+  if (shotAngleKey === "reclining" || (recliningHint && shotAngleKey === "auto" && (subjectSizeKey === "profileCloseup" || subjectSizeKey === "faceCloseup"))) {
+    return ANGLES.find(a => a.name === "RECLINING SIDE EYE LEVEL") || ANGLES[0];
+  }
+  if (shotAngleKey === "side") return ANGLES.find(a => a.name === "SIDE PROFILE") || ANGLES[0];
+  if (shotAngleKey === "walking") return ANGLES.find(a => a.name === "WALKING") || ANGLES[0];
+  if (shotAngleKey === "dynamic") return ANGLES.find(a => a.name === "DYNAMIC TILTED") || ANGLES[0];
+  if (shotAngleKey === "lookBack" || shotAngleKey === "overShoulder") {
+    const target = selfieMode === "off" ? "BACK OVER SHOULDER" : "OVER SHOULDER";
+    return ANGLES.find(a => a.name === target) || ANGLES[0];
+  }
+  if (shotAngleKey === "back") {
+    const target = selfieMode === "off" ? "BACK VIEW" : "OVER SHOULDER";
+    return ANGLES.find(a => a.name === target) || ANGLES[0];
+  }
+  if (shotAngleKey === "diagBack") {
+    const target = selfieMode === "off" ? "DIAGONAL BACK VIEW" : "OVER SHOULDER";
+    return ANGLES.find(a => a.name === target) || ANGLES[0];
+  }
+
+  if (cameraHeightKey === "topDown" || cameraHeightKey === "veryHigh") return ANGLES.find(a => a.name === "SUPER HIGH ANGLE") || ANGLES[0];
+  if (cameraHeightKey === "high") return ANGLES.find(a => a.name === "HIGH ANGLE") || ANGLES[0];
+  if (cameraHeightKey === "eye" || cameraHeightKey === "chest") return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
+  if (cameraHeightKey === "waist" || cameraHeightKey === "hiddenLow") return ANGLES.find(a => a.name === "HIDDEN WAIST-HELD SELFIE") || ANGLES[0];
+  if (cameraHeightKey === "low" || cameraHeightKey === "knee") return ANGLES.find(a => a.name === "LOW ANGLE") || ANGLES[0];
+  if (cameraHeightKey === "veryLow") return ANGLES.find(a => a.name === "SUPER LOW ANGLE") || ANGLES[0];
+
+  if (shotAngleKey === "front") return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
+  if (shotAngleKey === "diagonalFront") return ANGLES.find(a => a.name === "GOLDEN ANGLE") || ANGLES[0];
+
+  return pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode, faceDirectionKey);
+}
+
+function syncDerivedAngleState(sceneText = "") {
+  let selfieMode = state.selfieMode || "auto";
+  let derived = deriveAngleFromCameraSelections(state.cameraHeight, state.shotAngle, sceneText, selfieMode, state.faceDirection, getSubjectSizeMode().key, getPhotoStyleMode().key);
+  if (angleRequiresSelfieOff(derived.name) && selfieMode !== "off") {
+    state.selfieMode = "off";
+    selfieMode = "off";
+    derived = deriveAngleFromCameraSelections(state.cameraHeight, state.shotAngle, sceneText, selfieMode, state.faceDirection, getSubjectSizeMode().key, getPhotoStyleMode().key);
+  }
+  state.angleMode = derived.name;
+  return derived;
+}
+
 function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "auto", faceDirectionKey = "auto") {
   if (faceDirectionKey === "profile") {
     return ANGLES.find(a => a.name === "SIDE PROFILE") || ANGLES[0];
@@ -2473,14 +2556,15 @@ function handleGenerate() {
   const backgroundViewMode = getBackgroundViewMode();
   const photoStyleMode = getPhotoStyleMode();
   const effectStrengthMode = getEffectStrengthMode();
+  const cameraHeightMode = getCameraHeightMode();
+  const proximityMode = getProximityMode();
+  const shotAngleMode = getShotAngleMode();
   const angleMode = getAngleMode();
   const gazeMode = getGazeMode();
   const faceDirectionMode = getFaceDirectionMode();
   const closeupTextureMode = getCloseupTextureMode();
   const expectedSelfieMode = getSelfieMode(situation);
-  const angle = angleMode.key === "auto"
-    ? pickAngleForComposition(subjectSizeMode.key, photoStyleMode.key, expectedSelfieMode, faceDirectionMode.key)
-    : (ANGLES.find(a => a.name === angleMode.key) || ANGLES[0]);
+  const angle = syncDerivedAngleState(situation);
   const moodProfile = getMoodProfile(state.mood || "auto", situation);
   const expression = buildAIDerivedExpressionPrompt(situation, state.mood || "auto");
 
@@ -2490,7 +2574,7 @@ function handleGenerate() {
   const hipPrompt = state.hip || HIP_OPTIONS[2].value;
   const skinFinishPrompt = state.skinFinish || "";
 
-  const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult);
+  const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, shotAngleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult);
 
   document.getElementById("metaCard").classList.remove("hidden");
   const selectedOutfitReferenceLabel = getLabelByValue(OUTFIT_REFERENCE_MODE_OPTIONS, state.outfitReferenceMode);
@@ -2500,7 +2584,10 @@ function handleGenerate() {
   const selectedEffectLabels = getEffectLabels(state.effects);
   const effectStrengthModeForMeta = getEffectStrengthMode();
   const selectedEffectStrengthLabel = effectStrengthModeForMeta.label + " / weight ×" + effectStrengthModeForMeta.multiplier;
-  const selectedAngleModeLabel = getAngleMode().label;
+  const selectedCameraHeightLabel = getCameraHeightMode().label;
+  const selectedProximityLabel = getProximityMode().label;
+  const selectedShotAngleLabel = getShotAngleMode().label;
+  const selectedAngleModeLabel = getAngleMode().label || angle.name;
   const selectedSubjectSizeLabel = getSubjectSizeMode().label;
   const selectedBackgroundViewLabel = getBackgroundViewMode().label;
   const selectedFramingLabel = getFramingMode().label;
@@ -2530,11 +2617,14 @@ function handleGenerate() {
     "🌟 <b style='color:#c4b5fd'>エフェクト強度</b>：" + selectedEffectStrengthLabel + "<br>" +
     "🫧 <b style='color:#c4b5fd'>肌の見え方</b>：" + selectedSkinFinishLabel + "<br>" +
     "🔬 <b style='color:#c4b5fd'>接写質感</b>：" + selectedCloseupTextureLabel + "<br>" +
-    "📸 <b style='color:#c4b5fd'>カメラ位置/アングル</b>：" + selectedAngleModeLabel + " → " + angle.name + "<br>" +
+    "📏 <b style='color:#c4b5fd'>カメラの高さ</b>：" + selectedCameraHeightLabel + "<br>" +
+    "🔎 <b style='color:#c4b5fd'>距離 / 寄り方</b>：" + selectedProximityLabel + "<br>" +
+    "🧭 <b style='color:#c4b5fd'>撮影アングル / 体の向き</b>：" + selectedShotAngleLabel + "<br>" +
+    "📸 <b style='color:#c4b5fd'>導出カメラ位置/アングル</b>：" + selectedAngleModeLabel + " → " + angle.name + "<br>" +
     "👀 <b style='color:#c4b5fd'>視線</b>：" + selectedGazeLabel + "<br>" +
     "🙂 <b style='color:#c4b5fd'>顔向き</b>：" + selectedFaceDirectionLabel + "<br>" +
     "🧍 <b style='color:#c4b5fd'>構図/被写体サイズ</b>：" + selectedSubjectSizeLabel + "<br>" +
-    "🌆 <b style='color:#c4b5fd'>背景の見せ方</b>：" + selectedBackgroundViewLabel + "<br>" +
+    "🌆 <b style='color:#c4b5fd'>背景の見せ方 / 方向</b>：" + selectedBackgroundViewLabel + "<br>" +
     "🖼️ <b style='color:#c4b5fd'>余白/リーディングスペース</b>：" + selectedFramingLabel + "<br>" +
     "🎭 <b style='color:#c4b5fd'>写真の自然さ/演出度</b>：" + selectedPhotoStyleLabel + "<br>" +
     "✂️ <b style='color:#c4b5fd'>ヘア</b>：" + HAIR_BY_MONTH[t.month] + "<br>" +
@@ -2644,7 +2734,7 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
+  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
@@ -2657,6 +2747,9 @@ function handleReset() {
   renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
   renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
   renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
+  renderChips("cameraHeightChips", CAMERA_HEIGHT_OPTIONS, "cameraHeight");
+  renderChips("proximityChips", PROXIMITY_OPTIONS, "proximity");
+  renderChips("shotAngleChips", SHOT_ANGLE_OPTIONS, "shotAngle");
   renderChips("angleModeChips", ANGLE_UI_OPTIONS, "angleMode");
   renderChips("gazeChips", GAZE_OPTIONS, "gaze");
   renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
@@ -2673,16 +2766,21 @@ document.addEventListener("DOMContentLoaded", () => {
   state.outfitReferenceMode = OUTFIT_REFERENCE_MODE_OPTIONS[0].value;
   if (characterLockEl) characterLockEl.value = LIGHT_CHARACTER_LOCK;
   state.selfieMode = SELFIE_MODE_OPTIONS[0].value;
+  state.cameraHeight = CAMERA_HEIGHT_OPTIONS[0].value;
+  state.proximity = PROXIMITY_OPTIONS[0].value;
+  state.shotAngle = SHOT_ANGLE_OPTIONS[0].value;
   state.angleMode = ANGLE_UI_OPTIONS[0].value;
   state.subjectSize = SUBJECT_SIZE_MODES[0].value;
   state.skinFinish = SKIN_FINISH_OPTIONS[0].value;
   state.closeupTexture = CLOSEUP_TEXTURE_OPTIONS[0].value;
   state.gaze = GAZE_OPTIONS[0].value;
   state.faceDirection = FACE_DIRECTION_OPTIONS[0].value;
+  state.backgroundView = BACKGROUND_VIEW_MODES[0].value;
   state.framing = FRAMING_MODES[0].value;
   state.photoStyle = PHOTO_STYLE_MODES[0].value;
   updateClock();
   setInterval(updateClock, 30000);
+  syncDerivedAngleState(document.getElementById("situation") ? document.getElementById("situation").value || "" : "");
   renderAllOptionChips();
 });
 </script>
