@@ -1,8 +1,9 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.3.2-camera-ui-lightmode
+  Version: 5.3.3-camera-ui-generate-fix
   Updated: 2026-07-14
   Changelog:
+    v5.3.3 - 生成ボタン実行時の新カメラ項目getter未定義エラーを修正
     v5.3.2 - カメラ操作UIを「高さ」「距離 / 寄り方」「撮影アングル / 体の向き」に分解。背景の見せ方も「上 / 下 / 奥 / 手前」基準へ整理し、UIはライトモード固定に変更
     v5.3.1 - 視線・顔向き・接写質感を追加。表情/ポーズ/動きはAI自動導出のまま、横顔アップ・非カメラ目線・質感寄り接写を軽く指定できるよう改善
     v5.3.0 - テンション/感情/表情の3項目を「雰囲気・気分」に統合。表情・視線・ポーズ・動きはシチュエーションと雰囲気からAIが自動導出する仕様へ変更
@@ -495,7 +496,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.3.2-camera-ui-lightmode";
+const APP_VERSION = "v5.3.3-camera-ui-generate-fix";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -2405,6 +2406,18 @@ function getAngleMode() {
     state.angleMode = "HIDDEN WAIST-HELD SELFIE";
   }
   return ANGLE_UI_OPTIONS.find(m => m.value === state.angleMode) || ANGLE_UI_OPTIONS[0];
+}
+
+function getCameraHeightMode() {
+  return CAMERA_HEIGHT_OPTIONS.find(m => m.value === state.cameraHeight) || CAMERA_HEIGHT_OPTIONS[0];
+}
+
+function getProximityMode() {
+  return PROXIMITY_OPTIONS.find(m => m.value === state.proximity) || PROXIMITY_OPTIONS[0];
+}
+
+function getShotAngleMode() {
+  return SHOT_ANGLE_OPTIONS.find(m => m.value === state.shotAngle) || SHOT_ANGLE_OPTIONS[0];
 }
 
 function getGazeMode() {
