@@ -248,7 +248,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">固定キャラ + 今回のシーン v5.3.1</div>
+    <div class="header-sub">優先順位整理 + フィルム拡張 v6.0.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -286,157 +286,163 @@
     <div class="chips" id="outfitReferenceModeChips"></div>
   </div>
 
+  <!-- Priority summary -->
+  <div class="card card-dark">
+    <div class="slabel">優先順位ガイド</div>
+    <div class="hint">この順番で効きます：①顔 / 体（1枚目） → ②コーディネート（2枚目） → ③今回のシーン → ④カメラ / 構図 → ⑤雰囲気・気分 → ⑥天気・光 → ⑦フィルムトーン / 作品トーン / エフェクト。後ろの項目は前の項目を壊さない前提で効きます。</div>
+  </div>
+
   <!-- ① Scene only -->
   <div class="card">
     <div class="slabel">① 今回のシーンだけ（日本語で入力）</div>
-    <div class="hint">ここだけ毎回変更：場所・服装・何をしているか。表情・ポーズ・動きはシーンからAIが自然に導きます</div>
+    <div class="hint">ここだけ毎回変更：場所・服装・何をしているか。表情・ポーズ・動きはシーンからAIが自然に導きます。</div>
     <textarea id="situation" rows="4" placeholder="例：&#10;薄い紺色のワイシャツ、紺色のビジネスパンツ。西中島南方のラーメン店でラーメンをすすっている。&#10;キッチンのシンク前。後ろ向きでもたれる。&#10;ベランダの柵に前向きでもたれる。"></textarea>
-  </div>
-
-  <!-- Garment backlight response -->
-  <div class="card">
-    <div class="slabel">② 逆光時の布の見え方</div>
-    <div class="hint">服の素材分類ではなく、逆光で布が光を通す・ふんわり見えるかだけを選びます。ニット/リブ編み/サイズ感は①シーン本文に書く運用です。</div>
-    <div class="chips" id="garmentLightChips"></div>
-  </div>
-
-  <!-- Chest silhouette -->
-  <div class="card">
-    <div class="slabel">③ 胸シルエット</div>
-    <div class="hint">選択した内容をそのままプロンプトに反映します。控えめ＝普通サイズ寄り、立体感/ラインくっきり＝少し大きめ、立体感＋ライン＝最も強めに自然反映します。</div>
-    <div class="chips" id="bustChips"></div>
-  </div>
-
-  <!-- Hip silhouette -->
-  <div class="card">
-    <div class="slabel">④ ヒップ / 下半身シルエット</div>
-    <div class="hint">細身Iラインを維持したまま、ヒップの丸み・上向き感を調整します。</div>
-    <div class="chips" id="hipChips"></div>
-  </div>
-
-  <!-- Weather -->
-  <div class="card">
-    <div class="slabel">⑤ 天気を選択</div>
-    <div class="chips" id="weatherChips"></div>
-  </div>
-
-  <!-- ④ Film tone -->
-  <div class="card">
-    <div class="slabel">⑥ フィルムトーン / 質感</div>
-    <div class="hint">色味・質感・雰囲気を選びます。相反するものは自動で選べません</div>
-    <div class="chips" id="filmChips"></div>
-  </div>
-
-  <!-- ③ Overall tone -->
-  <div class="card">
-    <div class="slabel">⑦ 作品トーン</div>
-    <div class="hint">写真全体の印象を選びます。反対方向の組み合わせは自動整理</div>
-    <div class="chips" id="toneChips"></div>
-  </div>
-
-  <!-- ④ Bokeh & Effects -->
-  <div class="card">
-    <div class="slabel">⑧ エフェクト（複数選択可） ⓘ</div>
-    <div class="hint">長押しでヘルプ。相反するエフェクトは同時選択できません。まずは3〜5個くらいがおすすめです</div>
-    <div class="chips" id="effectChips"></div>
-  </div>
-
-  <!-- Effect strength -->
-  <div class="card">
-    <div class="slabel">⑨ エフェクト強度</div>
-    <div class="hint">選択したエフェクト内のweight数値を一括で倍率補正します。控えめは弱め、標準は基準値、強め・盛り盛りは各エフェクトの効きを直接強くします。</div>
-    <div class="chips" id="effectStrengthChips"></div>
-  </div>
-
-  <!-- Skin finish -->
-  <div class="card">
-    <div class="slabel">⑩ 肌の見え方 / 肌質感</div>
-    <div class="hint">肌の仕上がりを選びます。自然は標準、しっとりは保湿感、ツヤありはハイライトが少し乗りやすくなります。</div>
-    <div class="chips" id="skinFinishChips"></div>
-  </div>
-
-  <!-- Closeup texture -->
-  <div class="card">
-    <div class="slabel">⑪ 接写質感</div>
-    <div class="hint">顔アップや横顔アップで効きやすい近接描写の質感です。まつ毛・唇・肌のきめなどの描写密度を調整します。</div>
-    <div class="chips" id="closeupTextureChips"></div>
   </div>
 
   <!-- Selfie mode -->
   <div class="card">
-    <div class="slabel">⑫ 自撮り / 第三者撮影</div>
-    <div class="hint">自撮りONならスマホ手持ちカメラ視点。OFFなら他人が撮った自然なポートレート/スナップ扱い。自動は「他撮り・非自撮り」などがシーンにあればOFF、それ以外はON寄りです。</div>
+    <div class="slabel">② 自撮り / 第三者撮影</div>
+    <div class="hint">まず撮影の前提を決めます。自撮りONならスマホ手持ち視点、OFFなら他人が撮った自然なポートレート/スナップ扱いです。</div>
     <div class="chips" id="selfieModeChips"></div>
   </div>
 
   <!-- Camera height -->
   <div class="card">
-    <div class="slabel">⑬ カメラの高さ</div>
-    <div class="hint">まずはカメラがどの高さにあるかを決めます。床座り・足元・星空・見下ろしなどの基準になります。</div>
+    <div class="slabel">③ カメラの高さ</div>
+    <div class="hint">膝あたり・腰・目線・真上など、まずカメラがどの高さにあるかを決めます。</div>
     <div class="chips" id="cameraHeightChips"></div>
   </div>
 
   <!-- Camera distance -->
   <div class="card">
-    <div class="slabel">⑭ 距離 / 寄り方</div>
-    <div class="hint">マクロ・かなり近め・近め・標準・少し引きなど、被写体への近さを決めます。顔どアップにしたい時もここが効きます。</div>
+    <div class="slabel">④ 距離 / 寄り方</div>
+    <div class="hint">マクロ・かなり近め・近め・標準・引きなど、被写体への近さを決めます。</div>
     <div class="chips" id="proximityChips"></div>
   </div>
 
   <!-- Shot angle / body relation -->
   <div class="card">
-    <div class="slabel">⑮ 撮影アングル / 体の向き</div>
-    <div class="hint">正面・真横・見返り・背中から・寝転び横など、体に対してどこから撮るかを指定します。ポーズ自体はシチュエーションからAIが自然に導きます。</div>
+    <div class="slabel">⑤ 撮影アングル / 体との関係</div>
+    <div class="hint">正面・真横・見返り・背中からなど、体に対してどこから撮るかを指定します。ポーズ自体はシーンからAIが自然に導きます。</div>
     <div class="chips" id="shotAngleChips"></div>
-  </div>
-
-  <!-- Gaze -->
-  <div class="card">
-    <div class="slabel">⑯ 視線</div>
-    <div class="hint">カメラ目線にするか、少し外すか、遠くを見るかを軽く指定できます。未指定ならシーンと雰囲気からAIが導きます。</div>
-    <div class="chips" id="gazeChips"></div>
   </div>
 
   <!-- Face direction -->
   <div class="card">
-    <div class="slabel">⑰ 顔向き</div>
-    <div class="hint">正面・斜め・横顔・振り向きなどの顔の向きだけを指定します。カメラ高さや体に対する位置は⑬〜⑮で決めます。</div>
+    <div class="slabel">⑥ 顔向き</div>
+    <div class="hint">正面・斜め・横顔・振り向きなど、顔の向きだけを指定します。</div>
     <div class="chips" id="faceDirectionChips"></div>
+  </div>
+
+  <!-- Gaze -->
+  <div class="card">
+    <div class="slabel">⑦ 視線</div>
+    <div class="hint">カメラ目線にするか、少し外すか、遠くを見るかを軽く指定できます。未指定ならシーンと雰囲気からAIが導きます。</div>
+    <div class="chips" id="gazeChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑱ 構図 / 被写体サイズ</div>
-    <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます。横顔アップや超接写もここで選べます。</div>
+    <div class="slabel">⑧ 構図 / 被写体サイズ</div>
+    <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます。顔どアップ系では背景方向と余白の一部が自動整理されます。</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Background view -->
   <div class="card">
-    <div class="slabel">⑲ 背景の見せ方 / 方向</div>
-    <div class="hint">背景を上・下・奥・手前のどこに寄せるかを決めます。足元の花を入れたいなら「下」、夜空なら「上」、景色や街並みなら「奥」が基本です。</div>
+    <div class="slabel">⑨ 背景の見せ方 / 方向</div>
+    <div class="hint">背景を上・下・奥・手前のどこに寄せるかを決めます。夜空なら「上」、水面や花なら「下」、景色なら「奥」が基本です。</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑳ 余白 / リーディングスペース</div>
-    <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所を見せるかを選択します。ソファに寝転がる・椅子に座る等では「余白なし / 被写体いっぱい」が使いやすいです。</div>
+    <div class="slabel">⑩ 余白 / リーディングスペース</div>
+    <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所も見せるかを選びます。</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">㉑ 写真の自然さ / 演出度</div>
+    <div class="slabel">⑪ 写真の自然さ / 演出度</div>
     <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます。</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Mood / expression auto-derivation -->
   <div class="card">
-    <div class="slabel">㉒ 雰囲気・気分</div>
-    <div class="hint">表情・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します。視線と顔向きは必要な時だけ⑯⑰で軽く指定できます。</div>
+    <div class="slabel">⑫ 雰囲気・気分</div>
+    <div class="hint">表情・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します。</div>
     <div class="chips" id="moodChips"></div>
+  </div>
+
+  <!-- Garment backlight response -->
+  <div class="card">
+    <div class="slabel">⑬ 逆光時の布の見え方</div>
+    <div class="hint">服の素材分類ではなく、逆光で布が光を通す・ふんわり見えるかだけを選びます。</div>
+    <div class="chips" id="garmentLightChips"></div>
+  </div>
+
+  <!-- Chest silhouette -->
+  <div class="card">
+    <div class="slabel">⑭ 胸シルエット</div>
+    <div class="hint">1枚目の体型を基準に、服の上から見えるシルエットだけを自然に調整します。控えめ＝普通サイズ寄り、立体感/ラインくっきり＝少し大きめです。</div>
+    <div class="chips" id="bustChips"></div>
+  </div>
+
+  <!-- Hip silhouette -->
+  <div class="card">
+    <div class="slabel">⑮ ヒップ / 下半身シルエット</div>
+    <div class="hint">細身Iラインを維持したまま、ヒップの丸み・上向き感を調整します。横に広げない方向です。</div>
+    <div class="chips" id="hipChips"></div>
+  </div>
+
+  <!-- Weather -->
+  <div class="card">
+    <div class="slabel">⑯ 天気を選択</div>
+    <div class="chips" id="weatherChips"></div>
+  </div>
+
+  <!-- Film tone -->
+  <div class="card">
+    <div class="slabel">⑰ フィルムトーン / 質感 ⓘ</div>
+    <div class="hint">長押しでヘルプ。色味・質感・粒子感のベースを決めます。フィルムトーンは仕上げ層なので、顔・体・コーデ・カメラ選択は壊さない前提で効きます。</div>
+    <div class="chips" id="filmChips"></div>
+  </div>
+
+  <!-- Overall tone -->
+  <div class="card">
+    <div class="slabel">⑱ 作品トーン</div>
+    <div class="hint">写真全体の印象を選びます。反対方向の組み合わせは自動整理されます。</div>
+    <div class="chips" id="toneChips"></div>
+  </div>
+
+  <!-- Effects -->
+  <div class="card">
+    <div class="slabel">⑲ エフェクト（複数選択可） ⓘ</div>
+    <div class="hint">長押しでヘルプ。相反するエフェクトは同時選択できません。まずは3〜5個くらいがおすすめです。</div>
+    <div class="chips" id="effectChips"></div>
+  </div>
+
+  <!-- Effect strength -->
+  <div class="card">
+    <div class="slabel">⑳ エフェクト強度</div>
+    <div class="hint">選択したエフェクト内のweight数値を一括で倍率補正します。控えめは弱め、標準は基準値、強め・盛り盛りは各エフェクトの効きを直接強くします。</div>
+    <div class="chips" id="effectStrengthChips"></div>
+  </div>
+
+  <!-- Skin finish -->
+  <div class="card">
+    <div class="slabel">㉑ 肌の見え方 / 肌質感</div>
+    <div class="hint">肌の仕上がりを選びます。自然は標準、しっとりは保湿感、ツヤありはハイライトが少し乗りやすくなります。</div>
+    <div class="chips" id="skinFinishChips"></div>
+  </div>
+
+  <!-- Closeup texture -->
+  <div class="card">
+    <div class="slabel">㉒ 接写質感</div>
+    <div class="hint">顔アップや横顔アップで効きやすい近接描写の質感です。まつ毛・唇・肌のきめなどの描写密度を調整します。</div>
+    <div class="chips" id="closeupTextureChips"></div>
   </div>
 
   <!-- Buttons -->
@@ -497,7 +503,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.3.4-close-body-selfie-guard";
+const APP_VERSION = "v6.0.0-priority-film-help";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -690,16 +696,111 @@ const WEATHER_OPTIONS = [
 ];
 
 const FILM_TONES = [
-  {label:"なし", value:""},
-  {label:"コダック ゴールド 200", value:"Kodak Gold 200 film tone, clearly visible warm golden cast, noticeable analog warmth, lightly visible grain, unmistakable vintage print feel"},
-  {label:"フジ プロ 400H", value:"Fuji Pro 400H film tone, clearly visible pastel palette, soft mint-cool shadows, airy film color separation, unmistakable film softness"},
-  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, clearly visible rich warm skin, creamy highlight rolloff, noticeable film grain, unmistakable premium portrait film look"},
-  {label:"イルフォード HP5", value:"Ilford HP5 black and white film, clearly visible monochrome rendering, strong classic contrast, obvious grain texture, unmistakable black-and-white film look"},
-  {label:"シネスコープ", value:"CinemaScope film tone, clearly visible teal and orange grade, cinematic color separation, anamorphic blockbuster look, unmistakable movie-like grading"},
-  {label:"ローモ", value:"Lomography vivid tone, clearly visible cross-processed colors, strong saturation shift, lo-fi contrast, vignette edges, unmistakable lomo look"},
-  {label:"ポラロイド", value:"Polaroid instant film tone, clearly visible faded instant-film colors, nostalgic warm cast, soft bloom, unmistakable instant snapshot feel"},
-  {label:"ヴィンテージ 90s", value:"1990s vintage film tone, clearly visible retro color shift, muted warm mid-tones, nostalgic softness, unmistakable 90s film-photo mood"},
-  {label:"ガサつき", value:"gritty rough film tone, clearly visible coarse texture and dry roughness, pronounced gritty surface feel, raw unpolished analog mood, unmistakably harsh tactile photo texture"}
+  {label:"なし", value:"", help:`フィルムトーンを使わない標準状態です。
+
+向く場面
+まずベースを確認したい時。
+
+注意
+作品トーンやエフェクトだけで仕上げたい時向けです。`},
+  {label:"コダック ゴールド 200", value:"Kodak Gold 200 film tone, clearly visible warm golden cast, noticeable analog warmth, lightly visible grain, unmistakable vintage print feel", help:`暖かく少し懐かしい色味。黄色〜金色寄りの空気感が出ます。
+
+向く場面
+夕方、夏、街スナップ、旅行っぽい写真。
+
+注意
+寒色クール系より、あたたかい雰囲気向きです。`},
+  {label:"コダック ポートラ 400", value:"Kodak Portra 400 film tone, clearly visible natural warm skin color, soft contrast, fine grain, unmistakable balanced portrait-film look", help:`人物向けの定番。肌がきれいで自然、コントラストもやわらかめです。
+
+向く場面
+日中ポートレート、街歩き、自然な人物写真。
+
+注意
+派手な演出より、安定感重視です。`},
+  {label:"コダック ポートラ 800", value:"Kodak Portra 800 film tone, clearly visible rich warm skin, creamy highlight rolloff, noticeable film grain, unmistakable premium portrait film look", help:`夜や暗所でも人物がきれいに見えやすい暖色ポートレート系です。
+
+向く場面
+夜景ポートレート、室内、ムード重視の写真。
+
+注意
+寒色クールより、少し温かい人物描写に寄ります。`},
+  {label:"コダック エクター 100", value:"Kodak Ektar 100 film tone, clearly visible vivid yet clean color reproduction, crisp contrast, ultra-fine grain, unmistakable polished color-film look", help:`色が鮮やかで、粒子は細かめ。少しカリッとした発色です。
+
+向く場面
+青空、花、海、旅行、色を見せたい写真。
+
+注意
+やわらかい淡色路線より、色をしっかり見せたい時向きです。`},
+  {label:"フジ プロ 400H", value:"Fuji Pro 400H film tone, clearly visible pastel palette, soft mint-cool shadows, airy film color separation, unmistakable film softness", help:`淡くて軽い、透明感寄りのフィルム調。ミント寄りの影が少し出ます。
+
+向く場面
+白シャツ、窓辺、春夏、透明感のある写真。
+
+注意
+ダークで重い雰囲気とは少し逆方向です。`},
+  {label:"フジ スーペリア 400", value:"Fujifilm Superia 400 film tone, clearly visible lively green-blue color bias, casual snapshot color, medium grain, unmistakable everyday consumer-film feel", help:`気軽な日常スナップっぽさ。少し青緑寄りで生活感のある写りです。
+
+向く場面
+街スナップ、休日、記録写真っぽい雰囲気。
+
+注意
+高級感より、日常感が強めです。`},
+  {label:"フジ リアラエース", value:"Fujifilm Reala Ace film tone, clearly visible clean neutral color reproduction, soft highlight control, gentle film contrast, unmistakable refined modern-film look", help:`ニュートラルで整った色味。フジ系の自然さを残しつつ上品です。
+
+向く場面
+ファッション、街、バランス重視の人物写真。
+
+注意
+極端な色演出は弱めです。`},
+  {label:"シネスティル 800T", value:"CineStill 800T film tone, clearly visible tungsten-balanced cool shadows, glowing highlights, cinematic night color separation, unmistakable urban night-film look", help:`夜の街灯やネオンと相性が良いシネマ系。青い影と光のにじみが出やすいです。
+
+向く場面
+夜景、駅前、ネオン、室内のタングステン光。
+
+注意
+昼の自然光ではややクセが強いです。`},
+  {label:"イルフォード HP5", value:"Ilford HP5 black and white film, clearly visible monochrome rendering, strong classic contrast, obvious grain texture, unmistakable black-and-white film look", help:`白黒フィルム調。コントラストと粒子感が見えやすいです。
+
+向く場面
+ストリート、陰影重視、クラシックな写真。
+
+注意
+色のかわいさ・透明感表現は消えます。`},
+  {label:"ポラロイド", value:"Polaroid instant film tone, clearly visible faded instant-film colors, nostalgic warm cast, soft bloom, unmistakable instant snapshot feel", help:`インスタント写真っぽい、少し褪せたやさしい色味です。
+
+向く場面
+思い出写真、部屋、やわらかい日常スナップ。
+
+注意
+シャープさや現代的なキレより、雰囲気重視です。`},
+  {label:"ローモ", value:"Lomography vivid tone, clearly visible cross-processed colors, strong saturation shift, lo-fi contrast, vignette edges, unmistakable lomo look", help:`クセのある発色と周辺落ちで、ローファイ感が強いです。
+
+向く場面
+夜スナップ、遊びのある写真、ストリート。
+
+注意
+透明感・自然肌とは少し逆方向です。`},
+  {label:"シネスコープ", value:"CinemaScope film tone, clearly visible teal and orange grade, cinematic color separation, anamorphic blockbuster look, unmistakable movie-like grading", help:`映画っぽいティール&オレンジ寄りの色分離。作り込んだムードが出ます。
+
+向く場面
+夜景、ドラマチックな屋外、シネマ風ポートレート。
+
+注意
+暖色の素朴なフィルム感とは少しぶつかります。`},
+  {label:"ヴィンテージ 90s", value:"1990s vintage film tone, clearly visible retro color shift, muted warm mid-tones, nostalgic softness, unmistakable 90s film-photo mood", help:`90年代っぽい色ズレと少し眠い発色。懐かしい空気感が出ます。
+
+向く場面
+レトロ、日常、コンデジ/VHS系と合わせたい時。
+
+注意
+現代的なクリア感は少し弱まります。`},
+  {label:"ガサつき", value:"gritty rough film tone, clearly visible coarse texture and dry roughness, pronounced gritty surface feel, raw unpolished analog mood, unmistakably harsh tactile photo texture", help:`ザラつき・乾いた粗さ・アナログ感を強く出します。
+
+向く場面
+ストリート、夜、粗い質感を見せたい写真。
+
+注意
+透明感ややわらかさとは逆方向です。`}
 ];
 
 const OVERALL_TONES = [
@@ -1069,6 +1170,33 @@ function isIncompatibleOption(stateKey, itemValue) {
     }
   }
 
+  const closeFaceKeys = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
+  const closeFaceActive = closeFaceKeys.includes(state.subjectSize);
+
+  if (stateKey === "subjectSize") {
+    if (["macro", "veryClose"].includes(state.proximity) && itemValue === "widerBody") return true;
+    if (["slightlyWide", "wide"].includes(state.proximity) && ["extremeFace", "profileCloseup"].includes(itemValue)) return true;
+  }
+
+  if (stateKey === "proximity") {
+    if (closeFaceActive && ["slightlyWide", "wide"].includes(itemValue)) return true;
+    if (state.subjectSize === "widerBody" && ["macro", "veryClose"].includes(itemValue)) return true;
+    if (state.selfieMode === "off" && ["bodyNear", "armExtended"].includes(itemValue)) return true;
+  }
+
+  if (stateKey === "backgroundView") {
+    if (closeFaceActive && ["lower", "depth", "upper", "foreground"].includes(itemValue)) return true;
+  }
+
+  if (stateKey === "framing") {
+    if (closeFaceActive && itemValue === "wide") return true;
+  }
+
+  if (stateKey === "faceDirection") {
+    if (state.shotAngle === "back" && ["front", "threeQuarter"].includes(itemValue)) return true;
+    if (state.shotAngle === "side" && itemValue === "front") return true;
+  }
+
   if (stateKey === "effects") {
     if (isOvercastLikeWeatherActive() && itemValue === sparkleEffectValue()) return true;
 
@@ -1097,6 +1225,29 @@ function isIncompatibleOption(stateKey, itemValue) {
 function normalizeCompatibleState(changedKey) {
   if (["cameraHeight", "proximity", "shotAngle", "faceDirection", "subjectSize", "photoStyle", "selfieMode"].includes(changedKey)) {
     syncDerivedAngleState(document.getElementById("situation") ? document.getElementById("situation").value || "" : "");
+  }
+
+  const closeFaceKeys = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
+  if (closeFaceKeys.includes(state.subjectSize)) {
+    if (["lower", "depth", "upper", "foreground"].includes(state.backgroundView)) state.backgroundView = "auto";
+    if (state.framing === "wide") state.framing = "standard";
+    if (["slightlyWide", "wide"].includes(state.proximity)) state.proximity = "close";
+  }
+
+  if (state.subjectSize === "widerBody" && ["macro", "veryClose"].includes(state.proximity)) {
+    state.proximity = "standard";
+  }
+
+  if (state.selfieMode === "off" && ["bodyNear", "armExtended"].includes(state.proximity)) {
+    state.proximity = "standard";
+  }
+
+  if (state.shotAngle === "back" && ["front", "threeQuarter"].includes(state.faceDirection)) {
+    state.faceDirection = "turnBack";
+  }
+
+  if (state.shotAngle === "side" && state.faceDirection === "front") {
+    state.faceDirection = "profile";
   }
 
   if (changedKey === "weather" && isOvercastLikeWeatherActive()) {
@@ -1515,6 +1666,7 @@ function renderChips(containerId, items, stateKey) {
       normalizeCompatibleState(stateKey);
       renderAllOptionChips();
     };
+    if (item && item.help) bindChipHelp(btn, item);
     el.appendChild(btn);
   });
 }
