@@ -1,8 +1,9 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.3.3-camera-ui-generate-fix
+  Version: 5.3.4-close-body-selfie-guard
   Updated: 2026-07-14
   Changelog:
+    v5.3.4 - 腰だめ/体の近く/かなり近めの組み合わせで腕伸ばし自撮りに逃げないよう、CLOSE-BODY SELFIE ARM GUARDを追加。前景腕・長い腕・広角腕伸ばしを強く抑制
     v5.3.3 - 生成ボタン実行時の新カメラ項目getter未定義エラーを修正
     v5.3.2 - カメラ操作UIを「高さ」「距離 / 寄り方」「撮影アングル / 体の向き」に分解。背景の見せ方も「上 / 下 / 奥 / 手前」基準へ整理し、UIはライトモード固定に変更
     v5.3.1 - 視線・顔向き・接写質感を追加。表情/ポーズ/動きはAI自動導出のまま、横顔アップ・非カメラ目線・質感寄り接写を軽く指定できるよう改善
@@ -496,7 +497,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v5.3.3-camera-ui-generate-fix";
+const APP_VERSION = "v5.3.4-close-body-selfie-guard";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -529,7 +530,7 @@ const ANGLES = [
   {name:"SIDE PROFILE",     prompt:"(camera positioned from the true side of the face:1.9), (clear side-view or near-profile portrait angle:1.9), (lateral face plane emphasized:1.85), (camera remains around eye height from the side:1.88), (profile or near-profile eye line:1.82), (not overhead, not dramatic low-angle:1.85), (do not copy reference-image front-facing composition:1.9), " + CHIN_CONTROL},
   {name:"RECLINING SIDE EYE LEVEL", prompt:"(subject is lying down or reclining on her side:1.92), (camera placed beside her at face height:1.92), (side-on eye-level view from a reclining posture:1.9), (close lateral viewpoint while lying down:1.88), (intimate face-level side composition:1.85), (eyes meet the lens naturally from a sideways resting pose:1.82), (not overhead, not strong low-angle:1.88), (do not copy reference-image standing selfie composition:1.9), " + CHIN_CONTROL},
   {name:"LOW ANGLE",        prompt:"(ordinary low-angle selfie from in front of the body:1.8), (phone held slightly below chest level:1.8), (camera below the face and angled only mildly upward from the front:1.8), (viewer sees the subject from a lower front hand position:1.7), (face looking naturally toward the lens without pushing the chin forward:1.8), (not overhead:1.9), (not golden angle:1.8), (not waist-side vertical upshot:1.9), (not near-vertical upward camera axis:1.9), " + CHIN_CONTROL},
-  {name:"HIDDEN WAIST-HELD SELFIE", prompt:"(true hidden waist-held selfie:2.0), (smartphone held discreetly against her waist or lower torso:2.0), (elbow bent tightly and close to the body:2.0), (short folded arm, not extended toward the camera:2.0), (phone hidden near the body as if taking a quick discreet selfie:1.98), (camera viewpoint originates from very close to her lower torso or waist:2.0), (lens angled only slightly upward, not vertical:1.98), (close-body low handheld perspective:1.95), (torso feels close to the lens without extreme distortion:1.85), (natural low-angle selfie with subtle upward perspective only:1.85), (no arm's-length selfie pose:2.0), (no long stretched arm selfie:2.0), (no visible extended forearm reaching toward the camera:2.0), (no large foreground arm:2.0), (no selfie stick arm perspective:2.0), (not a normal raised-hand selfie:2.0), (not a dramatic low-angle upshot:1.98), (not a vertical upshot:1.98), (not camera pointing straight upward:1.98), (not near-vertical upward camera axis:1.98), (not phone extended far away:2.0), (do not copy the Face Reference image's camera angle, arm extension, chin posture, or composition:1.95), " + CHIN_CONTROL},
+  {name:"HIDDEN WAIST-HELD SELFIE", prompt:"(true close-body hidden waist-held selfie:2.0), (smartphone held discreetly against her waist or lower torso:2.0), (elbow bent tightly and close to the body:2.0), (short folded arm stays beside the torso and outside the crop:2.0), (phone hidden near the body as if taking a quick discreet selfie:1.98), (camera viewpoint originates from very close to her lower torso or waist:2.0), (lens angled only slightly upward, not vertical:1.98), (close-body low handheld perspective:1.95), (torso feels close to the lens without extreme distortion:1.85), (natural low-angle selfie with subtle upward perspective only:1.85), (forearm does not appear as a large diagonal foreground object:2.0), (hand and phone are cropped out or barely implied near the waist:1.98), (no arm's-length selfie pose:2.0), (no long stretched arm selfie:2.0), (no visible extended forearm reaching toward the camera:2.0), (no large foreground arm:2.0), (no selfie stick arm perspective:2.0), (not a normal raised-hand selfie:2.0), (not a dramatic low-angle upshot:1.98), (not a vertical upshot:1.98), (not camera pointing straight upward:1.98), (not near-vertical upward camera axis:1.98), (not phone extended far away:2.0), (do not copy the Face Reference image's camera angle, arm extension, chin posture, or composition:1.95), " + CHIN_CONTROL},
   {name:"WAIST-SIDE VERTICAL UPSHOT", prompt:"(legacy waist-side vertical upshot mode, not recommended for natural waist-held selfies:1.4), (strong vertical upshot only if explicitly required:1.4), (prefer HIDDEN WAIST-HELD SELFIE for natural discreet waist-level selfies:1.9), " + CHIN_CONTROL},
   {name:"SUPER LOW ANGLE",  prompt:"(dramatic super low-angle selfie:1.9), (phone held very low below the waist or near hip-to-thigh level:1.9), (strong upward perspective from far below the face:1.9), (camera looks up sharply with noticeable perspective distortion:1.8), (torso and jacket line strongly emphasized by low perspective:1.8), (face looking naturally toward the lens without jutting the chin:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9), (not waist-side vertical upshot:1.8), " + CHIN_CONTROL},
   {name:"DYNAMIC TILTED",   prompt:"(camera slightly rotated:1.8), (diagonal composition:1.8), (face tilted with camera in a natural way:1.7), (snapshot atmosphere:1.8), (do not copy reference-image chin posture:1.9), " + CHIN_CONTROL},
@@ -582,12 +583,12 @@ const CAMERA_HEIGHT_OPTIONS = [
 const PROXIMITY_OPTIONS = [
   {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera distance is automatically derived from the scene and chosen framing:1.82), (distance should feel intentional but natural:1.82)"},
   {label:"🔬 マクロ", key:"macro", value:"macro", prompt:"(macro-like camera distance for extreme close detail:1.88), (very near lens distance focusing on skin, lashes, lips, or small facial detail when appropriate:1.84)"},
-  {label:"🧿 かなり近め", key:"veryClose", value:"veryClose", prompt:"(camera is held very close to the subject:1.86), (intimate near-lens proximity with strong face presence:1.84)"},
+  {label:"🧿 かなり近め", key:"veryClose", value:"veryClose", prompt:"(camera is very close to the subject:1.86), (near-lens proximity with strong face presence:1.84), (close distance must not automatically imply a long outstretched selfie arm:1.88)"},
   {label:"🙂 近め", key:"close", value:"close", prompt:"(camera is close to the subject:1.84), (face and upper body feel near and readable:1.82)"},
   {label:"⚖️ 標準", key:"standard", value:"standard", prompt:"(camera distance is standard and balanced:1.82), (neither too near nor too far:1.8)"},
   {label:"↔️ 少し引き", key:"slightlyWide", value:"slightlyWide", prompt:"(camera is slightly pulled back:1.82), (a bit more room is left around the subject while keeping portrait priority:1.8)"},
   {label:"🧍 引き", key:"wide", value:"wide", prompt:"(camera is pulled back enough to show more body or place:1.82), (the subject appears smaller within a still-readable scene:1.8)"},
-  {label:"🤳 体の近くで持つ", key:"bodyNear", value:"bodyNear", prompt:"(the device is held close to the body rather than fully extended:1.84), (short arm distance or compact hold when in selfie mode:1.82)"},
+  {label:"🤳 体の近くで持つ", key:"bodyNear", value:"bodyNear", prompt:"(the device is held close to the body rather than fully extended:1.88), (short folded arm distance or compact hold when in selfie mode:1.86), (foreground arm stays mostly outside the frame:1.9), (not an arm-length selfie:1.9)"},
   {label:"🫱 腕を伸ばす", key:"armExtended", value:"armExtended", prompt:"(the device is held with a clearly extended arm or more open camera distance when in selfie mode:1.84), (extended reach helps show more surroundings naturally:1.82)"}
 ];
 
@@ -1783,7 +1784,7 @@ function resolveMotion(situation, dayMood, timeCtx, manualTension, manualEmotion
     "BACK OVER SHOULDER":"external over-the-shoulder view from behind, shoulder and hair foregrounded, slight glance back only if natural",
     "WINDOW BACK VIEW":"external camera behind her near the window, she looks outside, hair and shoulders outlined by room or window light",
     "LOW ANGLE":"ordinary front low-angle selfie, phone slightly below chest level, mild upward perspective only",
-    "HIDDEN WAIST-HELD SELFIE":"hidden waist-held selfie intent, phone close to waist or lower torso, short folded arm, close-body low handheld perspective",
+    "HIDDEN WAIST-HELD SELFIE":"hidden waist-held selfie intent, phone close to waist or lower torso, short folded arm, forearm kept outside the frame, no large foreground arm, close-body low handheld perspective",
     "WAIST-SIDE VERTICAL UPSHOT":"legacy vertical upshot disabled; use close-body waist-held logic, not a vertical upshot",
     "SUPER LOW ANGLE":"low selfie perspective kept physically plausible; lower frame may include outfit and a little thigh by framing, not by impossible torso tilt",
     "DYNAMIC TILTED":"slightly diagonal handheld composition, small body twist, natural off-center framing",
@@ -1953,6 +1954,36 @@ function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
   return "PORTRAIT / NIGHTSCAPE BALANCE:\n" + portraitBase.concat(nightBase).join(", ");
 }
 
+
+function isCloseBodySelfieCombo(angleName = "", cameraHeightKey = "auto", proximityKey = "auto", selfieMode = "auto") {
+  const lowCloseHeights = ["hiddenLow", "waist", "knee", "low"];
+  const closeDistances = ["veryClose", "bodyNear", "close", "auto"];
+  return selfieMode !== "off" && (
+    angleName === "HIDDEN WAIST-HELD SELFIE" ||
+    (lowCloseHeights.includes(cameraHeightKey) && closeDistances.includes(proximityKey))
+  );
+}
+
+function buildCloseBodySelfieArmGuard(angleName = "", cameraHeightMode = {}, proximityMode = {}, selfieMode = "auto") {
+  const shouldApply = isCloseBodySelfieCombo(
+    angleName,
+    cameraHeightMode && cameraHeightMode.key ? cameraHeightMode.key : "auto",
+    proximityMode && proximityMode.key ? proximityMode.key : "auto",
+    selfieMode
+  );
+  if (!shouldApply) return "";
+  return [
+    "(CLOSE-BODY SELFIE ARM GUARD active:1.98)",
+    "(camera is close to the torso or waist, not held at arm's length:2.0)",
+    "(the near arm stays folded close to the body and mostly outside the frame:2.0)",
+    "(no large foreground arm, no long diagonal forearm, no stretched arm reaching toward the lens:2.0)",
+    "(do not show an outstretched selfie arm even though this is a front-camera viewpoint:2.0)",
+    "(hand and phone are cropped out or hidden near the waist:1.96)",
+    "(upper body may feel close to the lens, but the arm must not become the closest dominant object:1.96)",
+    "(composition reads as compact close-body handheld, not normal raised-hand selfie:1.98)"
+  ].join(", ");
+}
+
 function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, shotAngleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult) {
   const overviewParts = [];
   overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
@@ -1990,6 +2021,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const characterModeLabel = state.characterMode === "off" ? "OFF / face reference only" : state.characterMode === "full" ? "FULL / legacy fixed character" : "LIGHT / face reference + atmosphere";
   const portraitBackgroundBalanceBlock = buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr);
   const leanSupportBlock = buildLeanSupportBlock(sceneText, motionResult && motionResult.poseCtx ? motionResult.poseCtx : detectPoseContext(sceneText));
+  const closeBodySelfieArmGuardBlock = buildCloseBodySelfieArmGuard(angle.name, cameraHeightMode, proximityMode, selfieMode);
 
   return `APP_VERSION: ${APP_VERSION}
 ANGLE_ENGINE: chin-control + face-reference-role-control + hidden-waist-held-selfie
@@ -2044,7 +2076,10 @@ ASPECT / ENVIRONMENT:
 CAMERA MODE:
 ${cameraModePrompt}
 
-CAMERA HEIGHT:
+${closeBodySelfieArmGuardBlock ? `CLOSE-BODY SELFIE ARM GUARD:
+${closeBodySelfieArmGuardBlock}
+
+` : ""}CAMERA HEIGHT:
 ${cameraHeightMode && cameraHeightMode.prompt ? cameraHeightMode.prompt : CAMERA_HEIGHT_OPTIONS[0].prompt}
 
 CAMERA DISTANCE / PROXIMITY:
@@ -2613,6 +2648,7 @@ function handleGenerate() {
   const selectedCloseupTextureLabel = (CLOSEUP_TEXTURE_OPTIONS.find(s => s.value === (state.closeupTexture || CLOSEUP_TEXTURE_OPTIONS[0].value))?.label || "🎲 おまかせ");
   const selectedGazeLabel = (GAZE_OPTIONS.find(g => g.value === (state.gaze || GAZE_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
   const selectedFaceDirectionLabel = (FACE_DIRECTION_OPTIONS.find(f => f.value === (state.faceDirection || FACE_DIRECTION_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
+  const closeBodySelfieGuardSummary = isCloseBodySelfieCombo(angle.name, getCameraHeightMode().key, getProximityMode().key, getSelfieMode(document.getElementById("situation").value || "")) ? "ON" : "OFF";
   const effectWarning = getEffectWarning(state.effects);
   const transparentPresetHint = getTransparentSmartphonePresetHint(state.effects);
   const compatibilityHint = getCompatibilityHint();
@@ -2634,6 +2670,7 @@ function handleGenerate() {
     "🔎 <b style='color:#c4b5fd'>距離 / 寄り方</b>：" + selectedProximityLabel + "<br>" +
     "🧭 <b style='color:#c4b5fd'>撮影アングル / 体の向き</b>：" + selectedShotAngleLabel + "<br>" +
     "📸 <b style='color:#c4b5fd'>導出カメラ位置/アングル</b>：" + selectedAngleModeLabel + " → " + angle.name + "<br>" +
+    "🫱 <b style='color:#c4b5fd'>近接腕ガード</b>：" + closeBodySelfieGuardSummary + "<br>" +
     "👀 <b style='color:#c4b5fd'>視線</b>：" + selectedGazeLabel + "<br>" +
     "🙂 <b style='color:#c4b5fd'>顔向き</b>：" + selectedFaceDirectionLabel + "<br>" +
     "🧍 <b style='color:#c4b5fd'>構図/被写体サイズ</b>：" + selectedSubjectSizeLabel + "<br>" +
