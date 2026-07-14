@@ -248,7 +248,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">優先順位整理 + フィルム拡張 v6.0.0</div>
+    <div class="header-sub">コーデシート優先 v6.1.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -282,7 +282,7 @@
   <!-- Outfit reference -->
   <div class="card card-dark">
     <div class="slabel">コーディネート画像参照 — 2枚目の添付画像</div>
-    <div class="hint">1枚目は被写体/顔ID、2枚目は服装・配色・シルエット参照として扱います。コーデ画像の顔・髪型・体型・ポーズ・背景はコピーしません。</div>
+    <div class="hint">1枚目は顔・体、2枚目は服装専用です。2枚目がコーディネートシートの場合は「SHEET」を選びます。シート内の文字・アイテム枠・色パレットを優先し、1枚目の服はコピーしません。</div>
     <div class="chips" id="outfitReferenceModeChips"></div>
   </div>
 
@@ -503,7 +503,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v6.0.0-priority-film-help";
+const APP_VERSION = "v6.1.0-coordinate-sheet-priority";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -513,7 +513,8 @@ const CHARACTER_MODE_OPTIONS = [
 const OUTFIT_REFERENCE_MODE_OPTIONS = [
   {label:"🚫 OFF / 使わない", key:"off", value:"off"},
   {label:"✨ LIGHT / 色・雰囲気", key:"light", value:"light"},
-  {label:"👗 FULL / 服装を強めに参照", key:"full", value:"full"},
+  {label:"👗 FULL / 着用写真を参照", key:"full", value:"full"},
+  {label:"📋 SHEET / コーデシート優先", key:"sheet", value:"sheet"},
 ];
 
 const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosphere:1.5),
@@ -2047,18 +2048,38 @@ function buildOutfitReferenceBlock() {
   const mode = getOutfitReferenceMode().key;
   if (mode === "off") return "";
   const base = `OUTFIT / COORDINATE REFERENCE:
-(use the second attached image as outfit and coordinate reference only:1.98),
-(apply the referenced outfit to the locked subject identity from the first image:1.98),
-(do not copy the outfit reference person's face, identity, hair, body type, bust size, waist width, hip width, limb proportions, pose, camera angle, framing, background, or lighting:1.98),
-(keep the subject face and bodyline from the character lock while borrowing clothing design from the outfit reference:1.95)`;
+(use the second attached image as the only outfit and coordination reference:2.0),
+(apply the referenced outfit to the locked subject identity and body from the first image:2.0),
+(the first image controls face and body only; the first image must not control clothing:2.0),
+(do not copy any shirt, blouse, skirt, pants, jacket, bag, shoes, color, pattern, fabric, collar, sleeve length, or accessories from the first image:2.0),
+(if the first image clothing conflicts with the second image outfit, the second image always wins for clothing:2.0),
+(do not copy the outfit reference person's face, identity, hair, body type, bust size, waist width, hip width, limb proportions, pose, camera angle, framing, background, or lighting:2.0),
+(keep the subject face and bodyline from the first image while borrowing clothing only from the second image:1.98)`;
   if (mode === "light") {
     return base + `,
-(reference only the outfit mood, color palette, rough garment category, and styling atmosphere:1.88),
+(reference only the outfit mood, color palette, rough garment category, and styling atmosphere from the second image:1.9),
 (scene text and manual clothing description may override small outfit details:1.9)`;
   }
+  if (mode === "sheet") {
+    return base + `,
+
+COORDINATE SHEET READING MODE:
+(the second attached image is a coordinate sheet, not a person photo:2.0),
+(read the coordinate sheet text, item labels, item-name fields, item illustration boxes, accessory boxes, color palette, point notes, and style point as outfit instructions:2.0),
+(ignore the sheet layout, borders, title typography, blank boxes, template lines, and card design as visual objects in the generated scene:2.0),
+(use only the filled clothing item information from the sheet; empty item boxes mean no item in that category:1.98),
+(the coordinate sheet text and item image are stronger than any clothing visible in the first image:2.0),
+(if the sheet contains ONE-PIECE, treat that as the main garment and do not replace it with the first image shirt or skirt:2.0),
+(if the sheet says towel wrap one-piece, bath towel wrap dress, white pile fabric, ivory, ecru, cream, light beige, or relax bath-wrap coordinate, reflect those outfit details strongly:2.0),
+(the generated outfit must visibly follow the coordinate sheet garment category, color palette, fabric impression, and styling concept:1.98),
+(do not output the first image's white blouse, plaid skirt, office outfit, or shoulder bag unless those items also appear in the coordinate sheet:2.0),
+(do not simplify the coordinate sheet into a generic white shirt or generic skirt:2.0),
+(scene text may override location, pose, camera, mood, and action, but must not erase the coordinate sheet outfit unless explicitly stated:1.96)`;
+  }
   return base + `,
-(copy the clothing coordination, garment types, layering, color balance, fabric impression, silhouette balance, shoes, bag, and accessories from the outfit reference:1.92),
-(preserve the outfit reference styling strongly while adapting it to the locked subject's slender I-line body:1.9),
+(copy the clothing coordination, garment types, layering, color balance, fabric impression, silhouette balance, shoes, bag, and accessories from the second image:1.96),
+(preserve the outfit reference styling strongly while adapting it to the locked subject's body from the first image:1.94),
+(do not fall back to the first image clothing when the second image is harder to interpret:2.0),
 (scene text may override location, pose, camera, mood, and action but should not erase the referenced outfit unless explicitly stated:1.88)`;
 }
 
@@ -2810,6 +2831,7 @@ function handleGenerate() {
     "🕐 <b style='color:#c4b5fd'>時間帯</b>：" + t.timeCtx.label + " / " + t.timeCtx.en + "<br>" +
     "🔒 <b style='color:#c4b5fd'>固定キャラモード</b>：" + getLabelByValue(CHARACTER_MODE_OPTIONS, state.characterMode) + "<br>" +
     "👗 <b style='color:#c4b5fd'>コーデ参照</b>：" + selectedOutfitReferenceLabel + "<br>" +
+    (state.outfitReferenceMode === "sheet" ? "📋 <b style='color:#c4b5fd'>コーデシート読取</b>：ON / 2枚目の文字・アイテム枠・色パレット優先<br>" : "") +
     "📅 <b style='color:#c4b5fd'>曜日 mood</b>：" + DAY_MOOD[t.day] + "<br>" +
     "☀️ <b style='color:#c4b5fd'>天気</b>：" + selectedWeatherLabel + "<br>" +
     "🎞️ <b style='color:#c4b5fd'>フィルムトーン</b>：" + selectedFilmLabel + "<br>" +
