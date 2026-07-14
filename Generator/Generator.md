@@ -194,6 +194,14 @@
   }
   .hidden { display: none; }
   .hint { font-size: 11px; color: var(--text-sub); margin-bottom: 8px; }
+  .compat-status {
+    margin-top: 8px; padding: 9px 10px; border-radius: 10px;
+    background: #f5f3ff; border: 1px solid #ddd6fe;
+    color: #5b21b6; font-size: 11px; line-height: 1.6;
+  }
+  .compat-status.ok { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
+  .compat-status.warn { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
+
 
   .chip.has-help::after {
     content: "？";
@@ -248,7 +256,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">コーデシート優先 v6.1.0</div>
+    <div class="header-sub">選択整合性エンジン v6.2.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -290,6 +298,7 @@
   <div class="card card-dark">
     <div class="slabel">優先順位ガイド</div>
     <div class="hint">この順番で効きます：①顔 / 体（1枚目） → ②コーディネート（2枚目） → ③今回のシーン → ④カメラ / 構図 → ⑤雰囲気・気分 → ⑥天気・光 → ⑦フィルムトーン / 作品トーン / エフェクト。後ろの項目は前の項目を壊さない前提で効きます。</div>
+    <div class="compat-status ok" id="compatStatus">上から選ぶと、矛盾する下位項目は自動で無効化されます。</div>
   </div>
 
   <!-- ① Scene only -->
@@ -302,145 +311,166 @@
   <!-- Selfie mode -->
   <div class="card">
     <div class="slabel">② 自撮り / 第三者撮影</div>
-    <div class="hint">まず撮影の前提を決めます。自撮りONならスマホ手持ち視点、OFFなら他人が撮った自然なポートレート/スナップ扱いです。</div>
+    <div class="hint">撮影の前提です。ここで選んだ方式に合わない持ち方・後方撮影は、下の項目で選べなくなります。</div>
     <div class="chips" id="selfieModeChips"></div>
   </div>
 
   <!-- Camera height -->
   <div class="card">
     <div class="slabel">③ カメラの高さ</div>
-    <div class="hint">膝あたり・腰・目線・真上など、まずカメラがどの高さにあるかを決めます。</div>
+    <div class="hint">レンズの物理的な高さだけを指定します。撮影方向や画面の傾きは別項目です。</div>
     <div class="chips" id="cameraHeightChips"></div>
   </div>
 
   <!-- Camera distance -->
   <div class="card">
-    <div class="slabel">④ 距離 / 寄り方</div>
-    <div class="hint">マクロ・かなり近め・近め・標準・引きなど、被写体への近さを決めます。</div>
+    <div class="slabel">④ カメラ距離 / 寄り方</div>
+    <div class="hint">マクロ・かなり近め・標準・引きなど、被写体までの距離だけを指定します。</div>
     <div class="chips" id="proximityChips"></div>
   </div>
 
-  <!-- Shot angle / body relation -->
+  <!-- Camera hold -->
   <div class="card">
-    <div class="slabel">⑤ 撮影アングル / 体との関係</div>
-    <div class="hint">正面・真横・見返り・背中からなど、体に対してどこから撮るかを指定します。ポーズ自体はシーンからAIが自然に導きます。</div>
+    <div class="slabel">⑤ 自撮り時の持ち方 / 腕</div>
+    <div class="hint">自撮り時だけ使用します。「体の近く」と「腕を伸ばす」を距離から分離しました。第三者撮影では自動以外を選べません。</div>
+    <div class="chips" id="cameraHoldChips"></div>
+  </div>
+
+  <!-- Shot direction -->
+  <div class="card">
+    <div class="slabel">⑥ 撮影方向 / 体との関係</div>
+    <div class="hint">正面・真横・見返り・背中側など、体に対してカメラがどこにあるかだけを指定します。歩く・寝転ぶなどの動作は①シーンに書きます。</div>
     <div class="chips" id="shotAngleChips"></div>
+  </div>
+
+  <!-- Lens direction -->
+  <div class="card">
+    <div class="slabel">⑦ レンズの向き</div>
+    <div class="hint">同じカメラ高さのまま、レンズを水平・上向き・下向きのどこへ向けるかを決めます。</div>
+    <div class="chips" id="lensDirectionChips"></div>
+  </div>
+
+  <!-- Camera roll -->
+  <div class="card">
+    <div class="slabel">⑧ 画面の傾き / カメラロール</div>
+    <div class="hint">カメラ位置を変えず、画面だけを水平または斜めにします。「斜め」は低いカメラ位置を上書きしません。</div>
+    <div class="chips" id="cameraRollChips"></div>
   </div>
 
   <!-- Face direction -->
   <div class="card">
-    <div class="slabel">⑥ 顔向き</div>
-    <div class="hint">正面・斜め・横顔・振り向きなど、顔の向きだけを指定します。</div>
+    <div class="slabel">⑨ 顔向き</div>
+    <div class="hint">正面・斜め・横顔・振り向き・顔を見せない、の顔方向だけを指定します。</div>
     <div class="chips" id="faceDirectionChips"></div>
   </div>
 
   <!-- Gaze -->
   <div class="card">
-    <div class="slabel">⑦ 視線</div>
-    <div class="hint">カメラ目線にするか、少し外すか、遠くを見るかを軽く指定できます。未指定ならシーンと雰囲気からAIが導きます。</div>
+    <div class="slabel">⑩ 視線</div>
+    <div class="hint">顔が見える組み合わせだけ選択できます。背中向き・顔を見せない場合は自動以外を無効化します。</div>
     <div class="chips" id="gazeChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑧ 構図 / 被写体サイズ</div>
-    <div class="hint">顔中心か、上半身か、服や体も含めて広めに見せるかを選びます。顔どアップ系では背景方向と余白の一部が自動整理されます。</div>
+    <div class="slabel">⑪ 構図 / 被写体サイズ</div>
+    <div class="hint">距離・高さに合う構図だけ選択できます。マクロと全身寄りなど、成立しない組み合わせは無効化します。</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Background view -->
   <div class="card">
-    <div class="slabel">⑨ 背景の見せ方 / 方向</div>
-    <div class="hint">背景を上・下・奥・手前のどこに寄せるかを決めます。夜空なら「上」、水面や花なら「下」、景色なら「奥」が基本です。</div>
+    <div class="slabel">⑫ 背景の見せ方 / 方向</div>
+    <div class="hint">上・下・奥・手前を指定します。顔の超接写では、広い背景方向を自動で無効化します。</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑩ 余白 / リーディングスペース</div>
-    <div class="hint">被写体を画像いっぱいにするか、少し余白を残すか、場所も見せるかを選びます。</div>
+    <div class="slabel">⑬ 余白 / リーディングスペース</div>
+    <div class="hint">寄り方や被写体サイズと矛盾しない余白だけ選択できます。</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑪ 写真の自然さ / 演出度</div>
-    <div class="hint">日常セルフィー寄りか、少し盛るか、モデル風か、ファッション誌風かを選びます。</div>
+    <div class="slabel">⑭ 写真の自然さ / 演出度</div>
+    <div class="hint">自撮り・第三者撮影のどちらでも使える、カメラ方式に依存しない表現へ整理しました。</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Mood / expression auto-derivation -->
   <div class="card">
-    <div class="slabel">⑫ 雰囲気・気分</div>
-    <div class="hint">表情・ポーズ・動きは、①シチュエーションとここで選んだ雰囲気からAIが自然に自動導出します。</div>
+    <div class="slabel">⑮ 雰囲気・気分</div>
+    <div class="hint">表情・姿勢・小さな動きは、①シーンとここからAIが導出します。上で選んだ撮影条件を変更してはいけません。</div>
     <div class="chips" id="moodChips"></div>
   </div>
 
   <!-- Garment backlight response -->
   <div class="card">
-    <div class="slabel">⑬ 逆光時の布の見え方</div>
+    <div class="slabel">⑯ 逆光時の布の見え方</div>
     <div class="hint">服の素材分類ではなく、逆光で布が光を通す・ふんわり見えるかだけを選びます。</div>
     <div class="chips" id="garmentLightChips"></div>
   </div>
 
   <!-- Chest silhouette -->
   <div class="card">
-    <div class="slabel">⑭ 胸シルエット</div>
+    <div class="slabel">⑰ 胸シルエット</div>
     <div class="hint">1枚目の体型を基準に、服の上から見えるシルエットだけを自然に調整します。控えめ＝普通サイズ寄り、立体感/ラインくっきり＝少し大きめです。</div>
     <div class="chips" id="bustChips"></div>
   </div>
 
   <!-- Hip silhouette -->
   <div class="card">
-    <div class="slabel">⑮ ヒップ / 下半身シルエット</div>
+    <div class="slabel">⑱ ヒップ / 下半身シルエット</div>
     <div class="hint">細身Iラインを維持したまま、ヒップの丸み・上向き感を調整します。横に広げない方向です。</div>
     <div class="chips" id="hipChips"></div>
   </div>
 
   <!-- Weather -->
   <div class="card">
-    <div class="slabel">⑯ 天気を選択</div>
+    <div class="slabel">⑲ 天気を選択</div>
     <div class="chips" id="weatherChips"></div>
   </div>
 
   <!-- Film tone -->
   <div class="card">
-    <div class="slabel">⑰ フィルムトーン / 質感 ⓘ</div>
+    <div class="slabel">⑳ フィルムトーン / 質感 ⓘ</div>
     <div class="hint">長押しでヘルプ。色味・質感・粒子感のベースを決めます。フィルムトーンは仕上げ層なので、顔・体・コーデ・カメラ選択は壊さない前提で効きます。</div>
     <div class="chips" id="filmChips"></div>
   </div>
 
   <!-- Overall tone -->
   <div class="card">
-    <div class="slabel">⑱ 作品トーン</div>
+    <div class="slabel">㉑ 作品トーン</div>
     <div class="hint">写真全体の印象を選びます。反対方向の組み合わせは自動整理されます。</div>
     <div class="chips" id="toneChips"></div>
   </div>
 
   <!-- Effects -->
   <div class="card">
-    <div class="slabel">⑲ エフェクト（複数選択可） ⓘ</div>
+    <div class="slabel">㉒ エフェクト（複数選択可） ⓘ</div>
     <div class="hint">長押しでヘルプ。相反するエフェクトは同時選択できません。まずは3〜5個くらいがおすすめです。</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
   <!-- Effect strength -->
   <div class="card">
-    <div class="slabel">⑳ エフェクト強度</div>
+    <div class="slabel">㉓ エフェクト強度</div>
     <div class="hint">選択したエフェクト内のweight数値を一括で倍率補正します。控えめは弱め、標準は基準値、強め・盛り盛りは各エフェクトの効きを直接強くします。</div>
     <div class="chips" id="effectStrengthChips"></div>
   </div>
 
   <!-- Skin finish -->
   <div class="card">
-    <div class="slabel">㉑ 肌の見え方 / 肌質感</div>
+    <div class="slabel">㉔ 肌の見え方 / 肌質感</div>
     <div class="hint">肌の仕上がりを選びます。自然は標準、しっとりは保湿感、ツヤありはハイライトが少し乗りやすくなります。</div>
     <div class="chips" id="skinFinishChips"></div>
   </div>
 
   <!-- Closeup texture -->
   <div class="card">
-    <div class="slabel">㉒ 接写質感</div>
+    <div class="slabel">㉕ 接写質感</div>
     <div class="hint">顔アップや横顔アップで効きやすい近接描写の質感です。まつ毛・唇・肌のきめなどの描写密度を調整します。</div>
     <div class="chips" id="closeupTextureChips"></div>
   </div>
@@ -503,7 +533,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v6.1.1-dynamic-coordinate-sheet-fix";
+const APP_VERSION = "v6.2.0-selection-compatibility-engine";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -530,23 +560,23 @@ const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosph
 const CHIN_CONTROL = "(neutral chin position:1.95), (chin not thrust forward:1.95), (no jutting chin:1.95), (no projected jaw:1.95), (no raised chin:1.9), (face kept level or only very slightly tilted:1.9), (neck relaxed and not stretched:1.85), (mouth and jaw relaxed naturally:1.85), (natural jaw posture:1.85)";
 
 const ANGLES = [
-  {name:"SUPER HIGH ANGLE", prompt:"(true overhead super high-angle selfie:1.9), (arm fully extended above head:1.9), (smartphone high over her head looking almost straight down:1.9), (bird's-eye framing of face, shoulders, outfit and surroundings:1.8), (subject keeps a natural face angle without looking up excessively:1.9), (eyes gently meet the lens without forcing an upward gaze:1.8), (do not copy any reference-image chin lift or arm-extension pose:1.9), (not eye-level:1.9), (not low-angle:1.9), " + CHIN_CONTROL},
-  {name:"GOLDEN ANGLE",     prompt:"(camera slightly above eye level looking down:1.9), (head-to-chest framing:1.8), (three-quarter facial view:1.8), (face 30-45 degrees from camera:1.8), (eyes naturally meet the lens:1.8), (flattering high selfie angle without exaggerated upward face tilt:1.9), (do not copy reference-image chin posture:1.9), " + CHIN_CONTROL},
-  {name:"HIGH ANGLE",       prompt:"(camera clearly above eye level:1.8), (head-to-chest framing:1.8), (natural relaxed face angle:1.8), (eyes looking naturally toward the lens without lifting the chin:1.9), (do not copy reference-image upward face tilt:1.9), " + CHIN_CONTROL},
-  {name:"EYE LEVEL",        prompt:"(camera at eye height:1.9), (head-to-chest framing:1.8), (face angled 10-30 degrees:1.7), (relaxed everyday selfie:1.8), (minimal distortion:1.7), (do not copy reference-image arm extension or chin posture:1.9), " + CHIN_CONTROL},
-  {name:"SIDE PROFILE",     prompt:"(camera positioned from the true side of the face:1.9), (clear side-view or near-profile portrait angle:1.9), (lateral face plane emphasized:1.85), (camera remains around eye height from the side:1.88), (profile or near-profile eye line:1.82), (not overhead, not dramatic low-angle:1.85), (do not copy reference-image front-facing composition:1.9), " + CHIN_CONTROL},
-  {name:"RECLINING SIDE EYE LEVEL", prompt:"(subject is lying down or reclining on her side:1.92), (camera placed beside her at face height:1.92), (side-on eye-level view from a reclining posture:1.9), (close lateral viewpoint while lying down:1.88), (intimate face-level side composition:1.85), (eyes meet the lens naturally from a sideways resting pose:1.82), (not overhead, not strong low-angle:1.88), (do not copy reference-image standing selfie composition:1.9), " + CHIN_CONTROL},
-  {name:"LOW ANGLE",        prompt:"(ordinary low-angle selfie from in front of the body:1.8), (phone held slightly below chest level:1.8), (camera below the face and angled only mildly upward from the front:1.8), (viewer sees the subject from a lower front hand position:1.7), (face looking naturally toward the lens without pushing the chin forward:1.8), (not overhead:1.9), (not golden angle:1.8), (not waist-side vertical upshot:1.9), (not near-vertical upward camera axis:1.9), " + CHIN_CONTROL},
-  {name:"HIDDEN WAIST-HELD SELFIE", prompt:"(true close-body hidden waist-held selfie:2.0), (smartphone held discreetly against her waist or lower torso:2.0), (elbow bent tightly and close to the body:2.0), (short folded arm stays beside the torso and outside the crop:2.0), (phone hidden near the body as if taking a quick discreet selfie:1.98), (camera viewpoint originates from very close to her lower torso or waist:2.0), (lens angled only slightly upward, not vertical:1.98), (close-body low handheld perspective:1.95), (torso feels close to the lens without extreme distortion:1.85), (natural low-angle selfie with subtle upward perspective only:1.85), (forearm does not appear as a large diagonal foreground object:2.0), (hand and phone are cropped out or barely implied near the waist:1.98), (no arm's-length selfie pose:2.0), (no long stretched arm selfie:2.0), (no visible extended forearm reaching toward the camera:2.0), (no large foreground arm:2.0), (no selfie stick arm perspective:2.0), (not a normal raised-hand selfie:2.0), (not a dramatic low-angle upshot:1.98), (not a vertical upshot:1.98), (not camera pointing straight upward:1.98), (not near-vertical upward camera axis:1.98), (not phone extended far away:2.0), (do not copy the Face Reference image's camera angle, arm extension, chin posture, or composition:1.95), " + CHIN_CONTROL},
-  {name:"WAIST-SIDE VERTICAL UPSHOT", prompt:"(legacy waist-side vertical upshot mode, not recommended for natural waist-held selfies:1.4), (strong vertical upshot only if explicitly required:1.4), (prefer HIDDEN WAIST-HELD SELFIE for natural discreet waist-level selfies:1.9), " + CHIN_CONTROL},
-  {name:"SUPER LOW ANGLE",  prompt:"(dramatic super low-angle selfie:1.9), (phone held very low below the waist or near hip-to-thigh level:1.9), (strong upward perspective from far below the face:1.9), (camera looks up sharply with noticeable perspective distortion:1.8), (torso and jacket line strongly emphasized by low perspective:1.8), (face looking naturally toward the lens without jutting the chin:1.8), (not overhead:1.9), (not golden angle:1.9), (not high-angle selfie:1.9), (not waist-side vertical upshot:1.8), " + CHIN_CONTROL},
-  {name:"DYNAMIC TILTED",   prompt:"(camera slightly rotated:1.8), (diagonal composition:1.8), (face tilted with camera in a natural way:1.7), (snapshot atmosphere:1.8), (do not copy reference-image chin posture:1.9), " + CHIN_CONTROL},
-  {name:"OVER SHOULDER",    prompt:"(face partially turned away:1.7), (looking back toward lens:1.8), (shoulder line emphasized:1.7), (candid feel:1.7), (do not copy reference-image selfie arm extension:1.9), " + CHIN_CONTROL},
-  {name:"BACK VIEW",        prompt:"(non-selfie back-view portrait:1.95), (camera behind the subject looking at her back and shoulders:1.95), (face mostly not visible or only a slight side hint:1.85), (back of outfit and hair silhouette are visible:1.88), (quiet rear-view fashion composition:1.9), (external photographer viewpoint, not selfie:1.95), (no front chest emphasis:1.95), (no selfie arm:1.95), " + CHIN_CONTROL},
-  {name:"DIAGONAL BACK VIEW", prompt:"(non-selfie diagonal back-view portrait:1.95), (camera behind and slightly to the side of the subject:1.95), (three-quarter rear angle with shoulder line and side profile hint:1.9), (face only partially visible if she turns slightly:1.78), (backlit outer clothing edge can be visible without body detail:1.86), (external photographer viewpoint, not selfie:1.95), (no front chest emphasis:1.95), " + CHIN_CONTROL},
-  {name:"BACK OVER SHOULDER", prompt:"(non-selfie over-the-shoulder view from behind:1.92), (camera behind her shoulder as she slightly looks away or glances back:1.88), (back shoulder line and hair are foregrounded:1.86), (rear-to-side fashion portrait composition:1.9), (external camera viewpoint, not selfie:1.95), (no arm-length selfie perspective:1.95), (no front chest emphasis:1.95), " + CHIN_CONTROL},
-  {name:"WINDOW BACK VIEW", prompt:"(non-selfie rear-view portrait by a window:1.95), (subject seen from behind while looking outside:1.95), (window light outlines hair, shoulders, and outer clothing edges:1.88), (room behind her is dim and quiet:1.82), (external photographer viewpoint, not selfie:1.95), (opaque clothing stays non-revealing in backlight:1.95), (no see-through body detail:1.95), " + CHIN_CONTROL},
-  {name:"WALKING",          prompt:"(captured mid-walk:1.8), (subtle body motion:1.7), (hair movement from motion:1.7), (face turned slightly to camera:1.7), (do not copy reference-image chin posture or composition:1.9), " + CHIN_CONTROL},
+  {name:"SUPER HIGH ANGLE", prompt:"(camera is physically far above the subject or overhead:1.96), (strong top-down perspective is clearly visible:1.94), (not eye-level and not low-angle:1.98), " + CHIN_CONTROL},
+  {name:"GOLDEN ANGLE", prompt:"(camera is slightly above eye level with a flattering mild downward perspective:1.9), (three-quarter facial readability when compatible with selected face direction:1.86), " + CHIN_CONTROL},
+  {name:"HIGH ANGLE", prompt:"(camera is clearly above eye level:1.92), (gentle downward perspective while preserving selected body direction:1.9), " + CHIN_CONTROL},
+  {name:"EYE LEVEL", prompt:"(camera is physically around eye height:1.94), (minimal vertical perspective distortion:1.9), " + CHIN_CONTROL},
+  {name:"SIDE PROFILE", prompt:"(camera is positioned at the true side of the subject:1.94), (lateral face or body relation remains readable:1.92), " + CHIN_CONTROL},
+  {name:"RECLINING SIDE EYE LEVEL", prompt:"(camera is beside a reclining subject near face height:1.92), (side-on resting geometry remains physically plausible:1.9), " + CHIN_CONTROL},
+  {name:"LOW ANGLE", prompt:"(camera is physically below the face and upper torso:1.94), (mild upward perspective is visible:1.92), (not eye-level and not overhead:1.98), " + CHIN_CONTROL},
+  {name:"HIDDEN WAIST-HELD SELFIE", prompt:"(camera viewpoint originates close to waist or lower-torso height:1.98), (short folded-arm close-body perspective when selfie mode is active:1.98), (no large foreground arm:2.0), " + CHIN_CONTROL},
+  {name:"WAIST-SIDE VERTICAL UPSHOT", prompt:"(legacy waist-side vertical upshot support:1.5), (use only when compatible with explicit selected controls:1.8), " + CHIN_CONTROL},
+  {name:"SUPER LOW ANGLE", prompt:"(camera is physically near knee-to-upper-thigh level:1.98), (strong upward perspective from far below the face is clearly visible:1.96), (not eye-level and not high-angle:2.0), " + CHIN_CONTROL},
+  {name:"DYNAMIC TILTED", prompt:"(diagonal frame rotation only:1.86), (camera roll must not change selected height, distance, or body direction:1.98), " + CHIN_CONTROL},
+  {name:"OVER SHOULDER", prompt:"(clear over-shoulder relation:1.9), (body and shoulder geometry remain physically believable:1.88), " + CHIN_CONTROL},
+  {name:"BACK VIEW", prompt:"(camera is behind the subject:1.96), (rear-view body relation dominates:1.94), (face may remain hidden unless a turn-back face direction is selected:1.9), " + CHIN_CONTROL},
+  {name:"DIAGONAL BACK VIEW", prompt:"(camera is behind and diagonally to the side:1.96), (rear-diagonal relation remains clear:1.94), " + CHIN_CONTROL},
+  {name:"BACK OVER SHOULDER", prompt:"(camera is behind the shoulder with a clear rear-to-side relation:1.94), (turn-back geometry remains natural:1.92), " + CHIN_CONTROL},
+  {name:"WINDOW BACK VIEW", prompt:"(rear-view portrait near a window:1.92), (window light may outline hair and opaque clothing edges:1.88), " + CHIN_CONTROL},
+  {name:"WALKING", prompt:"(captured during natural walking motion:1.88), (movement remains physically believable:1.86), " + CHIN_CONTROL}
 ];
 
 const ANGLE_UI_OPTIONS = [
@@ -574,43 +604,59 @@ const ANGLE_UI_OPTIONS = [
 ];
 
 const CAMERA_HEIGHT_OPTIONS = [
-  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera height is automatically derived from the scene, support, and intended framing:1.82), (camera placement should feel physically natural for the situation:1.84)"},
-  {label:"📉 かなり下", key:"veryLow", value:"veryLow", prompt:"(camera positioned very low relative to the body:1.86), (strong low placement near thigh-to-knee level when plausible:1.82)"},
-  {label:"🤫 腰だめ寄り", key:"hiddenLow", value:"hiddenLow", prompt:"(camera carried low and close to the body:1.84), (waist-held or hidden-low camera placement when plausible:1.82)"},
-  {label:"🪑 座りで膝あたり", key:"knee", value:"knee", prompt:"(for seated or floor-level scenes, camera height sits around knee level:1.84), (the low seated camera placement stays physically believable:1.84)"},
-  {label:"⬇️ 少し下", key:"low", value:"low", prompt:"(camera is slightly below face level:1.82), (a mild low camera placement creates gentle upward perspective:1.8)"},
-  {label:"🧍 腰", key:"waist", value:"waist", prompt:"(camera height is around waist level:1.82), (mid-low viewpoint with believable body-scale perspective:1.8)"},
-  {label:"🫁 胸", key:"chest", value:"chest", prompt:"(camera height is around chest level:1.82), (natural upper-body level viewpoint:1.8)"},
-  {label:"👁️ 目線", key:"eye", value:"eye", prompt:"(camera sits around eye height:1.84), (balanced everyday viewpoint with minimal distortion:1.82)"},
-  {label:"⬆️ 少し上", key:"high", value:"high", prompt:"(camera is slightly above eye level:1.84), (gentle downward viewpoint while keeping proportions natural:1.82)"},
-  {label:"🙆 かなり上", key:"veryHigh", value:"veryHigh", prompt:"(camera is clearly above the head line:1.86), (high lifted viewpoint with believable arm or photographer position:1.82)"},
-  {label:"🔝 真上", key:"topDown", value:"topDown", prompt:"(camera looks from directly overhead or near-overhead:1.88), (top-down viewpoint is only used when the pose and support make it physically possible:1.84)"}
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera height is derived from the scene only when no explicit height is selected:1.86)"},
+  {label:"📉 かなり下", key:"veryLow", value:"veryLow", prompt:"(camera lens is physically positioned near knee-to-upper-thigh height:1.98), (do not move the camera to waist, chest, or eye level:2.0), (make this low physical position clearly visible in perspective:1.96)"},
+  {label:"🪑 座り時：膝あたり", key:"knee", value:"knee", prompt:"(in a seated scene, camera lens is physically positioned around the seated knees:1.98), (do not reinterpret this as a standing waist-level camera:2.0)"},
+  {label:"⬇️ 少し下", key:"low", value:"low", prompt:"(camera lens is physically slightly below chest-to-face level:1.96), (do not replace this with eye-level framing:1.98)"},
+  {label:"🧍 腰", key:"waist", value:"waist", prompt:"(camera lens is physically around waist height:1.98), (do not move it to chest or eye height:2.0)"},
+  {label:"🫁 胸", key:"chest", value:"chest", prompt:"(camera lens is physically around chest height:1.96), (do not replace this with eye-level or waist-level placement:1.98)"},
+  {label:"👁️ 目線", key:"eye", value:"eye", prompt:"(camera lens is physically around eye height:1.96), (balanced eye-level perspective:1.9)"},
+  {label:"⬆️ 少し上", key:"high", value:"high", prompt:"(camera lens is physically slightly above eye level:1.96), (do not collapse into ordinary eye-level framing:1.98)"},
+  {label:"🙆 かなり上", key:"veryHigh", value:"veryHigh", prompt:"(camera lens is physically well above the subject's head line:1.98), (high camera placement must remain clearly visible:1.96)"},
+  {label:"🔝 真上", key:"topDown", value:"topDown", prompt:"(camera lens is physically directly overhead or near-overhead:2.0), (true top-down placement, not merely a mild high angle:2.0)"}
 ];
 
 const PROXIMITY_OPTIONS = [
-  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera distance is automatically derived from the scene and chosen framing:1.82), (distance should feel intentional but natural:1.82)"},
-  {label:"🔬 マクロ", key:"macro", value:"macro", prompt:"(macro-like camera distance for extreme close detail:1.88), (very near lens distance focusing on skin, lashes, lips, or small facial detail when appropriate:1.84)"},
-  {label:"🧿 かなり近め", key:"veryClose", value:"veryClose", prompt:"(camera is very close to the subject:1.86), (near-lens proximity with strong face presence:1.84), (close distance must not automatically imply a long outstretched selfie arm:1.88)"},
-  {label:"🙂 近め", key:"close", value:"close", prompt:"(camera is close to the subject:1.84), (face and upper body feel near and readable:1.82)"},
-  {label:"⚖️ 標準", key:"standard", value:"standard", prompt:"(camera distance is standard and balanced:1.82), (neither too near nor too far:1.8)"},
-  {label:"↔️ 少し引き", key:"slightlyWide", value:"slightlyWide", prompt:"(camera is slightly pulled back:1.82), (a bit more room is left around the subject while keeping portrait priority:1.8)"},
-  {label:"🧍 引き", key:"wide", value:"wide", prompt:"(camera is pulled back enough to show more body or place:1.82), (the subject appears smaller within a still-readable scene:1.8)"},
-  {label:"🤳 体の近くで持つ", key:"bodyNear", value:"bodyNear", prompt:"(the device is held close to the body rather than fully extended:1.88), (short folded arm distance or compact hold when in selfie mode:1.86), (foreground arm stays mostly outside the frame:1.9), (not an arm-length selfie:1.9)"},
-  {label:"🫱 腕を伸ばす", key:"armExtended", value:"armExtended", prompt:"(the device is held with a clearly extended arm or more open camera distance when in selfie mode:1.84), (extended reach helps show more surroundings naturally:1.82)"}
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera distance is derived from the selected framing only when no explicit distance is selected:1.86)"},
+  {label:"🔬 マクロ", key:"macro", value:"macro", prompt:"(macro-like lens-to-subject distance:1.98), (tiny facial or material details dominate:1.96), (do not widen to upper-body or full-outfit framing:2.0)"},
+  {label:"🧿 かなり近め", key:"veryClose", value:"veryClose", prompt:"(camera is extremely close to the subject:1.96), (strong near-lens perspective must remain visible:1.94)"},
+  {label:"🙂 近め", key:"close", value:"close", prompt:"(camera is clearly close to the subject:1.94), (face and nearby upper body remain prominent:1.9)"},
+  {label:"⚖️ 標準", key:"standard", value:"standard", prompt:"(camera distance is standard and balanced:1.9), (neither close-up nor pulled-back:1.88)"},
+  {label:"↔️ 少し引き", key:"slightlyWide", value:"slightlyWide", prompt:"(camera is slightly pulled back to include more body or place:1.92), (do not reinterpret this as a face close-up:1.96)"},
+  {label:"🧍 引き", key:"wide", value:"wide", prompt:"(camera is clearly pulled back:1.96), (more of the body and environment must be visible:1.94), (do not crop into a close portrait:1.98)"}
+];
+
+const CAMERA_HOLD_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(selfie arm placement is derived only when no explicit hold is selected:1.86)"},
+  {label:"🤳 体の近くで持つ", key:"bodyNear", value:"bodyNear", prompt:"(smartphone is held close to the torso with a short folded arm:2.0), (elbow remains close to the body:1.98), (no long outstretched selfie arm and no large foreground forearm:2.0)"},
+  {label:"🫱 腕を伸ばす", key:"armExtended", value:"armExtended", prompt:"(smartphone is intentionally held at arm's length:1.96), (extended-arm selfie perspective is visible but anatomically natural:1.92)"}
 ];
 
 const SHOT_ANGLE_OPTIONS = [
-  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(the shooting angle relative to the body is automatically derived from the scene and framing:1.82), (body relation and camera path should feel physically plausible:1.84)"},
-  {label:"↔️ 正面", key:"front", value:"front", prompt:"(camera approaches the subject mainly from the front:1.84), (front-facing composition while keeping pose natural:1.82)"},
-  {label:"🌀 斜め前", key:"diagonalFront", value:"diagonalFront", prompt:"(camera approaches from a front-diagonal angle:1.84), (slight diagonal body relation gives depth without breaking realism:1.82)"},
-  {label:"➡️ 真横", key:"side", value:"side", prompt:"(camera approaches from the true side or near-profile side:1.86), (side relation between subject and camera is clearly readable:1.84)"},
-  {label:"↩️ 見返り", key:"lookBack", value:"lookBack", prompt:"(body line suggests a look-back or over-shoulder relation:1.86), (the person turns back naturally toward the camera without impossible twisting:1.84)"},
-  {label:"⬅️ 背中から", key:"back", value:"back", prompt:"(camera approaches from behind the subject:1.86), (rear-view relation is clear while posture stays natural:1.84)"},
-  {label:"↖️ 斜め後ろ", key:"diagBack", value:"diagBack", prompt:"(camera approaches from a diagonal rear angle:1.86), (rear-diagonal relation is visible while body balance stays believable:1.84)"},
-  {label:"🧥 肩越し", key:"overShoulder", value:"overShoulder", prompt:"(camera reads as an over-shoulder composition:1.84), (the shoulder line helps guide the framing naturally:1.82)"},
-  {label:"🛋️ 寝転び横", key:"reclining", value:"reclining", prompt:"(the camera angle suits a reclining or lying posture from the side:1.86), (support, gravity, and body contact stay believable:1.84)"},
-  {label:"🚶 歩き / 動き", key:"walking", value:"walking", prompt:"(camera angle suits walking or moving candid capture:1.84), (motion direction and camera relation stay realistic:1.82)"},
-  {label:"🌀 少しひねる", key:"dynamic", value:"dynamic", prompt:"(camera uses a lightly dynamic or tilted relation to the body:1.82), (the pose remains physically possible and not over-twisted:1.84)"}
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera direction relative to the body is derived only when no explicit direction is selected:1.86)"},
+  {label:"↔️ 正面", key:"front", value:"front", prompt:"(camera is positioned in front of the torso:1.96), (do not drift into side or rear view:1.98)"},
+  {label:"🌀 斜め前", key:"diagonalFront", value:"diagonalFront", prompt:"(camera is positioned at a clear front-diagonal relation to the torso:1.96), (do not flatten into a straight-front composition:1.98)"},
+  {label:"➡️ 真横", key:"side", value:"side", prompt:"(camera is positioned at the true side of the torso:1.98), (lateral body relation remains clearly visible:1.96)"},
+  {label:"↩️ 見返り", key:"lookBack", value:"lookBack", prompt:"(body faces away or diagonally away while the face turns back naturally:1.98), (do not simplify into an ordinary front selfie:2.0)"},
+  {label:"⬅️ 背中から", key:"back", value:"back", prompt:"(camera is positioned behind the subject:2.0), (rear-view body relation must remain dominant:1.98)"},
+  {label:"↖️ 斜め後ろ", key:"diagBack", value:"diagBack", prompt:"(camera is positioned at a clear rear-diagonal relation:1.98), (do not simplify into front-diagonal view:2.0)"},
+  {label:"🧥 肩越し", key:"overShoulder", value:"overShoulder", prompt:"(camera uses a clear over-shoulder body relation:1.96), (shoulder and turned-back geometry remain physically believable:1.94)"}
+];
+
+const LENS_DIRECTION_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(lens direction is derived from the selected height and scene only when unspecified:1.86)"},
+  {label:"↔️ 水平", key:"level", value:"level", prompt:"(lens optical axis stays approximately horizontal:1.96), (do not add strong upward or downward tilt:1.98)"},
+  {label:"↗️ 少し上向き", key:"slightUp", value:"slightUp", prompt:"(lens points slightly upward from the selected physical camera height:1.96), (gentle upward optical axis, not a vertical upshot:1.94)"},
+  {label:"⬆️ 強く上向き", key:"strongUp", value:"strongUp", prompt:"(lens points clearly upward from the selected physical camera height:1.98), (upward optical axis must be visibly strong:1.96)"},
+  {label:"↘️ 少し下向き", key:"slightDown", value:"slightDown", prompt:"(lens points slightly downward from the selected physical camera height:1.96), (gentle downward optical axis:1.94)"},
+  {label:"⬇️ 強く下向き", key:"strongDown", value:"strongDown", prompt:"(lens points clearly downward from the selected physical camera height:1.98), (downward optical axis must be visibly strong:1.96)"}
+];
+
+const CAMERA_ROLL_OPTIONS = [
+  {label:"🎲 おまかせ", key:"auto", value:"auto", prompt:"(camera roll remains natural and is derived only when unspecified:1.82)"},
+  {label:"📐 水平", key:"level", value:"level", prompt:"(camera roll is level and the horizon stays straight:1.96)"},
+  {label:"／ 少し斜め", key:"slight", value:"slight", prompt:"(slight diagonal camera roll only:1.9), (this roll must not change camera height, distance, or body direction:1.98)"},
+  {label:"／／ 斜め強め", key:"strong", value:"strong", prompt:"(clearly diagonal camera roll:1.94), (camera roll affects frame rotation only and must not replace selected height or direction:2.0)"}
 ];
 
 const ANGLE_META = {
@@ -882,14 +928,14 @@ function scaleSelectedEffectPrompts(effectsArr, effectStrengthMode) {
 }
 
 const SUBJECT_SIZE_MODES = [
-  {label:"⚖️ バランス（おすすめ）", key:"balanced", value:"(balanced selfie composition with attractive face, upper body, and believable everyday context:1.8), (face and environment both matter:1.8), (natural handheld framing with believable body scale:1.8)"},
-  {label:"✨ 顔優先 / 盛れ重視", key:"face", value:"(face-priority selfie composition:1.8), (clean flattering framing centered on face and upper body:1.8), (beauty-focused composition with less environment emphasis:1.7), (visually refined selfie balance:1.7)"},
-  {label:"🙂 顔アップ", key:"headClose", value:"(head-dominant face close-up composition:1.9), (forehead-to-chin or forehead-to-neck framing:1.88), (little shoulder or neckline visible:1.75), (background is minimal and softly secondary:1.6), (eyes, lips, and skin are easy to read:1.85)"},
-  {label:"🔍 顔ズームアップ", key:"faceCloseup", value:"(close-up face selfie composition:1.9), (face fills most of the frame:1.9), (forehead-to-collarbone or face-to-neck framing:1.8), (background exists but is secondary and softly readable:1.5), (eyes and skin texture are the main focus:1.8)"},
-  {label:"↔️ 横顔アップ", key:"profileCloseup", value:"(profile close-up composition:1.92), (side face or near-profile fills most of the frame:1.9), (eye, nose bridge, lips, and cheek line are clearly readable:1.9), (background stays soft and secondary:1.7), (close-up side-view portrait with elegant profile emphasis:1.84)"},
-  {label:"🧿 超接写 / 顔どアップ", key:"extremeFace", value:"(extreme close-up portrait composition:1.95), (the face fills almost the entire frame:1.95), (partial crop on hair, cheek, forehead, or chin is allowed:1.88), (eyes, nose, lips, and skin texture dominate the image:1.9), (background is barely visible and heavily de-emphasized:1.65), (intimate close-up like the attached sample style:1.82)"},
-  {label:"🧥 上半身メイン", key:"upperBody", value:"(upper-body selfie composition:1.8), (head-to-waist or head-to-upper-hip framing:1.8), (face, shirt, jacket line, and upper silhouette are clearly readable:1.8), (balanced emphasis on face and outfit:1.8)"},
-  {label:"🧍 服や体も広めに", key:"widerBody", value:"(wider body framing selfie composition:1.8), (more of the outfit and body line are included:1.8), (subject appears slightly smaller within the frame than a face-first selfie:1.7), (body silhouette and location readability both matter:1.7)"},
+  {label:"⚖️ バランス（おすすめ）", key:"balanced", value:"(balanced portrait composition with face, upper body, and believable context:1.86), (subject and environment both remain readable:1.82)"},
+  {label:"✨ 顔優先 / 盛れ重視", key:"face", value:"(face-priority portrait composition:1.88), (clean flattering framing centered on face and nearby upper body:1.84), (environment remains secondary:1.76)"},
+  {label:"🙂 顔アップ", key:"headClose", value:"(head-dominant face close-up composition:1.94), (forehead-to-chin or forehead-to-neck framing:1.92), (background remains minimal:1.82)"},
+  {label:"🔍 顔ズームアップ", key:"faceCloseup", value:"(close-up face composition:1.96), (face fills most of the frame:1.96), (eyes and skin texture are primary:1.9)"},
+  {label:"↔️ 横顔アップ", key:"profileCloseup", value:"(profile close-up composition:1.98), (side face or near-profile fills most of the frame:1.96), (lateral facial line remains clear:1.94)"},
+  {label:"🧿 超接写 / 顔どアップ", key:"extremeFace", value:"(extreme face close-up composition:2.0), (face or facial detail fills almost the entire frame:1.98), (background is barely visible:1.94)"},
+  {label:"🧥 上半身メイン", key:"upperBody", value:"(upper-body portrait composition:1.9), (head-to-waist or head-to-upper-hip framing:1.88), (face and outfit remain readable:1.88)"},
+  {label:"🧍 服や体も広めに", key:"widerBody", value:"(wider body framing:1.92), (more of the outfit and body line are included:1.9), (location remains readable around the subject:1.84)"}
 ];
 
 const BACKGROUND_VIEW_MODES = [
@@ -910,11 +956,11 @@ const FRAMING_MODES = [
 ];
 
 const PHOTO_STYLE_MODES = [
-  {label:"📷 リアルな日常自撮り", key:"daily", value:"(real everyday selfie feel:1.9), (candid daily-life realism:1.8), (slight imperfection is allowed:1.7), (not over-directed, not magazine-like:1.8)"},
-  {label:"🙂 少し盛れた自然自撮り", key:"enhanced", value:"(naturally flattering selfie look:1.8), (slightly polished but still believable:1.8), (clean attractive selfie presentation:1.8), (natural but intentionally pretty:1.8)"},
-  {label:"🧍 モデルっぽい", key:"model", value:"(model-like posing and facial control:1.8), (deliberate shoulder line and body angle:1.8), (professional self-presentation from the subject:1.8), (the person looks like she knows how to pose:1.8)"},
-  {label:"🖤 ファッション誌っぽい", key:"editorial", value:"(fashion editorial photography feel:1.9), (magazine-style composition and styling:1.8), (editorial image design beyond simple selfie realism:1.8), (the whole photo feels like a fashion magazine page:1.8)"},
-  {label:"🎬 作り込み強め", key:"strong", value:"(strongly directed visual presentation:1.8), (stylized image design:1.8), (noticeably composed and produced look:1.8), (less accidental, more intentionally crafted:1.8)"},
+  {label:"📷 リアルな日常スナップ", key:"daily", value:"(real everyday snapshot feel:1.9), (candid daily-life realism:1.84), (slight imperfection is allowed:1.76), (not over-directed or magazine-like:1.86)"},
+  {label:"🙂 少し盛れた自然写真", key:"enhanced", value:"(naturally flattering portrait look:1.86), (slightly polished but still believable:1.84), (natural but intentionally attractive presentation:1.82)"},
+  {label:"🧍 モデルっぽい", key:"model", value:"(model-like posing and facial control:1.84), (deliberate shoulder line and body angle:1.82), (professional but physically plausible presentation:1.84)"},
+  {label:"🖤 ファッション誌っぽい", key:"editorial", value:"(fashion editorial photography feel:1.9), (magazine-style image design:1.84), (selected camera controls remain unchanged:1.96)"},
+  {label:"🎬 作り込み強め", key:"strong", value:"(strongly directed visual presentation:1.86), (noticeably produced look:1.84), (selected physical camera controls remain unchanged:1.98)"}
 ];
 
 function valueByLabel(items, labelPart) {
@@ -1128,12 +1174,109 @@ function hasCoolStyleActive() {
   return selectedCount(coolEffectValues()) >= 1 || state.film === valueByLabel(FILM_TONES, "シネスコープ");
 }
 
-function isIncompatibleOption(stateKey, itemValue) {
-  if (!itemValue) return false;
+let lastCompatibilityChanges = [];
+
+const SELECTION_DEFAULTS = {
+  selfieMode:"auto", cameraHeight:"auto", proximity:"auto", cameraHold:"auto",
+  shotAngle:"auto", lensDirection:"auto", cameraRoll:"auto",
+  faceDirection:"auto", gaze:"auto", subjectSize:"balanced",
+  backgroundView:"auto", framing:"standard", photoStyle:PHOTO_STYLE_MODES[0].value
+};
+
+function getCurrentSceneText() {
+  const el = document.getElementById("situation");
+  return el ? (el.value || "") : "";
+}
+
+function effectiveSelfieSelection() {
+  if (state.selfieMode === "off") return "off";
+  if (state.selfieMode === "on") return "on";
+  const scene = getCurrentSceneText();
+  if (/自撮りじゃない|セルフィーじゃない|非自撮り|他撮り|第三者撮影|誰かに撮られ|撮ってもら|non-selfie|third-person|third person|photographed by someone/i.test(scene)) return "off";
+  return "on";
+}
+
+function isCloseSubjectKey(key = "") {
+  return ["headClose", "faceCloseup", "profileCloseup", "extremeFace"].includes(key);
+}
+
+function isExtremeCloseSelection() {
+  return state.proximity === "macro" || state.subjectSize === "extremeFace";
+}
+
+function getIncompatibilityReason(stateKey, itemValue) {
+  if (!itemValue) return "";
+
+  const sceneText = getCurrentSceneText();
+  const poseCtx = detectPoseContext(sceneText);
+  const selfie = effectiveSelfieSelection();
+  const closeFace = isCloseSubjectKey(state.subjectSize);
+  const closeKeys = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
+  const rearAngles = ["back", "diagBack"];
+  const lookBackAngles = ["lookBack", "overShoulder"];
+
+  if (stateKey === "cameraHeight") {
+    if (itemValue === "knee" && !poseCtx.seated) return "『座り時：膝あたり』は、シーンが座っている時だけ選べます。";
+  }
+
+  if (stateKey === "cameraHold") {
+    if (itemValue !== "auto" && selfie === "off") return "第三者撮影では、自撮り時の持ち方は指定できません。";
+    if (itemValue === "bodyNear" && ["veryHigh", "topDown"].includes(state.cameraHeight)) return "かなり上・真上の自撮りでは、スマホを体の近くに保持できません。";
+    if (itemValue === "bodyNear" && ["slightlyWide", "wide"].includes(state.proximity)) return "体の近くで持つ設定では、引いた距離を作れません。";
+    if (itemValue === "armExtended" && state.proximity === "macro") return "マクロ距離と腕を伸ばした自撮りは同時に成立しません。";
+  }
+
+  if (stateKey === "shotAngle") {
+    if (rearAngles.includes(itemValue) && selfie !== "off") return "背中側からの撮影は第三者撮影を先に選んでください。";
+    if (lookBackAngles.includes(itemValue) && selfie === "on" && state.cameraHold === "bodyNear") return "見返り・肩越し自撮りでは、体の近くに保持したスマホ位置が成立しません。";
+  }
+
+  if (stateKey === "lensDirection") {
+    if (["topDown", "veryHigh"].includes(state.cameraHeight) && ["slightUp", "strongUp"].includes(itemValue)) return "上方のカメラから上向きにレンズを向けると被写体を捉えられません。";
+    if (state.cameraHeight === "topDown" && itemValue === "level") return "真上カメラでは水平レンズではなく、下向きまたは自動を使います。";
+  }
+
+  if (stateKey === "faceDirection") {
+    if (lookBackAngles.includes(state.shotAngle) && !["auto", "threeQuarter", "turnBack"].includes(itemValue)) return "見返り・肩越しでは、斜め向きか振り向きだけが成立します。";
+    if (rearAngles.includes(state.shotAngle) && !["auto", "turnBack", "away"].includes(itemValue)) return "背中側撮影では、振り向くか顔を見せない設定だけが成立します。";
+  }
+
+  if (stateKey === "gaze") {
+    if (state.faceDirection === "away" && itemValue !== "auto") return "顔を見せない設定では視線を指定できません。";
+    if (rearAngles.includes(state.shotAngle) && state.faceDirection !== "turnBack" && itemValue !== "auto") return "背中側撮影で顔を振り向かない場合、視線は指定できません。";
+  }
+
+  if (stateKey === "subjectSize") {
+    if (state.proximity === "macro" && !closeKeys.includes(itemValue)) return "マクロ距離では顔・細部中心の接写構図だけ選べます。";
+    if (state.proximity === "veryClose" && itemValue === "widerBody") return "かなり近い距離では、服や体を広く写せません。";
+    if (["slightlyWide", "wide"].includes(state.proximity) && closeKeys.includes(itemValue)) return "引いた距離では顔の接写構図を選べません。";
+    if (["veryLow", "knee"].includes(state.cameraHeight) && poseCtx.standing && closeKeys.includes(itemValue)) return "立った状態の膝付近カメラでは、顔の接写構図は成立しません。";
+    if (state.cameraHeight === "topDown" && itemValue === "profileCloseup") return "真上カメラと真横の横顔アップは同時に成立しません。";
+    if (state.cameraHold === "bodyNear" && ["macro", "veryClose", "close"].includes(state.proximity) && itemValue === "widerBody") return "体の近くからの近接自撮りでは、広い身体構図を作れません。";
+  }
+
+  if (stateKey === "backgroundView") {
+    if (isExtremeCloseSelection() && !["auto", "subtle"].includes(itemValue)) return "超接写・マクロでは、広い背景方向を見せられません。";
+    if (["headClose", "faceCloseup", "profileCloseup"].includes(state.subjectSize) && ["lower", "depth", "upper"].includes(itemValue)) return "顔アップでは、下・奥・上の背景を強く見せる余裕がありません。";
+  }
+
+  if (stateKey === "framing") {
+    if (closeFace && itemValue === "wide") return "顔アップでは『場所も見せる』ほど広い余白を作れません。";
+    if (state.proximity === "wide" && ["tight", "full"].includes(itemValue)) return "引いた距離と被写体いっぱいの構図は相反します。";
+    if (state.proximity === "macro" && itemValue === "wide") return "マクロ距離で広い場所の余白は見せられません。";
+  }
+
+  if (stateKey === "closeupTexture") {
+    if (itemValue === "detailed" && state.effects.includes(currentEffectValue("ソフトフォーカス"))) return "高精細接写とソフトフォーカスは質感が相反します。";
+  }
+
+  if (stateKey === "garmentLight") {
+    const currentAngle = state.angleMode === "auto" ? "" : state.angleMode;
+    if ((itemValue === "softGlow" || itemValue === "backlitEdge") && !isBacklightSafeAngle(currentAngle, state.selfieMode || "auto")) return "この撮影方向では、服の逆光縁取りを安全かつ自然に成立させにくいです。";
+  }
 
   const transparentEffects = transparentEffectValues();
   const strongTransparent = strongTransparentEffectValues();
-  const grainNoise = grainNoiseEffectValues();
   const grittyEffects = grittyEffectValues();
   const warmEffects = warmEffectValues();
   const coolEffects = coolEffectValues();
@@ -1146,209 +1289,140 @@ function isIncompatibleOption(stateKey, itemValue) {
   const softShadowEffects = softShadowEffectValues();
 
   if (stateKey === "film") {
-    if (hasTransparentStyleActive() && conflictFilms.includes(itemValue)) return true;
-    if (hasCoolStyleActive() && warmFilms.includes(itemValue)) return true;
-    if (hasWarmStyleActive() && itemValue === valueByLabel(FILM_TONES, "シネスコープ")) return true;
+    if (hasTransparentStyleActive() && conflictFilms.includes(itemValue)) return "透明感系の現在設定と、このフィルム質感は相反します。";
+    if (hasCoolStyleActive() && warmFilms.includes(itemValue)) return "寒色系の現在設定と暖色フィルムは相反します。";
+    if (hasWarmStyleActive() && itemValue === valueByLabel(FILM_TONES, "シネスコープ")) return "暖色系の現在設定とシネスコープの色分離は相反します。";
   }
 
   if (stateKey === "tone") {
-    if (hasTransparentStyleActive() && (itemValue === streetToneValue() || itemValue === darkToneValue())) return true;
-    if (hasGrittyStyleActive() && itemValue === transparentToneValue()) return true;
-  }
-
-  if (stateKey === "angleMode") {
-    if (state.selfieMode === "on" && angleRequiresSelfieOff(itemValue)) return true;
-  }
-
-  if (stateKey === "selfieMode") {
-    if (itemValue === "on" && angleRequiresSelfieOff(state.angleMode)) return true;
-  }
-
-  if (stateKey === "garmentLight") {
-    const currentAngle = state.angleMode === "auto" ? "" : state.angleMode;
-    if ((itemValue === "softGlow" || itemValue === "backlitEdge") && !isBacklightSafeAngle(currentAngle, state.selfieMode || "auto")) {
-      return true;
-    }
-  }
-
-  const closeFaceKeys = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
-  const closeFaceActive = closeFaceKeys.includes(state.subjectSize);
-
-  if (stateKey === "subjectSize") {
-    if (["macro", "veryClose"].includes(state.proximity) && itemValue === "widerBody") return true;
-    if (["slightlyWide", "wide"].includes(state.proximity) && ["extremeFace", "profileCloseup"].includes(itemValue)) return true;
-  }
-
-  if (stateKey === "proximity") {
-    if (closeFaceActive && ["slightlyWide", "wide"].includes(itemValue)) return true;
-    if (state.subjectSize === "widerBody" && ["macro", "veryClose"].includes(itemValue)) return true;
-    if (state.selfieMode === "off" && ["bodyNear", "armExtended"].includes(itemValue)) return true;
-  }
-
-  if (stateKey === "backgroundView") {
-    if (closeFaceActive && ["lower", "depth", "upper", "foreground"].includes(itemValue)) return true;
-  }
-
-  if (stateKey === "framing") {
-    if (closeFaceActive && itemValue === "wide") return true;
-  }
-
-  if (stateKey === "faceDirection") {
-    if (state.shotAngle === "back" && ["front", "threeQuarter"].includes(itemValue)) return true;
-    if (state.shotAngle === "side" && itemValue === "front") return true;
+    if (hasTransparentStyleActive() && (itemValue === streetToneValue() || itemValue === darkToneValue())) return "透明感系とストリート/ダークは相反します。";
+    if (hasGrittyStyleActive() && itemValue === transparentToneValue()) return "粒子・荒さの強い設定と透明感トーンは相反します。";
   }
 
   if (stateKey === "effects") {
-    if (isOvercastLikeWeatherActive() && itemValue === sparkleEffectValue()) return true;
-
-    if (hasFlashSnapshotEffectActive() && softDepthLightEffects.includes(itemValue)) return true;
-    if (hasSoftDepthLightEffectActive() && flashSnapshotEffects.includes(itemValue)) return true;
-
-    if (hasHardShadowEffectActive() && softShadowEffects.includes(itemValue)) return true;
-    if (hasSoftShadowEffectActive() && hardShadowEffects.includes(itemValue)) return true;
-
-    if (hasTransparentStyleActive() && grittyEffects.includes(itemValue)) return true;
-    if (hasGrittyStyleActive() && strongTransparent.includes(itemValue)) return true;
-    if (state.film && conflictFilms.includes(state.film) && transparentEffects.includes(itemValue)) return true;
-
-    if (hasWarmStyleActive() && coolEffects.includes(itemValue)) return true;
-    if (hasCoolStyleActive() && warmEffects.includes(itemValue)) return true;
-
-    if (monoFilms.includes(state.film) && transparentEffects.includes(itemValue)) return true;
-
-    if (state.tone === streetToneValue() && strongTransparent.includes(itemValue)) return true;
-    if (state.tone === darkToneValue() && strongTransparent.includes(itemValue)) return true;
+    if (isOvercastLikeWeatherActive() && itemValue === sparkleEffectValue()) return "曇り・雨・霧では強いきらめき粒子を選べません。";
+    if (hasFlashSnapshotEffectActive() && softDepthLightEffects.includes(itemValue)) return "直フラッシュ系と柔らかい自然光/ボケ系は相反します。";
+    if (hasSoftDepthLightEffectActive() && flashSnapshotEffects.includes(itemValue)) return "柔らかい自然光/ボケ系と直フラッシュ系は相反します。";
+    if (hasHardShadowEffectActive() && softShadowEffects.includes(itemValue)) return "硬い影と柔らかい影は同時に選べません。";
+    if (hasSoftShadowEffectActive() && hardShadowEffects.includes(itemValue)) return "柔らかい影と硬い影は同時に選べません。";
+    if (hasTransparentStyleActive() && grittyEffects.includes(itemValue)) return "透明感系と荒い質感エフェクトは相反します。";
+    if (hasGrittyStyleActive() && strongTransparent.includes(itemValue)) return "荒い質感系と強い透明感エフェクトは相反します。";
+    if (state.film && conflictFilms.includes(state.film) && transparentEffects.includes(itemValue)) return "選択中のフィルムと透明感エフェクトは相反します。";
+    if (hasWarmStyleActive() && coolEffects.includes(itemValue)) return "暖色系と冷色系エフェクトは同時に選べません。";
+    if (hasCoolStyleActive() && warmEffects.includes(itemValue)) return "冷色系と暖色系エフェクトは同時に選べません。";
+    if (monoFilms.includes(state.film) && transparentEffects.includes(itemValue)) return "白黒フィルムでは透明感カラー系エフェクトを使えません。";
+    if (state.closeupTexture === "detailed" && itemValue === currentEffectValue("ソフトフォーカス")) return "高精細接写とソフトフォーカスは相反します。";
+    const now = getTokyoNow();
+    const night = now.hour >= 18 || now.hour < 5;
+    if (night && itemValue === currentEffectValue("自然光ハイライト")) return "現在の夜時間帯では自然光ハイライトを選べません。";
+    if (night && itemValue === currentEffectValue("夕方斜光")) return "現在の夜時間帯では夕方斜光を選べません。";
   }
 
-  return false;
+  return "";
+}
+
+function isIncompatibleOption(stateKey, itemValue) {
+  return !!getIncompatibilityReason(stateKey, itemValue);
+}
+
+function setCompatibilityStatus(message = "", type = "ok") {
+  const el = document.getElementById("compatStatus");
+  if (!el) return;
+  el.className = "compat-status " + type;
+  el.textContent = message || "現在の選択は整合しています。";
+}
+
+function resetSelectionIfInvalid(key, fallback, changes) {
+  const current = state[key];
+  if (!current || current === fallback) return;
+  const reason = getIncompatibilityReason(key, current);
+  if (!reason) return;
+  const labelSets = {
+    cameraHeight:CAMERA_HEIGHT_OPTIONS, proximity:PROXIMITY_OPTIONS, cameraHold:CAMERA_HOLD_OPTIONS,
+    shotAngle:SHOT_ANGLE_OPTIONS, lensDirection:LENS_DIRECTION_OPTIONS, cameraRoll:CAMERA_ROLL_OPTIONS,
+    faceDirection:FACE_DIRECTION_OPTIONS, gaze:GAZE_OPTIONS, subjectSize:SUBJECT_SIZE_MODES,
+    backgroundView:BACKGROUND_VIEW_MODES, framing:FRAMING_MODES, photoStyle:PHOTO_STYLE_MODES,
+    garmentLight:GARMENT_BACKLIGHT_OPTIONS, closeupTexture:CLOSEUP_TEXTURE_OPTIONS,
+    film:FILM_TONES, tone:OVERALL_TONES
+  };
+  const label = getLabelByValue(labelSets[key] || [], current, current);
+  state[key] = fallback;
+  changes.push(label + " → 自動解除（" + reason + "）");
 }
 
 function normalizeCompatibleState(changedKey) {
-  if (["cameraHeight", "proximity", "shotAngle", "faceDirection", "subjectSize", "photoStyle", "selfieMode"].includes(changedKey)) {
-    syncDerivedAngleState(document.getElementById("situation") ? document.getElementById("situation").value || "" : "");
+  const changes = [];
+
+  // 上位選択に対して、下位の矛盾だけを解除する。
+  const ordered = [
+    ["cameraHeight", "auto"], ["proximity", "auto"], ["cameraHold", "auto"],
+    ["shotAngle", "auto"], ["lensDirection", "auto"], ["cameraRoll", "auto"],
+    ["faceDirection", "auto"], ["gaze", "auto"], ["subjectSize", "balanced"],
+    ["backgroundView", "auto"], ["framing", "standard"], ["photoStyle", PHOTO_STYLE_MODES[0].value],
+    ["garmentLight", ""], ["closeupTexture", "auto"], ["film", ""], ["tone", ""]
+  ];
+
+  // 複数回走査し、連鎖する矛盾も取り除く。
+  for (let pass = 0; pass < 3; pass++) {
+    ordered.forEach(([key, fallback]) => {
+      if (key !== changedKey) resetSelectionIfInvalid(key, fallback, changes);
+    });
   }
 
-  const closeFaceKeys = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
-  if (closeFaceKeys.includes(state.subjectSize)) {
-    if (["lower", "depth", "upper", "foreground"].includes(state.backgroundView)) state.backgroundView = "auto";
-    if (state.framing === "wide") state.framing = "standard";
-    if (["slightlyWide", "wide"].includes(state.proximity)) state.proximity = "close";
+  // エフェクトは選択済みのうち、現在の上位条件と矛盾するものだけ解除。
+  if (Array.isArray(state.effects)) {
+    const kept = [];
+    state.effects.forEach(v => {
+      const reason = getIncompatibilityReason("effects", v);
+      if (reason) changes.push(getLabelByValue(EFFECTS, v, "エフェクト") + " → 自動解除（" + reason + "）");
+      else kept.push(v);
+    });
+    state.effects = kept;
   }
 
-  if (state.subjectSize === "widerBody" && ["macro", "veryClose"].includes(state.proximity)) {
-    state.proximity = "standard";
-  }
+  // 新しく選んだエフェクト群の内部競合は、新しい方向に統一。
+  const flash = flashSnapshotEffectValues();
+  const soft = softDepthLightEffectValues();
+  const hardShadow = hardShadowEffectValues();
+  const softShadow = softShadowEffectValues();
+  const warm = warmEffectValues();
+  const cool = coolEffectValues();
+  if (selectedCount(flash) >= 1) state.effects = state.effects.filter(v => !soft.includes(v));
+  if (selectedCount(soft) >= 1) state.effects = state.effects.filter(v => !flash.includes(v));
+  if (selectedCount(hardShadow) >= 1) state.effects = state.effects.filter(v => !softShadow.includes(v));
+  if (selectedCount(softShadow) >= 1) state.effects = state.effects.filter(v => !hardShadow.includes(v));
+  if (selectedCount(warm) >= 1) state.effects = state.effects.filter(v => !cool.includes(v));
+  if (selectedCount(cool) >= 1) state.effects = state.effects.filter(v => !warm.includes(v));
 
-  if (state.selfieMode === "off" && ["bodyNear", "armExtended"].includes(state.proximity)) {
-    state.proximity = "standard";
-  }
-
-  if (state.shotAngle === "back" && ["front", "threeQuarter"].includes(state.faceDirection)) {
-    state.faceDirection = "turnBack";
-  }
-
-  if (state.shotAngle === "side" && state.faceDirection === "front") {
-    state.faceDirection = "profile";
-  }
-
-  if (changedKey === "weather" && isOvercastLikeWeatherActive()) {
-    state.effects = state.effects.filter(v => v !== sparkleEffectValue());
-  }
-
-  if (changedKey === "angleMode" && angleRequiresSelfieOff(state.angleMode)) {
-    state.selfieMode = "off";
-  }
-
-  if (changedKey === "selfieMode" && state.selfieMode === "on" && angleRequiresSelfieOff(state.angleMode)) {
-    state.angleMode = ANGLE_UI_OPTIONS[0].value;
-  }
-
-  if ((changedKey === "angleMode" || changedKey === "selfieMode") && !isBacklightSafeAngle(state.angleMode, state.selfieMode || "auto")) {
-    if (state.garmentLight === "softGlow" || state.garmentLight === "backlitEdge") state.garmentLight = "";
-  }
-
-  const transparentEffects = transparentEffectValues();
-  const strongTransparent = strongTransparentEffectValues();
-  const grainNoise = grainNoiseEffectValues();
-  const grittyEffects = grittyEffectValues();
-  const warmEffects = warmEffectValues();
-  const coolEffects = coolEffectValues();
-  const conflictFilms = transparentConflictFilmValues();
-  const warmFilms = warmFilmValues();
-  const monoFilms = monochromeFilmValues();
-  const flashSnapshotEffects = flashSnapshotEffectValues();
-  const softDepthLightEffects = softDepthLightEffectValues();
-  const hardShadowEffects = hardShadowEffectValues();
-  const softShadowEffects = softShadowEffectValues();
-
-  if (changedKey === "tone" && state.tone === transparentToneValue()) {
-    if (conflictFilms.includes(state.film)) state.film = "";
-    state.effects = state.effects.filter(v => !grittyEffects.includes(v));
-  }
-
-  if (changedKey === "tone" && (state.tone === streetToneValue() || state.tone === darkToneValue())) {
-    state.effects = state.effects.filter(v => !strongTransparent.includes(v));
-    if (state.tone === darkToneValue()) state.effects = state.effects.filter(v => !warmEffects.includes(v));
-  }
-
-  if (changedKey === "film") {
-    if (conflictFilms.includes(state.film)) {
-      if (state.tone === transparentToneValue()) state.tone = "";
-      state.effects = state.effects.filter(v => !transparentEffects.includes(v));
-    }
-    if (warmFilms.includes(state.film)) state.effects = state.effects.filter(v => !coolEffects.includes(v));
-    if (state.film === valueByLabel(FILM_TONES, "シネスコープ")) state.effects = state.effects.filter(v => !warmEffects.includes(v));
-    if (monoFilms.includes(state.film)) state.effects = state.effects.filter(v => !transparentEffects.includes(v));
-  }
-
-  if (changedKey === "effects") {
-    if (selectedCount(flashSnapshotEffects) >= 1) {
-      state.effects = state.effects.filter(v => !softDepthLightEffects.includes(v));
-    }
-
-    if (selectedCount(softDepthLightEffects) >= 1) {
-      state.effects = state.effects.filter(v => !flashSnapshotEffects.includes(v));
-    }
-
-    if (selectedCount(hardShadowEffects) >= 1) {
-      state.effects = state.effects.filter(v => !softShadowEffects.includes(v));
-    }
-
-    if (selectedCount(softShadowEffects) >= 1) {
-      state.effects = state.effects.filter(v => !hardShadowEffects.includes(v));
-    }
-
-    if (hasTransparentStyleActive()) {
-      if (conflictFilms.includes(state.film)) state.film = "";
-      if (state.tone === streetToneValue() || state.tone === darkToneValue()) state.tone = "";
-      state.effects = state.effects.filter(v => !grittyEffects.includes(v));
-    }
-
-    if (selectedCount(grainNoise) >= 1 || selectedCount(darkEdgeEffectValues()) >= 1) {
-      if (state.tone === transparentToneValue()) state.tone = "";
-      state.effects = state.effects.filter(v => !strongTransparent.includes(v));
-    }
-
-    if (selectedCount(warmEffects) >= 1) {
-      state.effects = state.effects.filter(v => !coolEffects.includes(v));
-      if (state.film === valueByLabel(FILM_TONES, "シネスコープ")) state.film = "";
-    }
-
-    if (selectedCount(coolEffects) >= 1) {
-      state.effects = state.effects.filter(v => !warmEffects.includes(v));
-      if (warmFilms.includes(state.film)) state.film = "";
-    }
+  syncDerivedAngleState(getCurrentSceneText());
+  lastCompatibilityChanges = [...new Set(changes)];
+  if (lastCompatibilityChanges.length) {
+    setCompatibilityStatus(lastCompatibilityChanges.join(" / "), "warn");
+  } else {
+    setCompatibilityStatus("現在の選択は整合しています。下位の矛盾項目は選択できません。", "ok");
   }
 }
 
 function renderAllOptionChips() {
   renderChips("characterModeChips", CHARACTER_MODE_OPTIONS, "characterMode");
   renderChips("outfitReferenceModeChips", OUTFIT_REFERENCE_MODE_OPTIONS, "outfitReferenceMode");
-  renderChips("outfitReferenceModeChips", OUTFIT_REFERENCE_MODE_OPTIONS, "outfitReferenceMode");
-  renderChips("bustChips", BUST_OPTIONS, "bust");
-  renderChips("garmentLightChips", GARMENT_BACKLIGHT_OPTIONS, "garmentLight");
-  renderChips("hipChips", HIP_OPTIONS, "hip");
   renderChips("selfieModeChips", SELFIE_MODE_OPTIONS, "selfieMode");
+  renderChips("cameraHeightChips", CAMERA_HEIGHT_OPTIONS, "cameraHeight");
+  renderChips("proximityChips", PROXIMITY_OPTIONS, "proximity");
+  renderChips("cameraHoldChips", CAMERA_HOLD_OPTIONS, "cameraHold");
+  renderChips("shotAngleChips", SHOT_ANGLE_OPTIONS, "shotAngle");
+  renderChips("lensDirectionChips", LENS_DIRECTION_OPTIONS, "lensDirection");
+  renderChips("cameraRollChips", CAMERA_ROLL_OPTIONS, "cameraRoll");
+  renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
+  renderChips("gazeChips", GAZE_OPTIONS, "gaze");
+  renderChips("subjectSizeChips", SUBJECT_SIZE_MODES, "subjectSize");
+  renderChips("backgroundViewChips", BACKGROUND_VIEW_MODES, "backgroundView");
+  renderChips("framingChips", FRAMING_MODES, "framing");
+  renderChips("photoStyleChips", PHOTO_STYLE_MODES, "photoStyle");
+  renderChips("moodChips", MOOD_OPTIONS, "mood");
+  renderChips("garmentLightChips", GARMENT_BACKLIGHT_OPTIONS, "garmentLight");
+  renderChips("bustChips", BUST_OPTIONS, "bust");
+  renderChips("hipChips", HIP_OPTIONS, "hip");
   renderChips("weatherChips", WEATHER_OPTIONS, "weather");
   renderChips("filmChips", FILM_TONES, "film");
   renderChips("toneChips", OVERALL_TONES, "tone");
@@ -1356,17 +1430,6 @@ function renderAllOptionChips() {
   renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
   renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
   renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
-  renderChips("cameraHeightChips", CAMERA_HEIGHT_OPTIONS, "cameraHeight");
-  renderChips("proximityChips", PROXIMITY_OPTIONS, "proximity");
-  renderChips("shotAngleChips", SHOT_ANGLE_OPTIONS, "shotAngle");
-  renderChips("angleModeChips", ANGLE_UI_OPTIONS, "angleMode");
-  renderChips("gazeChips", GAZE_OPTIONS, "gaze");
-  renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
-  renderChips("subjectSizeChips", SUBJECT_SIZE_MODES, "subjectSize");
-  renderChips("backgroundViewChips", BACKGROUND_VIEW_MODES, "backgroundView");
-  renderChips("framingChips", FRAMING_MODES, "framing");
-  renderChips("photoStyleChips", PHOTO_STYLE_MODES, "photoStyle");
-  renderChips("moodChips", MOOD_OPTIONS, "mood");
 }
 
 const MOOD_OPTIONS = [
@@ -1526,7 +1589,8 @@ const FACE_DIRECTION_OPTIONS = [
   {label:"🙂 正面", key:"front", value:"front", prompt:"(front-facing or near-front facial orientation:1.84), (face plane mostly toward the camera:1.82)"},
   {label:"◢ 斜め向き", key:"threeQuarter", value:"threeQuarter", prompt:"(three-quarter facial angle:1.86), (face turned about 20 to 45 degrees from camera:1.84), (natural diagonal face orientation:1.82)"},
   {label:"➡️ 横顔", key:"profile", value:"profile", prompt:"(true side-profile or near-profile facial orientation:1.9), (lateral face line clearly readable:1.88), (one eye dominant in frame:1.82)"},
-  {label:"↩️ 振り向き", key:"turnBack", value:"turnBack", prompt:"(looking back over shoulder or gentle turned-back facial orientation:1.86), (face partially turned back in a natural way:1.84), (turn-back angle remains physically believable:1.82)"}
+  {label:"↩️ 振り向き", key:"turnBack", value:"turnBack", prompt:"(looking back over shoulder or gentle turned-back facial orientation:1.92), (turn-back angle remains physically believable:1.9)"},
+  {label:"🙈 顔を見せない", key:"away", value:"away", prompt:"(face is turned away and not presented to the camera:1.96), (back or side of the head is visible instead of a readable face:1.94)"}
 ];
 
 const HIP_OPTIONS = [
@@ -1540,7 +1604,7 @@ const HIP_OPTIONS = [
 let state = {
   characterMode: "light", outfitReferenceMode: "off",
   bust: "", garmentLight: "", hip: "", weather: "", film: "", tone: "",
-  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode: "", angleMode: "", gaze: GAZE_OPTIONS[0].value, faceDirection: FACE_DIRECTION_OPTIONS[0].value, subjectSize: "", backgroundView: "", framing: "", photoStyle: "", mood: "auto",
+  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode: "", cameraHold: "auto", lensDirection: "auto", cameraRoll: "auto", angleMode: "", gaze: GAZE_OPTIONS[0].value, faceDirection: FACE_DIRECTION_OPTIONS[0].value, subjectSize: "", backgroundView: "", framing: "", photoStyle: "", mood: "auto",
 };
 let tokyoNow = {};
 
@@ -1821,7 +1885,7 @@ function resolveCameraScenario(angleName, selfieMode, poseCtx, subjectSizeKey) {
     return { key:"floor-seated-low", prompt:"(resolved camera logic: floor-seated low selfie perspective:1.95), (camera sits near lap, knees, or lower torso while she is seated on the floor:1.92), (low viewpoint shows face, upper body, and a natural hint of folded legs in the lower frame:1.86), (upward angle remains physically plausible and not a vertical upshot:1.9), (body weight is supported by floor and wall if present:1.88), " + chin + ", " + phys };
   }
   if (angleName === "SUPER LOW ANGLE" && poseCtx.standing && poseCtx.support === "none") {
-    return { key:"supported-standing-low", prompt:"(resolved camera logic: physically plausible standing low-angle selfie:1.9), (low camera perspective remains moderate enough to keep balance realistic:1.88), (torso tilt stays within a natural range unless a wall, desk, or chair visibly supports her:1.92), (one leg may shift weight naturally while the body remains stable:1.84), (a little thigh may appear at the lower frame through composition, not through impossible body tilt:1.8), " + chin + ", " + phys };
+    return { key:"supported-standing-low", prompt:"(resolved camera logic: physically plausible standing low-angle selfie:1.9), (strong low camera perspective remains clearly visible while body balance stays realistic:1.96), (torso tilt stays within a natural range unless a wall, desk, or chair visibly supports her:1.92), (one leg may shift weight naturally while the body remains stable:1.84), (a little thigh may appear at the lower frame through composition, not through impossible body tilt:1.8), " + chin + ", " + phys };
   }
   return { key:"base", prompt:null, physical:phys };
 }
@@ -2104,14 +2168,14 @@ function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
   const nightLike = isNightLikeScene(sceneText, t);
   const flashSelected = hasFlashEffectSelected(effectsArr);
   const portraitBase = [
-    "(portrait-first composition:1.92)",
-    "(subject is the clear main focus:1.95)",
-    "(background supports the portrait without dominating:1.9)",
-    "(background is softly separated but still readable as a real place:1.86)",
-    "(moderate background blur only, not heavy cutout separation:1.9)",
-    "(face, expression, hair, outfit, and upper-body silhouette are prioritized:1.92)",
-    "(selected bust silhouette must not shrink during background or exposure balancing:1.9)",
-    "(soft side highlights keep the upper-body garment contour readable:1.88)"
+    "(subject remains the clear main focus within the selected composition:1.95)",
+    "(selected subject size, framing, and background direction must be preserved:1.98)",
+    "(background supports the portrait without replacing the selected background direction:1.92)",
+    "(background remains readable or minimal exactly as selected:1.9)",
+    "(do not crop tighter or wider than the selected subject size:1.98)",
+    "(face, hair, outfit, and body line remain readable within the chosen framing:1.92)",
+    "(selected bust silhouette stays compatible with the chosen framing:1.9)",
+    "(lighting balance must not override camera height, distance, or angle:1.98)"
   ];
   if (!nightLike) return "PORTRAIT / BACKGROUND BALANCE:\n" + portraitBase.join(", ");
   const nightBase = [
@@ -2134,36 +2198,31 @@ function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
 }
 
 
-function isCloseBodySelfieCombo(angleName = "", cameraHeightKey = "auto", proximityKey = "auto", selfieMode = "auto") {
-  const lowCloseHeights = ["hiddenLow", "waist", "knee", "low"];
-  const closeDistances = ["veryClose", "bodyNear", "close", "auto"];
-  return selfieMode !== "off" && (
-    angleName === "HIDDEN WAIST-HELD SELFIE" ||
-    (lowCloseHeights.includes(cameraHeightKey) && closeDistances.includes(proximityKey))
-  );
+function isCloseBodySelfieCombo(cameraHoldKey = "auto", selfieMode = "auto") {
+  return selfieMode !== "off" && cameraHoldKey === "bodyNear";
 }
 
-function buildCloseBodySelfieArmGuard(angleName = "", cameraHeightMode = {}, proximityMode = {}, selfieMode = "auto") {
-  const shouldApply = isCloseBodySelfieCombo(
-    angleName,
-    cameraHeightMode && cameraHeightMode.key ? cameraHeightMode.key : "auto",
-    proximityMode && proximityMode.key ? proximityMode.key : "auto",
-    selfieMode
-  );
-  if (!shouldApply) return "";
+function buildCloseBodySelfieArmGuard(cameraHoldMode = {}, selfieMode = "auto") {
+  const holdKey = cameraHoldMode && cameraHoldMode.key ? cameraHoldMode.key : "auto";
+  if (!isCloseBodySelfieCombo(holdKey, selfieMode)) return "";
   return [
-    "(CLOSE-BODY SELFIE ARM GUARD active:1.98)",
-    "(camera is close to the torso or waist, not held at arm's length:2.0)",
-    "(the near arm stays folded close to the body and mostly outside the frame:2.0)",
+    "(CLOSE-BODY SELFIE ARM GUARD active:2.0)",
+    "(camera stays close to the torso exactly as selected:2.0)",
+    "(near arm is folded and mostly outside the frame:2.0)",
     "(no large foreground arm, no long diagonal forearm, no stretched arm reaching toward the lens:2.0)",
-    "(do not show an outstretched selfie arm even though this is a front-camera viewpoint:2.0)",
-    "(hand and phone are cropped out or hidden near the waist:1.96)",
-    "(upper body may feel close to the lens, but the arm must not become the closest dominant object:1.96)",
-    "(composition reads as compact close-body handheld, not normal raised-hand selfie:1.98)"
+    "(do not escape into a conventional arm-extended selfie:2.0)"
   ].join(", ");
 }
 
-function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, shotAngleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult) {
+function getSemanticBodyAngleName(baseAngleName = "", shotAngleKey = "auto") {
+  if (shotAngleKey === "back") return "BACK VIEW";
+  if (shotAngleKey === "diagBack") return "DIAGONAL BACK VIEW";
+  if (shotAngleKey === "lookBack" || shotAngleKey === "overShoulder") return "BACK OVER SHOULDER";
+  if (shotAngleKey === "side") return "SIDE PROFILE";
+  return baseAngleName;
+}
+
+function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, weatherVal, filmVal, toneVal, effectsArr, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, cameraHoldMode, shotAngleMode, lensDirectionMode, cameraRollMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult) {
   const overviewParts = [];
   overviewParts.push("current time: " + t.timeCtx.label + " (" + t.timeCtx.en + "), " + t.timeStr + " JST");
   overviewParts.push("day: " + t.day + " — " + DAY_MOOD[t.day]);
@@ -2182,7 +2241,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const rawSceneText = situation.trim() || "No scene details provided. Create a realistic everyday portrait scene.";
   const sceneText = sanitizeSceneForFaceReference(rawSceneText);
   const selfieMode = getSelfieMode(sceneText);
-  const cameraModePrompt = getCameraModePrompt(selfieMode, angle.name);
+  const cameraModePrompt = getCameraModePrompt(selfieMode, cameraHoldMode && cameraHoldMode.key ? cameraHoldMode.key : "auto");
   const motionText = motionResult && motionResult.motionText ? motionResult.motionText : "natural physically plausible posture";
   const cameraAnglePrompt = motionResult && motionResult.cameraPrompt ? motionResult.cameraPrompt : angle.prompt;
   const safeExpression = normalizeExpressionForContext(expression, motionResult && motionResult.poseCtx ? motionResult.poseCtx : detectPoseContext(sceneText), angle.name);
@@ -2192,7 +2251,8 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const effectiveCloseupTexturePrompt = closeupTextureMode && closeupTextureMode.prompt ? closeupTextureMode.prompt : CLOSEUP_TEXTURE_OPTIONS[0].prompt;
   const effectiveBustPrompt = bustPrompt;
   const effectiveHipPrompt = hipPrompt;
-  const bodySilhouetteBlock = buildBodySilhouetteBlock(subjectSizeMode, effectiveBustPrompt, effectiveHipPrompt, angle.name, sceneText);
+  const semanticBodyAngleName = getSemanticBodyAngleName(angle.name, shotAngleMode && shotAngleMode.key ? shotAngleMode.key : "auto");
+  const bodySilhouetteBlock = buildBodySilhouetteBlock(subjectSizeMode, effectiveBustPrompt, effectiveHipPrompt, semanticBodyAngleName, sceneText);
   const effectiveMotionText = motionText;
   const fixedCharacter = characterLock.trim();
   const outfitReferenceBlock = buildOutfitReferenceBlock();
@@ -2200,10 +2260,10 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const characterModeLabel = state.characterMode === "off" ? "OFF / face reference only" : state.characterMode === "full" ? "FULL / legacy fixed character" : "LIGHT / face reference + atmosphere";
   const portraitBackgroundBalanceBlock = buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr);
   const leanSupportBlock = buildLeanSupportBlock(sceneText, motionResult && motionResult.poseCtx ? motionResult.poseCtx : detectPoseContext(sceneText));
-  const closeBodySelfieArmGuardBlock = buildCloseBodySelfieArmGuard(angle.name, cameraHeightMode, proximityMode, selfieMode);
+  const closeBodySelfieArmGuardBlock = buildCloseBodySelfieArmGuard(cameraHoldMode, selfieMode);
 
   return `APP_VERSION: ${APP_VERSION}
-ANGLE_ENGINE: chin-control + face-reference-role-control + hidden-waist-held-selfie
+ANGLE_ENGINE: ordered-selection-compatibility + independent-camera-controls + no-easy-escape
 HAIR_ENGINE: monthly-hair-priority + no-reference-hairstyle-copy
 TIME: ${t.day}, month ${t.month}, ${t.timeCtx.label} / ${t.timeCtx.en}, ${t.timeStr} JST
 
@@ -2239,6 +2299,13 @@ SCENE:
 ${sceneText}
 (scene text overrides default location, clothing, pose and action, but never overrides face-reference safety or app-priority hair rules:1.9)
 
+SELECTION PRIORITY / NO-EASY-ESCAPE RULE:
+(scene defines the physical situation first:2.0),
+(user-selected camera height, distance, hold, body direction, lens direction, camera roll, face direction, gaze, subject size, background direction, and framing are concrete shooting conditions:2.0),
+(do not replace a difficult selected combination with an easier eye-level front selfie or generic portrait:2.0),
+(if the selected setup is difficult, adjust posture, hand placement, body rotation, balance, and head angle while preserving every enabled selection:1.98),
+(lower-priority mood, style, film tone, and effects must not change any selected physical camera control:2.0)
+
 ${leanSupportBlock ? `SUPPORT / LEAN AUTO-REFLECTION:
 ${leanSupportBlock}
 
@@ -2250,7 +2317,7 @@ ${portraitBackgroundBalanceBlock}
 
 ASPECT / ENVIRONMENT:
 (aspect ratio 9:16:1.6), (vertical smartphone framing:1.6),
-(real Japanese location, realistic crowd/posture/signage/ambient lighting:1.75)
+(real location matching the written scene, realistic crowd, posture, signage, and ambient lighting:1.75)
 
 CAMERA MODE:
 ${cameraModePrompt}
@@ -2264,10 +2331,19 @@ ${cameraHeightMode && cameraHeightMode.prompt ? cameraHeightMode.prompt : CAMERA
 CAMERA DISTANCE / PROXIMITY:
 ${proximityMode && proximityMode.prompt ? proximityMode.prompt : PROXIMITY_OPTIONS[0].prompt}
 
-SHOT ANGLE / BODY RELATION:
+SELFIE HOLD / ARM:
+${cameraHoldMode && cameraHoldMode.prompt ? cameraHoldMode.prompt : CAMERA_HOLD_OPTIONS[0].prompt}
+
+SHOT DIRECTION / BODY RELATION:
 ${shotAngleMode && shotAngleMode.prompt ? shotAngleMode.prompt : SHOT_ANGLE_OPTIONS[0].prompt}
 
-CAMERA POSITION / ANGLE — ${angle.name}:
+LENS DIRECTION:
+${lensDirectionMode && lensDirectionMode.prompt ? lensDirectionMode.prompt : LENS_DIRECTION_OPTIONS[0].prompt}
+
+CAMERA ROLL:
+${cameraRollMode && cameraRollMode.prompt ? cameraRollMode.prompt : CAMERA_ROLL_OPTIONS[0].prompt}
+
+DERIVED CAMERA HEIGHT SUPPORT — ${angle.name}:
 ${cameraAnglePrompt}
 
 COMPOSITION:
@@ -2376,67 +2452,46 @@ function getSelfieModeLabel(mode) {
   return "自動";
 }
 
-function getCameraModePrompt(selfieMode, angleName = "") {
+function getCameraModePrompt(selfieMode, cameraHoldKey = "auto") {
   if (selfieMode === "off") {
     return `============================================================
 CAMERA MODE — NON-SELFIE / THIRD-PERSON PHOTO
 ============================================================
-(non-selfie portrait photo:1.95),
-(third-person camera viewpoint:1.95),
-(photo taken by another person or an external camera:1.9),
-(subject is not holding the active camera:1.95),
-(no smartphone selfie POV:1.95),
-(no arm's-length selfie perspective:1.95),
-(no visible selfie arm:1.9),
-(no handheld front-camera perspective from the subject's own phone:1.95),
-(camera position follows the selected angle as an external photographer's camera:1.9)`;
+(non-selfie portrait photo:1.98),
+(third-person external camera viewpoint:1.98),
+(subject is not holding the active camera:2.0),
+(no smartphone selfie POV, no selfie arm, no front-camera perspective:2.0),
+(camera must follow the selected physical height, distance, direction, lens direction, and roll:1.98)`;
   }
 
-  if (angleName === "HIDDEN WAIST-HELD SELFIE" || angleName === "WAIST-SIDE VERTICAL UPSHOT") {
+  if (cameraHoldKey === "bodyNear") {
     return `============================================================
-CAMERA
+CAMERA MODE — CLOSE-BODY SELFIE
 ============================================================
-(smartphone in her hand IS the active camera:1.9),
-(viewpoint MUST match her discreet waist-held smartphone:1.95),
-(only ONE smartphone in scene:1.9)
+(subject's smartphone is the active front camera:1.98),
+(smartphone is held close to the torso with a short folded arm:2.0),
+(elbow stays near the body and the phone/hand may remain outside the frame:1.98),
+(no arm's-length selfie, no long foreground arm, no large diagonal forearm:2.0),
+(camera must follow the selected physical height, distance, body direction, lens direction, and roll:2.0)`;
+  }
+
+  if (cameraHoldKey === "armExtended") {
+    return `============================================================
+CAMERA MODE — ARM-EXTENDED SELFIE
 ============================================================
-SELFIE POV — HIDDEN WAIST-HELD
-============================================================
-(POV smartphone front-camera selfie:1.8),
-(smartphone held discreetly close to her lower torso or waist:1.95),
-(short lowered arm, elbow close to body:1.95),
-(phone is not extended far away:1.95),
-(no arm's-length selfie pose:1.95),
-(no long stretched arm selfie:2.0),
-(no visible extended forearm reaching toward the camera:2.0),
-(no large foreground arm:2.0),
-(no selfie-stick-like arm perspective:2.0),
-(no copied reference-image arm extension:1.98),
-(camera is ALWAYS her held smartphone:1.9),
-(viewpoint ALWAYS from the hidden waist-held front camera:1.95),
-(no third-person shots unless the scene explicitly says non-selfie:1.9),
-(natural close-body handheld micro-shake:1.75),
-(perspective MUST reflect discreet close-body waist-held selfie:1.95)`;
+(subject's smartphone is the active front camera:1.98),
+(one arm is intentionally extended at a believable length:1.96),
+(extended-arm perspective is allowed but must not override selected camera height or direction:1.98),
+(camera must follow the selected physical height, distance, body direction, lens direction, and roll:2.0)`;
   }
 
   return `============================================================
-CAMERA
+CAMERA MODE — SELFIE / HOLD AUTO
 ============================================================
-(smartphone in her hand IS the active camera:1.9),
-(viewpoint MUST match her held smartphone:1.9),
-(only ONE smartphone in scene:1.9)
-============================================================
-SELFIE POV
-============================================================
-(POV smartphone front-camera selfie:1.8),
-(random left hand or right hand holding the phone:1.9),
-(natural wide-angle selfie distortion:1.6),
-(camera is ALWAYS her held smartphone:1.9),
-(viewpoint ALWAYS from her hand-held front camera:1.9),
-(no third-person shots unless the scene explicitly says non-selfie:1.9),
-(natural handheld selfie posture consistent with selected angle:1.8),
-(do not copy the Face Reference image's arm extension or camera distance:1.9),
-(perspective MUST reflect handheld selfie unless the scene explicitly says non-selfie:1.9)`;
+(subject's smartphone is the active front camera:1.96),
+(selfie hand and arm placement are derived from the selected camera controls:1.92),
+(do not default to an ordinary eye-level arm-extended selfie when another height or direction is selected:2.0),
+(camera must follow the selected physical height, distance, body direction, lens direction, and roll:2.0)`;
 }
 
 function detectSwimwearScene(sceneText = "") {
@@ -2634,6 +2689,18 @@ function getShotAngleMode() {
   return SHOT_ANGLE_OPTIONS.find(m => m.value === state.shotAngle) || SHOT_ANGLE_OPTIONS[0];
 }
 
+function getCameraHoldMode() {
+  return CAMERA_HOLD_OPTIONS.find(m => m.value === state.cameraHold) || CAMERA_HOLD_OPTIONS[0];
+}
+
+function getLensDirectionMode() {
+  return LENS_DIRECTION_OPTIONS.find(m => m.value === state.lensDirection) || LENS_DIRECTION_OPTIONS[0];
+}
+
+function getCameraRollMode() {
+  return CAMERA_ROLL_OPTIONS.find(m => m.value === state.cameraRoll) || CAMERA_ROLL_OPTIONS[0];
+}
+
 function getGazeMode() {
   return GAZE_OPTIONS.find(m => m.value === state.gaze) || GAZE_OPTIONS[0];
 }
@@ -2663,34 +2730,24 @@ function getPhotoStyleMode() {
 }
 
 function deriveAngleFromCameraSelections(cameraHeightKey, shotAngleKey, sceneText = "", selfieMode = "auto", faceDirectionKey = "auto", subjectSizeKey = "balanced", photoStyleKey = "daily") {
-  const recliningHint = /寝転|横にな|横たわ|ベッド|ソファ|床に座|reclining|lying/i.test(sceneText || "");
+  // Physical camera height is the primary source for the legacy support angle.
+  if (cameraHeightKey === "topDown" || cameraHeightKey === "veryHigh") return ANGLES.find(a => a.name === "SUPER HIGH ANGLE") || ANGLES[0];
+  if (cameraHeightKey === "high") return ANGLES.find(a => a.name === "HIGH ANGLE") || ANGLES[0];
+  if (cameraHeightKey === "eye" || cameraHeightKey === "chest") return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
+  if (cameraHeightKey === "waist") return selfieMode === "off"
+    ? (ANGLES.find(a => a.name === "LOW ANGLE") || ANGLES[0])
+    : (ANGLES.find(a => a.name === "HIDDEN WAIST-HELD SELFIE") || ANGLES[0]);
+  if (cameraHeightKey === "low" || cameraHeightKey === "knee") return ANGLES.find(a => a.name === "LOW ANGLE") || ANGLES[0];
+  if (cameraHeightKey === "veryLow") return ANGLES.find(a => a.name === "SUPER LOW ANGLE") || ANGLES[0];
 
-  if (shotAngleKey === "reclining" || (recliningHint && shotAngleKey === "auto" && (subjectSizeKey === "profileCloseup" || subjectSizeKey === "faceCloseup"))) {
-    return ANGLES.find(a => a.name === "RECLINING SIDE EYE LEVEL") || ANGLES[0];
-  }
+  // Only when height is AUTO may body direction choose the legacy support angle.
   if (shotAngleKey === "side") return ANGLES.find(a => a.name === "SIDE PROFILE") || ANGLES[0];
-  if (shotAngleKey === "walking") return ANGLES.find(a => a.name === "WALKING") || ANGLES[0];
-  if (shotAngleKey === "dynamic") return ANGLES.find(a => a.name === "DYNAMIC TILTED") || ANGLES[0];
   if (shotAngleKey === "lookBack" || shotAngleKey === "overShoulder") {
     const target = selfieMode === "off" ? "BACK OVER SHOULDER" : "OVER SHOULDER";
     return ANGLES.find(a => a.name === target) || ANGLES[0];
   }
-  if (shotAngleKey === "back") {
-    const target = selfieMode === "off" ? "BACK VIEW" : "OVER SHOULDER";
-    return ANGLES.find(a => a.name === target) || ANGLES[0];
-  }
-  if (shotAngleKey === "diagBack") {
-    const target = selfieMode === "off" ? "DIAGONAL BACK VIEW" : "OVER SHOULDER";
-    return ANGLES.find(a => a.name === target) || ANGLES[0];
-  }
-
-  if (cameraHeightKey === "topDown" || cameraHeightKey === "veryHigh") return ANGLES.find(a => a.name === "SUPER HIGH ANGLE") || ANGLES[0];
-  if (cameraHeightKey === "high") return ANGLES.find(a => a.name === "HIGH ANGLE") || ANGLES[0];
-  if (cameraHeightKey === "eye" || cameraHeightKey === "chest") return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
-  if (cameraHeightKey === "waist" || cameraHeightKey === "hiddenLow") return ANGLES.find(a => a.name === "HIDDEN WAIST-HELD SELFIE") || ANGLES[0];
-  if (cameraHeightKey === "low" || cameraHeightKey === "knee") return ANGLES.find(a => a.name === "LOW ANGLE") || ANGLES[0];
-  if (cameraHeightKey === "veryLow") return ANGLES.find(a => a.name === "SUPER LOW ANGLE") || ANGLES[0];
-
+  if (shotAngleKey === "back") return ANGLES.find(a => a.name === "BACK VIEW") || ANGLES[0];
+  if (shotAngleKey === "diagBack") return ANGLES.find(a => a.name === "DIAGONAL BACK VIEW") || ANGLES[0];
   if (shotAngleKey === "front") return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
   if (shotAngleKey === "diagonalFront") return ANGLES.find(a => a.name === "GOLDEN ANGLE") || ANGLES[0];
 
@@ -2757,7 +2814,12 @@ function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "au
     weightedNames.push("GOLDEN ANGLE", "EYE LEVEL", "HIGH ANGLE");
   }
 
-  const weightedPool = weightedNames
+  const modeSafeNames = weightedNames.filter(name => {
+    if (selfieMode === "off" && name === "HIDDEN WAIST-HELD SELFIE") return false;
+    if (selfieMode !== "off" && angleRequiresSelfieOff(name)) return false;
+    return true;
+  });
+  const weightedPool = modeSafeNames
     .map(name => ANGLES.find(a => a.name === name))
     .filter(Boolean);
 
@@ -2785,7 +2847,10 @@ function handleGenerate() {
   const effectStrengthMode = getEffectStrengthMode();
   const cameraHeightMode = getCameraHeightMode();
   const proximityMode = getProximityMode();
+  const cameraHoldMode = getCameraHoldMode();
   const shotAngleMode = getShotAngleMode();
+  const lensDirectionMode = getLensDirectionMode();
+  const cameraRollMode = getCameraRollMode();
   const angleMode = getAngleMode();
   const gazeMode = getGazeMode();
   const faceDirectionMode = getFaceDirectionMode();
@@ -2801,7 +2866,7 @@ function handleGenerate() {
   const hipPrompt = state.hip || HIP_OPTIONS[2].value;
   const skinFinishPrompt = state.skinFinish || "";
 
-  const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, shotAngleMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult);
+  const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, cameraHoldMode, shotAngleMode, lensDirectionMode, cameraRollMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult);
 
   document.getElementById("metaCard").classList.remove("hidden");
   const selectedOutfitReferenceLabel = getLabelByValue(OUTFIT_REFERENCE_MODE_OPTIONS, state.outfitReferenceMode);
@@ -2813,7 +2878,10 @@ function handleGenerate() {
   const selectedEffectStrengthLabel = effectStrengthModeForMeta.label + " / weight ×" + effectStrengthModeForMeta.multiplier;
   const selectedCameraHeightLabel = getCameraHeightMode().label;
   const selectedProximityLabel = getProximityMode().label;
+  const selectedCameraHoldLabel = getCameraHoldMode().label;
   const selectedShotAngleLabel = getShotAngleMode().label;
+  const selectedLensDirectionLabel = getLensDirectionMode().label;
+  const selectedCameraRollLabel = getCameraRollMode().label;
   const selectedAngleModeLabel = getAngleMode().label || angle.name;
   const selectedSubjectSizeLabel = getSubjectSizeMode().label;
   const selectedBackgroundViewLabel = getBackgroundViewMode().label;
@@ -2827,13 +2895,14 @@ function handleGenerate() {
   const selectedCloseupTextureLabel = (CLOSEUP_TEXTURE_OPTIONS.find(s => s.value === (state.closeupTexture || CLOSEUP_TEXTURE_OPTIONS[0].value))?.label || "🎲 おまかせ");
   const selectedGazeLabel = (GAZE_OPTIONS.find(g => g.value === (state.gaze || GAZE_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
   const selectedFaceDirectionLabel = (FACE_DIRECTION_OPTIONS.find(f => f.value === (state.faceDirection || FACE_DIRECTION_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
-  const closeBodySelfieGuardSummary = isCloseBodySelfieCombo(angle.name, getCameraHeightMode().key, getProximityMode().key, getSelfieMode(document.getElementById("situation").value || "")) ? "ON" : "OFF";
+  const closeBodySelfieGuardSummary = isCloseBodySelfieCombo(getCameraHoldMode().key, getSelfieMode(document.getElementById("situation").value || "")) ? "ON" : "OFF";
   const effectWarning = getEffectWarning(state.effects);
   const transparentPresetHint = getTransparentSmartphonePresetHint(state.effects);
   const compatibilityHint = getCompatibilityHint();
 
   document.getElementById("metaContent").innerHTML =
     "🧩 <b style='color:#c4b5fd'>App</b>：" + APP_VERSION + "<br>" +
+    "🧠 <b style='color:#c4b5fd'>選択整合性エンジン</b>：ON / 上位選択で下位を制御<br>" +
     "🕐 <b style='color:#c4b5fd'>時間帯</b>：" + t.timeCtx.label + " / " + t.timeCtx.en + "<br>" +
     "🔒 <b style='color:#c4b5fd'>固定キャラモード</b>：" + getLabelByValue(CHARACTER_MODE_OPTIONS, state.characterMode) + "<br>" +
     "👗 <b style='color:#c4b5fd'>コーデ参照</b>：" + selectedOutfitReferenceLabel + "<br>" +
@@ -2848,7 +2917,10 @@ function handleGenerate() {
     "🔬 <b style='color:#c4b5fd'>接写質感</b>：" + selectedCloseupTextureLabel + "<br>" +
     "📏 <b style='color:#c4b5fd'>カメラの高さ</b>：" + selectedCameraHeightLabel + "<br>" +
     "🔎 <b style='color:#c4b5fd'>距離 / 寄り方</b>：" + selectedProximityLabel + "<br>" +
-    "🧭 <b style='color:#c4b5fd'>撮影アングル / 体の向き</b>：" + selectedShotAngleLabel + "<br>" +
+    "🫱 <b style='color:#c4b5fd'>自撮り時の持ち方</b>：" + selectedCameraHoldLabel + "<br>" +
+    "🧭 <b style='color:#c4b5fd'>撮影方向 / 体との関係</b>：" + selectedShotAngleLabel + "<br>" +
+    "🔭 <b style='color:#c4b5fd'>レンズ向き</b>：" + selectedLensDirectionLabel + "<br>" +
+    "📐 <b style='color:#c4b5fd'>画面の傾き</b>：" + selectedCameraRollLabel + "<br>" +
     "📸 <b style='color:#c4b5fd'>導出カメラ位置/アングル</b>：" + selectedAngleModeLabel + " → " + angle.name + "<br>" +
     "🫱 <b style='color:#c4b5fd'>近接腕ガード</b>：" + closeBodySelfieGuardSummary + "<br>" +
     "👀 <b style='color:#c4b5fd'>視線</b>：" + selectedGazeLabel + "<br>" +
@@ -2964,7 +3036,7 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
+  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, cameraHold:CAMERA_HOLD_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, lensDirection:LENS_DIRECTION_OPTIONS[0].value, cameraRoll:CAMERA_ROLL_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
@@ -2979,7 +3051,10 @@ function handleReset() {
   renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
   renderChips("cameraHeightChips", CAMERA_HEIGHT_OPTIONS, "cameraHeight");
   renderChips("proximityChips", PROXIMITY_OPTIONS, "proximity");
+  renderChips("cameraHoldChips", CAMERA_HOLD_OPTIONS, "cameraHold");
   renderChips("shotAngleChips", SHOT_ANGLE_OPTIONS, "shotAngle");
+  renderChips("lensDirectionChips", LENS_DIRECTION_OPTIONS, "lensDirection");
+  renderChips("cameraRollChips", CAMERA_ROLL_OPTIONS, "cameraRoll");
   renderChips("angleModeChips", ANGLE_UI_OPTIONS, "angleMode");
   renderChips("gazeChips", GAZE_OPTIONS, "gaze");
   renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
@@ -2998,7 +3073,10 @@ document.addEventListener("DOMContentLoaded", () => {
   state.selfieMode = SELFIE_MODE_OPTIONS[0].value;
   state.cameraHeight = CAMERA_HEIGHT_OPTIONS[0].value;
   state.proximity = PROXIMITY_OPTIONS[0].value;
+  state.cameraHold = CAMERA_HOLD_OPTIONS[0].value;
   state.shotAngle = SHOT_ANGLE_OPTIONS[0].value;
+  state.lensDirection = LENS_DIRECTION_OPTIONS[0].value;
+  state.cameraRoll = CAMERA_ROLL_OPTIONS[0].value;
   state.angleMode = ANGLE_UI_OPTIONS[0].value;
   state.subjectSize = SUBJECT_SIZE_MODES[0].value;
   state.skinFinish = SKIN_FINISH_OPTIONS[0].value;
@@ -3009,8 +3087,20 @@ document.addEventListener("DOMContentLoaded", () => {
   state.framing = FRAMING_MODES[0].value;
   state.photoStyle = PHOTO_STYLE_MODES[0].value;
   updateClock();
+  const situationEl = document.getElementById("situation");
+  if (situationEl) {
+    let compatTimer = null;
+    situationEl.addEventListener("input", () => {
+      if (compatTimer) clearTimeout(compatTimer);
+      compatTimer = setTimeout(() => {
+        normalizeCompatibleState("situation");
+        renderAllOptionChips();
+      }, 120);
+    });
+  }
   setInterval(updateClock, 30000);
   syncDerivedAngleState(document.getElementById("situation") ? document.getElementById("situation").value || "" : "");
+  normalizeCompatibleState("init");
   renderAllOptionChips();
 });
 </script>
