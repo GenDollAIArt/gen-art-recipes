@@ -282,7 +282,7 @@
   <!-- Outfit reference -->
   <div class="card card-dark">
     <div class="slabel">コーディネート画像参照 — 2枚目の添付画像</div>
-    <div class="hint">1枚目は顔・体、2枚目は服装専用です。2枚目がコーディネートシートの場合は「SHEET」を選びます。シート内の文字・アイテム枠・色パレットを優先し、1枚目の服はコピーしません。</div>
+    <div class="hint">1枚目は顔・体、2枚目はその回の服装専用です。2枚目がコーディネートシートの場合は「SHEET」を選びます。過去のシート内容は使わず、現在添付した2枚目の文字・アイテム枠・色パレットだけを優先します。</div>
     <div class="chips" id="outfitReferenceModeChips"></div>
   </div>
 
@@ -503,7 +503,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v6.1.0-coordinate-sheet-priority";
+const APP_VERSION = "v6.1.1-dynamic-coordinate-sheet-fix";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -2063,18 +2063,24 @@ function buildOutfitReferenceBlock() {
   if (mode === "sheet") {
     return base + `,
 
-COORDINATE SHEET READING MODE:
-(the second attached image is a coordinate sheet, not a person photo:2.0),
-(read the coordinate sheet text, item labels, item-name fields, item illustration boxes, accessory boxes, color palette, point notes, and style point as outfit instructions:2.0),
+COORDINATE SHEET READING MODE — CURRENT SECOND IMAGE ONLY:
+(the second attached image in the current generation is the only coordinate sheet source:2.0),
+(do not use any previous coordinate sheet, cached outfit, sample outfit, app example, or earlier conversation outfit:2.0),
+(ignore all coordinate sheet information that is not visibly present in the current second attached image:2.0),
+(if extra images are attached after the second image, do not use them for outfit unless the user explicitly says otherwise:1.98),
+(read the current second coordinate sheet text, category labels, item-name fields, item illustration boxes, accessory boxes, color palette, POINT notes, and STYLE POINT as outfit instructions:2.0),
 (ignore the sheet layout, borders, title typography, blank boxes, template lines, and card design as visual objects in the generated scene:2.0),
-(use only the filled clothing item information from the sheet; empty item boxes mean no item in that category:1.98),
-(the coordinate sheet text and item image are stronger than any clothing visible in the first image:2.0),
-(if the sheet contains ONE-PIECE, treat that as the main garment and do not replace it with the first image shirt or skirt:2.0),
-(if the sheet says towel wrap one-piece, bath towel wrap dress, white pile fabric, ivory, ecru, cream, light beige, or relax bath-wrap coordinate, reflect those outfit details strongly:2.0),
-(the generated outfit must visibly follow the coordinate sheet garment category, color palette, fabric impression, and styling concept:1.98),
-(do not output the first image's white blouse, plaid skirt, office outfit, or shoulder bag unless those items also appear in the coordinate sheet:2.0),
-(do not simplify the coordinate sheet into a generic white shirt or generic skirt:2.0),
-(scene text may override location, pose, camera, mood, and action, but must not erase the coordinate sheet outfit unless explicitly stated:1.96)`;
+(use only the filled clothing item information from the current second sheet; empty item boxes mean no item in that category:1.98),
+(the current second coordinate sheet text and item images are stronger than any clothing visible in the first subject image:2.0),
+(if the current second sheet contains ONE-PIECE, treat ONE-PIECE as the main garment:2.0),
+(if the current second sheet contains INNER, TOPS, OUTER, BOTTOMS, or SHOES, use exactly those visible filled categories as the outfit structure:2.0),
+(if ONE-PIECE is blank or marked with a dash, do not invent a one-piece from a previous sheet:2.0),
+(if INNER or BOTTOMS are filled, do not replace them with a previous ONE-PIECE outfit:2.0),
+(the generated outfit must visibly follow the current second sheet garment category, color palette, fabric impression, accessory selection, and styling concept:2.0),
+(do not output the first image's white blouse, plaid skirt, office outfit, or shoulder bag unless those items also appear in the current second coordinate sheet:2.0),
+(do not reuse towel wrap, bath towel dress, white pile wrap, or any previous sheet outfit unless those exact items are visible in the current second sheet:2.0),
+(do not simplify the current coordinate sheet into a generic white shirt, generic skirt, or previous outfit:2.0),
+(scene text may override location, pose, camera, mood, and action, but must not erase the current second coordinate sheet outfit unless explicitly stated:1.96)`;
   }
   return base + `,
 (copy the clothing coordination, garment types, layering, color balance, fabric impression, silhouette balance, shoes, bag, and accessories from the second image:1.96),
@@ -2831,7 +2837,7 @@ function handleGenerate() {
     "🕐 <b style='color:#c4b5fd'>時間帯</b>：" + t.timeCtx.label + " / " + t.timeCtx.en + "<br>" +
     "🔒 <b style='color:#c4b5fd'>固定キャラモード</b>：" + getLabelByValue(CHARACTER_MODE_OPTIONS, state.characterMode) + "<br>" +
     "👗 <b style='color:#c4b5fd'>コーデ参照</b>：" + selectedOutfitReferenceLabel + "<br>" +
-    (state.outfitReferenceMode === "sheet" ? "📋 <b style='color:#c4b5fd'>コーデシート読取</b>：ON / 2枚目の文字・アイテム枠・色パレット優先<br>" : "") +
+    (state.outfitReferenceMode === "sheet" ? "📋 <b style='color:#c4b5fd'>コーデシート読取</b>：ON / 現在の2枚目だけを動的参照<br>" : "") +
     "📅 <b style='color:#c4b5fd'>曜日 mood</b>：" + DAY_MOOD[t.day] + "<br>" +
     "☀️ <b style='color:#c4b5fd'>天気</b>：" + selectedWeatherLabel + "<br>" +
     "🎞️ <b style='color:#c4b5fd'>フィルムトーン</b>：" + selectedFilmLabel + "<br>" +
