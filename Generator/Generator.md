@@ -1,12 +1,13 @@
 <!--
   Selfie Prompt Generator
-  Version: 6.2.1-auto-selection-open-fix
+  Version: 7.0.0-explicit-camera-origin-rebuild
   Updated: 2026-07-15
   Changelog:
-    v6.2.1 - 「自動 / おまかせ」を未確定として扱い、初期状態や姿勢未記載のシーンで下位選択肢を先回りして無効化しないよう修正。明示的な矛盾だけをディセーブル
-    v6.2.0 - 上から選ぶ優先順と選択整合性エンジンを追加。カメラ高さ・距離・持ち方・撮影方向・レンズ向き・画面傾きを分離し、矛盾項目を自動無効化
-    v6.1.1 - 現在の2枚目のコーディネートシートだけを動的に読むよう修正。以前のシートや固定コーデの引き継ぎを禁止
-    v6.0.0 - 優先順位ベースのUI構造とフィルムトーン拡張、長押しヘルプを追加
+    v7.0.0 - 自撮り/第三者撮影の自動判定を廃止し、必須2択へ再設計。撮影方式が未選択の間は下位カメラ項目を無効化し、選択後も方式を勝手に切り替えない明示カメラ起点ロックを追加
+    v6.4.0 - 選択状態の保存形式をsemantic keyへ統一。構図・背景・余白・写真スタイル・肌質感の選択整合性が実際の生成プロンプトへ正しく反映されるよう全面修正
+    v6.3.0 - 基本姿勢セレクターとシーン細部補完を追加
+    v6.2.0 - 上から選ぶ優先順と選択整合性エンジンを追加
+    v6.1.1 - 現在の2枚目のコーディネートシートだけを動的に読むよう修正
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -197,6 +198,18 @@
   }
   .compat-status.ok { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
   .compat-status.warn { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
+  .compat-status.error { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+  .required-badge {
+    display:inline-block; margin-left:6px; padding:2px 6px; border-radius:999px;
+    background:#dc2626; color:#fff; font-size:9px; font-weight:800; letter-spacing:0.04em;
+    vertical-align:1px;
+  }
+  .camera-mode-note {
+    margin-top:10px; padding:9px 10px; border-radius:10px;
+    background:#fef2f2; border:1px solid #fecaca; color:#991b1b;
+    font-size:11px; line-height:1.55;
+  }
+  .camera-mode-note.ready { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
 
 
   .chip.has-help::after {
@@ -252,7 +265,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">基本姿勢連動 + 選択整合性 v6.3.0</div>
+    <div class="header-sub">明示カメラ起点 + 選択整合性 v7.0.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -311,11 +324,12 @@
     <textarea id="situation" rows="4" placeholder="例：&#10;立っているを選択 → 前かがみで券売機を見ている。&#10;座っているを選択 → 床に三角座り。壁に背中を預けている。&#10;寝転がっているを選択 → ソファで横向きに休んでいる。"></textarea>
   </div>
 
-  <!-- Selfie mode -->
-  <div class="card">
-    <div class="slabel">③ 自撮り / 第三者撮影</div>
-    <div class="hint">撮影の前提です。ここで選んだ方式に合わない持ち方・後方撮影は、下の項目で選べなくなります。</div>
+  <!-- Camera origin mode -->
+  <div class="card" id="cameraModeCard">
+    <div class="slabel">③ 自撮り / 第三者撮影 <span class="required-badge">必須</span></div>
+    <div class="hint">自動判定はありません。必ずどちらかを選びます。ここで撮影カメラの起点を固定し、下の項目やシーン文が勝手に方式を変更することはありません。</div>
     <div class="chips" id="selfieModeChips"></div>
+    <div class="camera-mode-note" id="cameraModeNote">先に「自撮り ON」または「自撮り OFF / 第三者撮影」を選択してください。選ぶまで下位のカメラ・構図項目は操作できません。</div>
   </div>
 
   <!-- Camera height -->
@@ -536,7 +550,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v6.3.0-base-posture-selector";
+const APP_VERSION = "v7.0.0-explicit-camera-origin-rebuild";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -714,7 +728,6 @@ const BODY_LINE_BASE_PROMPT = [
 ].join(", ");
 
 const SELFIE_MODE_OPTIONS = [
-  {label:"🎲 自動 / おまかせ", key:"auto", value:"auto"},
   {label:"🤳 自撮り ON", key:"selfie_on", value:"on"},
   {label:"📷 自撮り OFF / 第三者撮影", key:"selfie_off", value:"off"},
 ];
@@ -1187,10 +1200,10 @@ function hasCoolStyleActive() {
 let lastCompatibilityChanges = [];
 
 const SELECTION_DEFAULTS = {
-  selfieMode:"auto", cameraHeight:"auto", proximity:"auto", cameraHold:"auto",
+  selfieMode:"", cameraHeight:"auto", proximity:"auto", cameraHold:"auto",
   shotAngle:"auto", lensDirection:"auto", cameraRoll:"auto",
   faceDirection:"auto", gaze:"auto", subjectSize:"balanced",
-  backgroundView:"auto", framing:"standard", photoStyle:PHOTO_STYLE_MODES[0].value
+  backgroundView:"auto", framing:"standard", photoStyle:"daily"
 };
 
 function getCurrentSceneText() {
@@ -1198,13 +1211,37 @@ function getCurrentSceneText() {
   return el ? (el.value || "") : "";
 }
 
+const CAMERA_MODE_DEPENDENT_STATE_KEYS = new Set([
+  "cameraHeight", "proximity", "cameraHold", "shotAngle", "lensDirection", "cameraRoll",
+  "faceDirection", "gaze", "subjectSize", "backgroundView", "framing", "photoStyle"
+]);
+
+function hasExplicitCameraMode() {
+  return state.selfieMode === "on" || state.selfieMode === "off";
+}
+
+function updateCameraModeUI() {
+  const selected = hasExplicitCameraMode();
+  const note = document.getElementById("cameraModeNote");
+  if (note) {
+    note.className = "camera-mode-note" + (selected ? " ready" : "");
+    note.textContent = selected
+      ? (state.selfieMode === "on"
+          ? "自撮り ON：被写体自身が持つスマホのフロントカメラを撮影起点として固定します。"
+          : "自撮り OFF / 第三者撮影：被写体の外部にあるカメラを撮影起点として固定します。")
+      : "先に「自撮り ON」または「自撮り OFF / 第三者撮影」を選択してください。選ぶまで下位のカメラ・構図項目は操作できません。";
+  }
+  const btn = document.getElementById("btnGen");
+  if (btn && btn.dataset.busy !== "1") {
+    btn.disabled = !selected;
+    btn.innerHTML = selected ? "✦ プロンプト生成" : "③ 撮影方式を選択してください";
+  }
+}
+
 function effectiveSelfieSelection() {
-  if (state.selfieMode === "off") return "off";
   if (state.selfieMode === "on") return "on";
-  const scene = getCurrentSceneText();
-  if (/自撮りじゃない|セルフィーじゃない|非自撮り|他撮り|第三者撮影|誰かに撮られ|撮ってもら|non-selfie|third-person|third person|photographed by someone/i.test(scene)) return "off";
-  if (/自撮り|セルフィー|front[- ]camera selfie|selfie/i.test(scene)) return "on";
-  return "auto";
+  if (state.selfieMode === "off") return "off";
+  return "";
 }
 
 function detectExplicitPosture(sceneText = "") {
@@ -1239,8 +1276,26 @@ function isExtremeCloseSelection() {
   return state.proximity === "macro" || state.subjectSize === "extremeFace";
 }
 
+function isLowCloseBodyUpshotSelection(values = state) {
+  const lowHeight = ["veryLow", "knee"].includes(values.cameraHeight);
+  const closeDistance = ["macro", "veryClose", "close"].includes(values.proximity);
+  const closeHold = values.cameraHold === "bodyNear";
+  const upwardLens = ["slightUp", "strongUp"].includes(values.lensDirection);
+  return values.selfieMode === "on" && lowHeight && closeDistance && closeHold && upwardLens;
+}
+
+function getResolvedSelfieModeLabel() {
+  if (state.selfieMode === "on") return "自撮りON（明示・固定）";
+  if (state.selfieMode === "off") return "自撮りOFF / 第三者撮影（明示・固定）";
+  return "未選択";
+}
+
 function getIncompatibilityReason(stateKey, itemValue) {
   if (!itemValue) return "";
+
+  if (CAMERA_MODE_DEPENDENT_STATE_KEYS.has(stateKey) && !hasExplicitCameraMode()) {
+    return "先に③『自撮り / 第三者撮影』を選択してください。";
+  }
 
   const sceneText = getCurrentSceneText();
   const poseCtx = detectPoseContext(sceneText);
@@ -1257,6 +1312,11 @@ function getIncompatibilityReason(stateKey, itemValue) {
     if (itemValue === "knee" && base === "auto" && (explicitPose.standing || explicitPose.walking || explicitPose.reclining)) return "シーンに立ち姿・歩行・寝転びが明記されているため、『座り時：膝あたり』は選べません。";
   }
 
+  if (stateKey === "proximity") {
+    const candidate = {...state, proximity:itemValue};
+    if (candidate.cameraHold === "bodyNear" && ["veryLow", "knee"].includes(candidate.cameraHeight) && ["slightUp", "strongUp"].includes(candidate.lensDirection) && itemValue === "macro") return "低位置の体近接セルフィーで顔まで入れる場合、マクロ距離では画角が成立しません。かなり近め・近め・標準を使います。";
+  }
+
   if (stateKey === "cameraHold") {
     if (itemValue !== "auto" && selfie === "off") return "第三者撮影では、自撮り時の持ち方は指定できません。";
     if (itemValue === "bodyNear" && ["veryHigh", "topDown"].includes(state.cameraHeight)) return "かなり上・真上の自撮りでは、スマホを体の近くに保持できません。";
@@ -1265,7 +1325,7 @@ function getIncompatibilityReason(stateKey, itemValue) {
   }
 
   if (stateKey === "shotAngle") {
-    if (rearAngles.includes(itemValue) && selfie === "on") return "自撮りONでは背中側から撮れません。自動のままなら、背中側を選ぶと第三者撮影へ自動調整されます。";
+    if (rearAngles.includes(itemValue) && selfie === "on") return "自撮りONでは背中側から撮れません。自撮りOFF / 第三者撮影を選択してください。";
     if (lookBackAngles.includes(itemValue) && selfie === "on" && state.cameraHold === "bodyNear") return "見返り・肩越し自撮りでは、体の近くに保持したスマホ位置が成立しません。";
   }
 
@@ -1285,6 +1345,7 @@ function getIncompatibilityReason(stateKey, itemValue) {
   }
 
   if (stateKey === "subjectSize") {
+    if (isLowCloseBodyUpshotSelection() && itemValue !== "widerBody") return "かなり低い位置・近接・体の近く保持・上向きレンズでは、スマホから顔までの距離差が大きいため『服や体も広めに』だけが成立します。上半身写真へ寄せると第三者撮影に逃げやすくなります。";
     if (state.proximity === "macro" && !closeKeys.includes(itemValue)) return "マクロ距離では顔・細部中心の接写構図だけ選べます。";
     if (state.proximity === "veryClose" && itemValue === "widerBody") return "かなり近い距離では、服や体を広く写せません。";
     if (["slightlyWide", "wide"].includes(state.proximity) && closeKeys.includes(itemValue)) return "引いた距離では顔の接写構図を選べません。";
@@ -1392,6 +1453,19 @@ function resetSelectionIfInvalid(key, fallback, changes) {
 function normalizeCompatibleState(changedKey) {
   const changes = [];
 
+  if (changedKey === "selfieMode") {
+    if (state.selfieMode === "off" && state.cameraHold !== "auto") {
+      state.cameraHold = "auto";
+      changes.push("自撮り時の持ち方 → 自動解除（第三者撮影では使用しません）");
+    }
+    if (state.selfieMode === "on" && ["back", "diagBack"].includes(state.shotAngle)) {
+      state.shotAngle = "auto";
+      state.faceDirection = "auto";
+      state.gaze = "auto";
+      changes.push("背中側撮影 → 自動解除（自撮りONでは成立しません）");
+    }
+  }
+
   // 上位選択に対して、下位の矛盾だけを解除する。
   const ordered = [
     ["basePosture", "auto"], ["cameraHeight", "auto"], ["proximity", "auto"], ["cameraHold", "auto"],
@@ -1406,6 +1480,12 @@ function normalizeCompatibleState(changedKey) {
     ordered.forEach(([key, fallback]) => {
       if (key !== changedKey) resetSelectionIfInvalid(key, fallback, changes);
     });
+  }
+
+  // 低位置・近接・体の近く・上向きの自撮りは、狭い上半身構図にすると第三者撮影へ逃げやすい。
+  if (isLowCloseBodyUpshotSelection() && state.subjectSize !== "widerBody") {
+    state.subjectSize = "widerBody";
+    changes.push("構図 / 被写体サイズ → 服や体も広めに自動調整（低位置の体近接セルフィー視点を守るため）");
   }
 
   // エフェクトは選択済みのうち、現在の上位条件と矛盾するものだけ解除。
@@ -1442,7 +1522,10 @@ function normalizeCompatibleState(changedKey) {
   } else if (lastCompatibilityChanges.length) {
     setCompatibilityStatus(lastCompatibilityChanges.join(" / "), "warn");
   } else {
-    setCompatibilityStatus("現在の選択は整合しています。基本姿勢はシーンの細部より上位で、細かな姿勢だけを②シーン欄から補完します。", "ok");
+    const cameraModeText = hasExplicitCameraMode()
+      ? (state.selfieMode === "on" ? " 撮影起点は自撮りスマホに固定されています。" : " 撮影起点は第三者カメラに固定されています。")
+      : " ③撮影方式を選択してください。";
+    setCompatibilityStatus("現在の選択は整合しています。基本姿勢はシーンの細部より上位で、細かな姿勢だけを②シーン欄から補完します。" + cameraModeText, hasExplicitCameraMode() ? "ok" : "warn");
   }
 }
 
@@ -1474,6 +1557,7 @@ function renderAllOptionChips() {
   renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
   renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
   renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
+  updateCameraModeUI();
 }
 
 const MOOD_OPTIONS = [
@@ -1649,11 +1733,11 @@ let state = {
   characterMode: "light", outfitReferenceMode: "off",
   bust: "", garmentLight: "", hip: "", weather: "", film: "", tone: "",
   effects: [], effectStrength: "standard",
-  skinFinish: SKIN_FINISH_OPTIONS[0].value, closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value,
-  basePosture: "auto", selfieMode: "auto", cameraHeight: "auto", proximity: "auto", cameraHold: "auto",
+  skinFinish: "auto", closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value,
+  basePosture: "auto", selfieMode: "", cameraHeight: "auto", proximity: "auto", cameraHold: "auto",
   shotAngle: "auto", lensDirection: "auto", cameraRoll: "auto", angleMode: "auto",
   gaze: "auto", faceDirection: "auto", subjectSize: "balanced",
-  backgroundView: "auto", framing: "standard", photoStyle: PHOTO_STYLE_MODES[0].value, mood: "auto",
+  backgroundView: "auto", framing: "standard", photoStyle: "daily", mood: "auto",
 };
 let tokyoNow = {};
 
@@ -1756,14 +1840,28 @@ function hideChipHelp() {
   if (overlay) overlay.classList.add("hidden");
 }
 
+const SEMANTIC_KEY_STATE_FIELDS = new Set(["subjectSize", "backgroundView", "framing", "photoStyle", "skinFinish"]);
+
+function getOptionStateValue(stateKey, item) {
+  if (!item) return "";
+  if (SEMANTIC_KEY_STATE_FIELDS.has(stateKey) && item.key !== undefined) return item.key;
+  return item.value;
+}
+
+function findOptionByState(items, stateValue) {
+  if (!Array.isArray(items)) return null;
+  return items.find(item => item.key === stateValue || item.value === stateValue) || null;
+}
+
 function renderChips(containerId, items, stateKey) {
   const el = document.getElementById(containerId);
   if (!el || !Array.isArray(items)) return;
   el.innerHTML = "";
   items.forEach((item) => {
     const btn = document.createElement("button");
-    const isActive = state[stateKey] === item.value;
-    const isDisabled = !isActive && isIncompatibleOption(stateKey, item.value);
+    const optionStateValue = getOptionStateValue(stateKey, item);
+    const isActive = state[stateKey] === optionStateValue;
+    const isDisabled = !isActive && isIncompatibleOption(stateKey, optionStateValue);
     btn.className = "chip" + (isActive ? " active" : "") + (isDisabled ? " disabled" : "");
     btn.textContent = item.label;
     btn.disabled = isDisabled;
@@ -1776,7 +1874,13 @@ function renderChips(containerId, items, stateKey) {
         renderAllOptionChips();
         return;
       }
-      state[stateKey] = isActive ? "" : item.value;
+      if (stateKey === "selfieMode") {
+        state.selfieMode = optionStateValue;
+        normalizeCompatibleState("selfieMode");
+        renderAllOptionChips();
+        return;
+      }
+      state[stateKey] = isActive ? "" : optionStateValue;
       normalizeCompatibleState(stateKey);
       renderAllOptionChips();
     };
@@ -2275,20 +2379,62 @@ function buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr = []) {
 }
 
 
-function isCloseBodySelfieCombo(cameraHoldKey = "auto", selfieMode = "auto") {
-  return selfieMode !== "off" && cameraHoldKey === "bodyNear";
+function isCloseBodySelfieCombo(cameraHoldKey = "auto", selfieMode = "") {
+  return selfieMode === "on" && cameraHoldKey === "bodyNear";
 }
 
-function buildCloseBodySelfieArmGuard(cameraHoldMode = {}, selfieMode = "auto") {
+function buildCloseBodySelfieArmGuard(cameraHoldMode = {}, selfieMode = "") {
   const holdKey = cameraHoldMode && cameraHoldMode.key ? cameraHoldMode.key : "auto";
   if (!isCloseBodySelfieCombo(holdKey, selfieMode)) return "";
   return [
     "(CLOSE-BODY SELFIE ARM GUARD active:2.0)",
     "(camera stays close to the torso exactly as selected:2.0)",
-    "(near arm is folded and mostly outside the frame:2.0)",
+    "(holding arm remains short and bent beside the body:2.0)",
+    "(a small cropped wrist, knuckle, or hand edge may touch the lower or side frame as self-shot evidence:1.94)",
     "(no large foreground arm, no long diagonal forearm, no stretched arm reaching toward the lens:2.0)",
-    "(do not escape into a conventional arm-extended selfie:2.0)"
+    "(do not remove every self-shot cue and do not escape into a conventional external portrait:2.0)"
   ].join(", ");
+}
+
+function buildCameraOriginExecutionLock(selfieMode = "", cameraHeightMode = {}, proximityMode = {}, cameraHoldMode = {}, lensDirectionMode = {}) {
+  const heightKey = cameraHeightMode && cameraHeightMode.key ? cameraHeightMode.key : "auto";
+  const proximityKey = proximityMode && proximityMode.key ? proximityMode.key : "auto";
+  const holdKey = cameraHoldMode && cameraHoldMode.key ? cameraHoldMode.key : "auto";
+  const lensKey = lensDirectionMode && lensDirectionMode.key ? lensDirectionMode.key : "auto";
+  const lowCloseUpshot = selfieMode === "on" && ["veryLow", "knee"].includes(heightKey) && holdKey === "bodyNear" && ["slightUp", "strongUp"].includes(lensKey);
+
+  if (lowCloseUpshot) {
+    return [
+      "CAMERA ORIGIN / EXECUTION LOCK — LOW CLOSE-BODY SELFIE UPSHOT:",
+      "(the active camera is the front camera of the smartphone held by the subject herself:2.0)",
+      "(the optical center physically originates from her own phone beside the knee or upper thigh, within a short bent arm's reach:2.0)",
+      "(the lens points upward from below the torso exactly as selected:2.0)",
+      "(the near thigh, hip, and lower torso are visibly closer to the lens and larger in perspective than the face:1.98)",
+      "(strong vertical foreshortening and close-body wide-angle perspective prove the low self-held camera origin:1.98)",
+      "(the framing is asymmetrical like a phone held beside the body, not centered like an external photographer portrait:1.98)",
+      "(a small cropped wrist, knuckle, or hand edge may appear at the lower or side border as self-shot evidence:1.92)",
+      "(the smartphone itself is not visible because it is the active camera:1.98)",
+      "(not a third-person camera, not an external photographer, not a tripod, not an eye-level portrait:2.0)",
+      "(do not beautify or simplify the geometry by moving the viewpoint away from the subject's hand:2.0)",
+      "(distance mode remains " + proximityKey + " without changing the camera origin:1.94)"
+    ].join("\n");
+  }
+
+  if (selfieMode === "on") {
+    return [
+      "CAMERA ORIGIN / EXECUTION LOCK — SELF-SHOT:",
+      "(the active optical viewpoint originates from the subject's own smartphone held in her hand:2.0)",
+      "(self-held asymmetry and camera-to-body geometry must remain visible:1.96)",
+      "(not a third-person portrait, not an external photographer, and not a tripod camera:2.0)",
+      "(do not remove the selected selfie perspective merely to make the portrait easier:2.0)"
+    ].join("\n");
+  }
+
+  return [
+    "CAMERA ORIGIN / EXECUTION LOCK — EXTERNAL CAMERA:",
+    "(the active camera is outside the subject and operated by another person or fixed support:2.0)",
+    "(no self-held phone-camera geometry:2.0)"
+  ].join("\n");
 }
 
 function getSemanticBodyAngleName(baseAngleName = "", shotAngleKey = "auto") {
@@ -2338,6 +2484,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
   const portraitBackgroundBalanceBlock = buildPortraitBackgroundBalanceBlock(t, sceneText, effectsArr);
   const leanSupportBlock = buildLeanSupportBlock(sceneText, motionResult && motionResult.poseCtx ? motionResult.poseCtx : detectPoseContext(sceneText));
   const closeBodySelfieArmGuardBlock = buildCloseBodySelfieArmGuard(cameraHoldMode, selfieMode);
+  const cameraOriginExecutionLockBlock = buildCameraOriginExecutionLock(selfieMode, cameraHeightMode, proximityMode, cameraHoldMode, lensDirectionMode);
 
   return `APP_VERSION: ${APP_VERSION}
 ANGLE_ENGINE: ordered-selection-compatibility + independent-camera-controls + no-easy-escape
@@ -2384,10 +2531,13 @@ ${sceneText}
 
 SELECTION PRIORITY / NO-EASY-ESCAPE RULE:
 (selected base posture and written scene details define the physical situation first:2.0),
+(camera origin mode is explicitly selected as either selfie or third-person and must never be inferred or changed automatically:2.0),
 (user-selected base posture, camera height, distance, hold, body direction, lens direction, camera roll, face direction, gaze, subject size, background direction, and framing are concrete conditions:2.0),
 (do not replace a difficult selected combination with an easier eye-level front selfie or generic portrait:2.0),
 (if the selected setup is difficult, adjust posture, hand placement, body rotation, balance, and head angle while preserving every enabled selection:1.98),
 (lower-priority mood, style, film tone, and effects must not change any selected physical camera control:2.0)
+
+${cameraOriginExecutionLockBlock}
 
 ${leanSupportBlock ? `SUPPORT / LEAN AUTO-REFLECTION:
 ${leanSupportBlock}
@@ -2456,7 +2606,7 @@ ${accessories}
 }
 
 function getLabelByValue(items, value, fallback = "未選択") {
-  const found = items.find(item => item.value === value);
+  const found = findOptionByState(items, value);
   return found ? found.label : fallback;
 }
 
@@ -2521,18 +2671,16 @@ function getEffectStrengthMode() {
   return EFFECT_STRENGTH_OPTIONS.find(m => m.key === state.effectStrength) || EFFECT_STRENGTH_OPTIONS[1];
 }
 
-function getSelfieMode(sceneText = "") {
-  if (angleRequiresSelfieOff(state.angleMode)) return "off";
-  const selected = state.selfieMode || "auto";
-  if (selected === "on" || selected === "off") return selected;
-  if (/自撮りじゃない|セルフィーじゃない|非自撮り|他撮り|第三者撮影|誰かに撮られ|撮ってもら|non-selfie|third-person|third person|photographed by someone/i.test(sceneText)) return "off";
-  return "on";
+function getSelfieMode() {
+  if (state.selfieMode === "on") return "on";
+  if (state.selfieMode === "off") return "off";
+  return "";
 }
 
 function getSelfieModeLabel(mode) {
   if (mode === "off") return "自撮りOFF / 第三者撮影";
   if (mode === "on") return "自撮りON";
-  return "自動";
+  return "未選択";
 }
 
 function getCameraModePrompt(selfieMode, cameraHoldKey = "auto") {
@@ -2551,10 +2699,12 @@ CAMERA MODE — NON-SELFIE / THIRD-PERSON PHOTO
     return `============================================================
 CAMERA MODE — CLOSE-BODY SELFIE
 ============================================================
-(subject's smartphone is the active front camera:1.98),
+(subject's smartphone is the active front camera:2.0),
+(the image is captured from that phone itself, never from an outside observer:2.0),
 (smartphone is held close to the torso with a short folded arm:2.0),
-(elbow stays near the body and the phone/hand may remain outside the frame:1.98),
+(elbow stays near the body and a tiny cropped hand cue may remain at the frame edge:1.94),
 (no arm's-length selfie, no long foreground arm, no large diagonal forearm:2.0),
+(no third-person portrait geometry and no external photographer viewpoint:2.0),
 (camera must follow the selected physical height, distance, body direction, lens direction, and roll:2.0)`;
   }
 
@@ -2792,24 +2942,28 @@ function getFaceDirectionMode() {
   return FACE_DIRECTION_OPTIONS.find(m => m.value === state.faceDirection) || FACE_DIRECTION_OPTIONS[0];
 }
 
+function getSkinFinishMode() {
+  return findOptionByState(SKIN_FINISH_OPTIONS, state.skinFinish) || SKIN_FINISH_OPTIONS[0];
+}
+
 function getCloseupTextureMode() {
   return CLOSEUP_TEXTURE_OPTIONS.find(m => m.value === state.closeupTexture) || CLOSEUP_TEXTURE_OPTIONS[0];
 }
 
 function getSubjectSizeMode() {
-  return SUBJECT_SIZE_MODES.find(m => m.value === state.subjectSize) || SUBJECT_SIZE_MODES[0];
+  return findOptionByState(SUBJECT_SIZE_MODES, state.subjectSize) || SUBJECT_SIZE_MODES[0];
 }
 
 function getFramingMode() {
-  return FRAMING_MODES.find(m => m.value === state.framing) || FRAMING_MODES[0];
+  return findOptionByState(FRAMING_MODES, state.framing) || FRAMING_MODES[0];
 }
 
 function getBackgroundViewMode() {
-  return BACKGROUND_VIEW_MODES.find(m => m.value === state.backgroundView) || BACKGROUND_VIEW_MODES[0];
+  return findOptionByState(BACKGROUND_VIEW_MODES, state.backgroundView) || BACKGROUND_VIEW_MODES[0];
 }
 
 function getPhotoStyleMode() {
-  return PHOTO_STYLE_MODES.find(m => m.value === state.photoStyle) || PHOTO_STYLE_MODES[0];
+  return findOptionByState(PHOTO_STYLE_MODES, state.photoStyle) || PHOTO_STYLE_MODES[0];
 }
 
 function deriveAngleFromCameraSelections(cameraHeightKey, shotAngleKey, sceneText = "", selfieMode = "auto", faceDirectionKey = "auto", subjectSizeKey = "balanced", photoStyleKey = "daily") {
@@ -2838,12 +2992,26 @@ function deriveAngleFromCameraSelections(cameraHeightKey, shotAngleKey, sceneTex
 }
 
 function syncDerivedAngleState(sceneText = "") {
-  let selfieMode = state.selfieMode || "auto";
-  let derived = deriveAngleFromCameraSelections(state.cameraHeight, state.shotAngle, sceneText, selfieMode, state.faceDirection, getSubjectSizeMode().key, getPhotoStyleMode().key);
-  if (angleRequiresSelfieOff(derived.name) && selfieMode !== "off") {
-    state.selfieMode = "off";
-    selfieMode = "off";
-    derived = deriveAngleFromCameraSelections(state.cameraHeight, state.shotAngle, sceneText, selfieMode, state.faceDirection, getSubjectSizeMode().key, getPhotoStyleMode().key);
+  const selfieMode = getSelfieMode();
+  if (!selfieMode) {
+    state.angleMode = "auto";
+    return ANGLES.find(a => a.name === "EYE LEVEL") || ANGLES[0];
+  }
+
+  let derived = deriveAngleFromCameraSelections(
+    state.cameraHeight, state.shotAngle, sceneText, selfieMode, state.faceDirection,
+    getSubjectSizeMode().key, getPhotoStyleMode().key
+  );
+
+  // 撮影方式は絶対に自動変更しない。矛盾が残った場合は下位の撮影方向を解除する。
+  if (selfieMode === "on" && angleRequiresSelfieOff(derived.name)) {
+    state.shotAngle = "auto";
+    state.faceDirection = "auto";
+    state.gaze = "auto";
+    derived = deriveAngleFromCameraSelections(
+      state.cameraHeight, "auto", sceneText, selfieMode, "auto",
+      getSubjectSizeMode().key, getPhotoStyleMode().key
+    );
   }
   state.angleMode = derived.name;
   return derived;
@@ -2911,9 +3079,18 @@ function pickAngleForComposition(subjectSizeKey, photoStyleKey, selfieMode = "au
 }
 
 function handleGenerate() {
+  if (!hasExplicitCameraMode()) {
+    setCompatibilityStatus("③『自撮り ON』または『自撮り OFF / 第三者撮影』を選択してください。", "error");
+    const card = document.getElementById("cameraModeCard");
+    if (card) card.scrollIntoView({ behavior:"smooth", block:"center" });
+    updateCameraModeUI();
+    return;
+  }
+
   const situation = document.getElementById("situation").value;
   const characterLock = document.getElementById("characterLock").value;
   const btn = document.getElementById("btnGen");
+  btn.dataset.busy = "1";
   btn.disabled = true;
   btn.innerHTML = "⏳ 生成中…";
 
@@ -2947,7 +3124,7 @@ function handleGenerate() {
   const motionText = motionResult.motionText;
   const bustPrompt = state.bust || BUST_OPTIONS[4].value;
   const hipPrompt = state.hip || HIP_OPTIONS[2].value;
-  const skinFinishPrompt = state.skinFinish || "";
+  const skinFinishPrompt = getSkinFinishMode().value || "";
 
   const prompt = buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFinishPrompt, closeupTextureMode, state.weather, state.film, state.tone, state.effects, effectStrengthMode, subjectSizeMode, backgroundViewMode, framingMode, photoStyleMode, cameraHeightMode, proximityMode, cameraHoldMode, shotAngleMode, lensDirectionMode, cameraRollMode, angle, gazeMode, faceDirectionMode, expression, scene, accessories, motionResult);
 
@@ -2975,7 +3152,7 @@ function handleGenerate() {
   const selectedGarmentLightLabel = (GARMENT_BACKLIGHT_OPTIONS.find(g => g.value === (state.garmentLight || ""))?.label || "🚫 指定なし");
   const selectedBustLabel = (BUST_OPTIONS.find(b => b.value === (state.bust || BUST_OPTIONS[4].value))?.label || "⬆️🧱 立体感＋ライン");
   const selectedHipLabel = (HIP_OPTIONS.find(h => h.value === (state.hip || HIP_OPTIONS[2].value))?.label || "🍑 小尻プリ");
-  const selectedSkinFinishLabel = (SKIN_FINISH_OPTIONS.find(s => s.value === (state.skinFinish || ""))?.label || "🎲 おまかせ");
+  const selectedSkinFinishLabel = getSkinFinishMode().label;
   const selectedCloseupTextureLabel = (CLOSEUP_TEXTURE_OPTIONS.find(s => s.value === (state.closeupTexture || CLOSEUP_TEXTURE_OPTIONS[0].value))?.label || "🎲 おまかせ");
   const selectedGazeLabel = (GAZE_OPTIONS.find(g => g.value === (state.gaze || GAZE_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
   const selectedFaceDirectionLabel = (FACE_DIRECTION_OPTIONS.find(f => f.value === (state.faceDirection || FACE_DIRECTION_OPTIONS[0].value))?.label || "🎲 AIにおまかせ");
@@ -3026,7 +3203,7 @@ function handleGenerate() {
     "🍑 <b style='color:#c4b5fd'>ヒップ/下半身</b>：" + selectedHipLabel + "<br>" +
     "🖼️ <b style='color:#c4b5fd'>Face Reference</b>：チャット冒頭の最初の添付画像<br>" +
     (state.outfitReferenceMode !== "off" ? "👗 <b style='color:#c4b5fd'>Outfit Reference</b>：2枚目の添付画像を服装参照<br>" : "") +
-    "📷 <b style='color:#c4b5fd'>撮影モード</b>：" + getSelfieModeLabel(getSelfieMode(document.getElementById("situation").value || "")) + "<br>" +
+    "📷 <b style='color:#c4b5fd'>撮影モード</b>：" + getResolvedSelfieModeLabel() + "<br>" +
     "🔒 <b style='color:#c4b5fd'>Face Reference安全ロック</b>：ON<br>" +
     (detectFaceReferenceSensitiveScene(document.getElementById("situation").value || "") ? "🧹 <b style='color:#c4b5fd'>危険語サニタイズ</b>：ON<br>" : "") +
     "🧍 <b style='color:#c4b5fd'>体型/胸シルエット</b>：" + selectedBustLabel +
@@ -3038,8 +3215,8 @@ function handleGenerate() {
   document.getElementById("outputArea").value = prompt;
   copyPromptToClipboard(true);
 
-  btn.disabled = false;
-  btn.innerHTML = "✦ プロンプト生成";
+  btn.dataset.busy = "0";
+  updateCameraModeUI();
 
   document.getElementById("outputCard").scrollIntoView({ behavior: "smooth" });
 }
@@ -3121,7 +3298,7 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", outfitReferenceMode:"off", basePosture:BASE_POSTURE_OPTIONS[0].value, bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, cameraHold:CAMERA_HOLD_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, lensDirection:LENS_DIRECTION_OPTIONS[0].value, cameraRoll:CAMERA_ROLL_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
+  state = { characterMode:"light", outfitReferenceMode:"off", basePosture:BASE_POSTURE_OPTIONS[0].value, bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:"auto", closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:"", cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, cameraHold:CAMERA_HOLD_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, lensDirection:LENS_DIRECTION_OPTIONS[0].value, cameraRoll:CAMERA_ROLL_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:"balanced", backgroundView:"auto", framing:"standard", photoStyle:"daily", mood:"auto" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
@@ -3149,6 +3326,8 @@ function handleReset() {
   renderChips("framingChips", FRAMING_MODES, "framing");
   renderChips("photoStyleChips", PHOTO_STYLE_MODES, "photoStyle");
   renderChips("moodChips", MOOD_OPTIONS, "mood");
+  normalizeCompatibleState("reset");
+  renderAllOptionChips();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -3157,7 +3336,7 @@ document.addEventListener("DOMContentLoaded", () => {
   state.outfitReferenceMode = OUTFIT_REFERENCE_MODE_OPTIONS[0].value;
   state.basePosture = BASE_POSTURE_OPTIONS[0].value;
   if (characterLockEl) characterLockEl.value = LIGHT_CHARACTER_LOCK;
-  state.selfieMode = SELFIE_MODE_OPTIONS[0].value;
+  state.selfieMode = "";
   state.cameraHeight = CAMERA_HEIGHT_OPTIONS[0].value;
   state.proximity = PROXIMITY_OPTIONS[0].value;
   state.cameraHold = CAMERA_HOLD_OPTIONS[0].value;
@@ -3165,14 +3344,14 @@ document.addEventListener("DOMContentLoaded", () => {
   state.lensDirection = LENS_DIRECTION_OPTIONS[0].value;
   state.cameraRoll = CAMERA_ROLL_OPTIONS[0].value;
   state.angleMode = ANGLE_UI_OPTIONS[0].value;
-  state.subjectSize = SUBJECT_SIZE_MODES[0].value;
-  state.skinFinish = SKIN_FINISH_OPTIONS[0].value;
+  state.subjectSize = "balanced";
+  state.skinFinish = "auto";
   state.closeupTexture = CLOSEUP_TEXTURE_OPTIONS[0].value;
   state.gaze = GAZE_OPTIONS[0].value;
   state.faceDirection = FACE_DIRECTION_OPTIONS[0].value;
-  state.backgroundView = BACKGROUND_VIEW_MODES[0].value;
-  state.framing = FRAMING_MODES[0].value;
-  state.photoStyle = PHOTO_STYLE_MODES[0].value;
+  state.backgroundView = "auto";
+  state.framing = "standard";
+  state.photoStyle = "daily";
   updateClock();
   const situationEl = document.getElementById("situation");
   if (situationEl) {
