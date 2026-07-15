@@ -1,16 +1,12 @@
 <!--
   Selfie Prompt Generator
-  Version: 5.3.4-close-body-selfie-guard
-  Updated: 2026-07-14
+  Version: 6.2.1-auto-selection-open-fix
+  Updated: 2026-07-15
   Changelog:
-    v5.3.4 - 腰だめ/体の近く/かなり近めの組み合わせで腕伸ばし自撮りに逃げないよう、CLOSE-BODY SELFIE ARM GUARDを追加。前景腕・長い腕・広角腕伸ばしを強く抑制
-    v5.3.3 - 生成ボタン実行時の新カメラ項目getter未定義エラーを修正
-    v5.3.2 - カメラ操作UIを「高さ」「距離 / 寄り方」「撮影アングル / 体の向き」に分解。背景の見せ方も「上 / 下 / 奥 / 手前」基準へ整理し、UIはライトモード固定に変更
-    v5.3.1 - 視線・顔向き・接写質感を追加。表情/ポーズ/動きはAI自動導出のまま、横顔アップ・非カメラ目線・質感寄り接写を軽く指定できるよう改善
-    v5.3.0 - テンション/感情/表情の3項目を「雰囲気・気分」に統合。表情・視線・ポーズ・動きはシチュエーションと雰囲気からAIが自動導出する仕様へ変更
-    v5.2.2 - シーン文中の「もたれる / 寄りかかる / 前向き / 後ろ向き / 横向き / シンク / 柵 / カウンター / 壁 / ガラス」から、自動でもたれ方と接触点を導くLEAN SUPPORT AUTO-REFLECTIONを追加
-    v5.2.1 - 夜景ポートレート用の背景なじみ/露出バランスを追加。背景ボケを中程度に調整し、フラッシュ感を抑えつつ胸シルエット維持ロックを追加。前ボケ効果も追加
-    v5.1.1 - 胸シルエット選択肢の効き方を調整。控えめ=普通サイズ寄り、立体感/ラインくっきり=少し大きめ、立体感＋ライン=最も強く自然に反映
+    v6.2.1 - 「自動 / おまかせ」を未確定として扱い、初期状態や姿勢未記載のシーンで下位選択肢を先回りして無効化しないよう修正。明示的な矛盾だけをディセーブル
+    v6.2.0 - 上から選ぶ優先順と選択整合性エンジンを追加。カメラ高さ・距離・持ち方・撮影方向・レンズ向き・画面傾きを分離し、矛盾項目を自動無効化
+    v6.1.1 - 現在の2枚目のコーディネートシートだけを動的に読むよう修正。以前のシートや固定コーデの引き継ぎを禁止
+    v6.0.0 - 優先順位ベースのUI構造とフィルムトーン拡張、長押しヘルプを追加
 -->
 <!DOCTYPE html>
 <html lang="ja">
@@ -256,7 +252,7 @@
   <div class="header-icon">✦</div>
   <div>
     <div class="header-title">Stable Character Prompt Generator</div>
-    <div class="header-sub">選択整合性エンジン v6.2.0</div>
+    <div class="header-sub">基本姿勢連動 + 選択整合性 v6.3.0</div>
   </div>
   <div class="header-time">
     <div class="header-time-main" id="hTime">--:--</div>
@@ -297,180 +293,187 @@
   <!-- Priority summary -->
   <div class="card card-dark">
     <div class="slabel">優先順位ガイド</div>
-    <div class="hint">この順番で効きます：①顔 / 体（1枚目） → ②コーディネート（2枚目） → ③今回のシーン → ④カメラ / 構図 → ⑤雰囲気・気分 → ⑥天気・光 → ⑦フィルムトーン / 作品トーン / エフェクト。後ろの項目は前の項目を壊さない前提で効きます。</div>
+    <div class="hint">この順番で効きます：①顔 / 体（1枚目） → ②コーディネート（2枚目） → ③基本姿勢と今回のシーン → ④カメラ / 構図 → ⑤雰囲気・気分 → ⑥天気・光 → ⑦フィルムトーン / 作品トーン / エフェクト。後ろの項目は前の項目を壊さない前提で効きます。</div>
     <div class="compat-status ok" id="compatStatus">上から選ぶと、矛盾する下位項目は自動で無効化されます。</div>
   </div>
 
-  <!-- ① Scene only -->
+  <!-- ① Base posture -->
   <div class="card">
-    <div class="slabel">① 今回のシーンだけ（日本語で入力）</div>
-    <div class="hint">ここだけ毎回変更：場所・服装・何をしているか。表情・ポーズ・動きはシーンからAIが自然に導きます。</div>
-    <textarea id="situation" rows="4" placeholder="例：&#10;薄い紺色のワイシャツ、紺色のビジネスパンツ。西中島南方のラーメン店でラーメンをすすっている。&#10;キッチンのシンク前。後ろ向きでもたれる。&#10;ベランダの柵に前向きでもたれる。"></textarea>
+    <div class="slabel">① 基本姿勢</div>
+    <div class="hint">まず大きな姿勢だけを選びます。細かな姿勢は②シーン欄に書きます。例：立っている＋「前かがみ」、座っている＋「床に三角座り」。</div>
+    <div class="chips" id="basePostureChips"></div>
+  </div>
+
+  <!-- ② Scene detail -->
+  <div class="card">
+    <div class="slabel">② 今回のシーンだけ（日本語で入力）</div>
+    <div class="hint">場所・服装・行動と、選んだ基本姿勢の細部を書きます。選択した基本姿勢を別の姿勢へ変更する言葉は避けてください。</div>
+    <textarea id="situation" rows="4" placeholder="例：&#10;立っているを選択 → 前かがみで券売機を見ている。&#10;座っているを選択 → 床に三角座り。壁に背中を預けている。&#10;寝転がっているを選択 → ソファで横向きに休んでいる。"></textarea>
   </div>
 
   <!-- Selfie mode -->
   <div class="card">
-    <div class="slabel">② 自撮り / 第三者撮影</div>
+    <div class="slabel">③ 自撮り / 第三者撮影</div>
     <div class="hint">撮影の前提です。ここで選んだ方式に合わない持ち方・後方撮影は、下の項目で選べなくなります。</div>
     <div class="chips" id="selfieModeChips"></div>
   </div>
 
   <!-- Camera height -->
   <div class="card">
-    <div class="slabel">③ カメラの高さ</div>
+    <div class="slabel">④ カメラの高さ</div>
     <div class="hint">レンズの物理的な高さだけを指定します。撮影方向や画面の傾きは別項目です。</div>
     <div class="chips" id="cameraHeightChips"></div>
   </div>
 
   <!-- Camera distance -->
   <div class="card">
-    <div class="slabel">④ カメラ距離 / 寄り方</div>
+    <div class="slabel">⑤ カメラ距離 / 寄り方</div>
     <div class="hint">マクロ・かなり近め・標準・引きなど、被写体までの距離だけを指定します。</div>
     <div class="chips" id="proximityChips"></div>
   </div>
 
   <!-- Camera hold -->
   <div class="card">
-    <div class="slabel">⑤ 自撮り時の持ち方 / 腕</div>
+    <div class="slabel">⑥ 自撮り時の持ち方 / 腕</div>
     <div class="hint">自撮り時だけ使用します。「体の近く」と「腕を伸ばす」を距離から分離しました。第三者撮影では自動以外を選べません。</div>
     <div class="chips" id="cameraHoldChips"></div>
   </div>
 
   <!-- Shot direction -->
   <div class="card">
-    <div class="slabel">⑥ 撮影方向 / 体との関係</div>
-    <div class="hint">正面・真横・見返り・背中側など、体に対してカメラがどこにあるかだけを指定します。歩く・寝転ぶなどの動作は①シーンに書きます。</div>
+    <div class="slabel">⑦ 撮影方向 / 体との関係</div>
+    <div class="hint">正面・真横・見返り・背中側など、体に対してカメラがどこにあるかだけを指定します。歩く・寝転ぶなどの動作は②シーンに書きます。</div>
     <div class="chips" id="shotAngleChips"></div>
   </div>
 
   <!-- Lens direction -->
   <div class="card">
-    <div class="slabel">⑦ レンズの向き</div>
+    <div class="slabel">⑧ レンズの向き</div>
     <div class="hint">同じカメラ高さのまま、レンズを水平・上向き・下向きのどこへ向けるかを決めます。</div>
     <div class="chips" id="lensDirectionChips"></div>
   </div>
 
   <!-- Camera roll -->
   <div class="card">
-    <div class="slabel">⑧ 画面の傾き / カメラロール</div>
+    <div class="slabel">⑨ 画面の傾き / カメラロール</div>
     <div class="hint">カメラ位置を変えず、画面だけを水平または斜めにします。「斜め」は低いカメラ位置を上書きしません。</div>
     <div class="chips" id="cameraRollChips"></div>
   </div>
 
   <!-- Face direction -->
   <div class="card">
-    <div class="slabel">⑨ 顔向き</div>
+    <div class="slabel">⑩ 顔向き</div>
     <div class="hint">正面・斜め・横顔・振り向き・顔を見せない、の顔方向だけを指定します。</div>
     <div class="chips" id="faceDirectionChips"></div>
   </div>
 
   <!-- Gaze -->
   <div class="card">
-    <div class="slabel">⑩ 視線</div>
+    <div class="slabel">⑪ 視線</div>
     <div class="hint">顔が見える組み合わせだけ選択できます。背中向き・顔を見せない場合は自動以外を無効化します。</div>
     <div class="chips" id="gazeChips"></div>
   </div>
 
   <!-- Subject framing / composition -->
   <div class="card">
-    <div class="slabel">⑪ 構図 / 被写体サイズ</div>
+    <div class="slabel">⑫ 構図 / 被写体サイズ</div>
     <div class="hint">距離・高さに合う構図だけ選択できます。マクロと全身寄りなど、成立しない組み合わせは無効化します。</div>
     <div class="chips" id="subjectSizeChips"></div>
   </div>
 
   <!-- Background view -->
   <div class="card">
-    <div class="slabel">⑫ 背景の見せ方 / 方向</div>
+    <div class="slabel">⑬ 背景の見せ方 / 方向</div>
     <div class="hint">上・下・奥・手前を指定します。顔の超接写では、広い背景方向を自動で無効化します。</div>
     <div class="chips" id="backgroundViewChips"></div>
   </div>
 
   <!-- Framing space -->
   <div class="card">
-    <div class="slabel">⑬ 余白 / リーディングスペース</div>
+    <div class="slabel">⑭ 余白 / リーディングスペース</div>
     <div class="hint">寄り方や被写体サイズと矛盾しない余白だけ選択できます。</div>
     <div class="chips" id="framingChips"></div>
   </div>
 
   <!-- Photo naturalness / staging -->
   <div class="card">
-    <div class="slabel">⑭ 写真の自然さ / 演出度</div>
+    <div class="slabel">⑮ 写真の自然さ / 演出度</div>
     <div class="hint">自撮り・第三者撮影のどちらでも使える、カメラ方式に依存しない表現へ整理しました。</div>
     <div class="chips" id="photoStyleChips"></div>
   </div>
 
   <!-- Mood / expression auto-derivation -->
   <div class="card">
-    <div class="slabel">⑮ 雰囲気・気分</div>
-    <div class="hint">表情・姿勢・小さな動きは、①シーンとここからAIが導出します。上で選んだ撮影条件を変更してはいけません。</div>
+    <div class="slabel">⑯ 雰囲気・気分</div>
+    <div class="hint">表情・姿勢・小さな動きは、①基本姿勢・②シーンとここからAIが導出します。上で選んだ撮影条件を変更してはいけません。</div>
     <div class="chips" id="moodChips"></div>
   </div>
 
   <!-- Garment backlight response -->
   <div class="card">
-    <div class="slabel">⑯ 逆光時の布の見え方</div>
+    <div class="slabel">⑰ 逆光時の布の見え方</div>
     <div class="hint">服の素材分類ではなく、逆光で布が光を通す・ふんわり見えるかだけを選びます。</div>
     <div class="chips" id="garmentLightChips"></div>
   </div>
 
   <!-- Chest silhouette -->
   <div class="card">
-    <div class="slabel">⑰ 胸シルエット</div>
+    <div class="slabel">⑱ 胸シルエット</div>
     <div class="hint">1枚目の体型を基準に、服の上から見えるシルエットだけを自然に調整します。控えめ＝普通サイズ寄り、立体感/ラインくっきり＝少し大きめです。</div>
     <div class="chips" id="bustChips"></div>
   </div>
 
   <!-- Hip silhouette -->
   <div class="card">
-    <div class="slabel">⑱ ヒップ / 下半身シルエット</div>
+    <div class="slabel">⑲ ヒップ / 下半身シルエット</div>
     <div class="hint">細身Iラインを維持したまま、ヒップの丸み・上向き感を調整します。横に広げない方向です。</div>
     <div class="chips" id="hipChips"></div>
   </div>
 
   <!-- Weather -->
   <div class="card">
-    <div class="slabel">⑲ 天気を選択</div>
+    <div class="slabel">⑳ 天気を選択</div>
     <div class="chips" id="weatherChips"></div>
   </div>
 
   <!-- Film tone -->
   <div class="card">
-    <div class="slabel">⑳ フィルムトーン / 質感 ⓘ</div>
+    <div class="slabel">㉑ フィルムトーン / 質感 ⓘ</div>
     <div class="hint">長押しでヘルプ。色味・質感・粒子感のベースを決めます。フィルムトーンは仕上げ層なので、顔・体・コーデ・カメラ選択は壊さない前提で効きます。</div>
     <div class="chips" id="filmChips"></div>
   </div>
 
   <!-- Overall tone -->
   <div class="card">
-    <div class="slabel">㉑ 作品トーン</div>
+    <div class="slabel">㉒ 作品トーン</div>
     <div class="hint">写真全体の印象を選びます。反対方向の組み合わせは自動整理されます。</div>
     <div class="chips" id="toneChips"></div>
   </div>
 
   <!-- Effects -->
   <div class="card">
-    <div class="slabel">㉒ エフェクト（複数選択可） ⓘ</div>
+    <div class="slabel">㉓ エフェクト（複数選択可） ⓘ</div>
     <div class="hint">長押しでヘルプ。相反するエフェクトは同時選択できません。まずは3〜5個くらいがおすすめです。</div>
     <div class="chips" id="effectChips"></div>
   </div>
 
   <!-- Effect strength -->
   <div class="card">
-    <div class="slabel">㉓ エフェクト強度</div>
+    <div class="slabel">㉔ エフェクト強度</div>
     <div class="hint">選択したエフェクト内のweight数値を一括で倍率補正します。控えめは弱め、標準は基準値、強め・盛り盛りは各エフェクトの効きを直接強くします。</div>
     <div class="chips" id="effectStrengthChips"></div>
   </div>
 
   <!-- Skin finish -->
   <div class="card">
-    <div class="slabel">㉔ 肌の見え方 / 肌質感</div>
+    <div class="slabel">㉕ 肌の見え方 / 肌質感</div>
     <div class="hint">肌の仕上がりを選びます。自然は標準、しっとりは保湿感、ツヤありはハイライトが少し乗りやすくなります。</div>
     <div class="chips" id="skinFinishChips"></div>
   </div>
 
   <!-- Closeup texture -->
   <div class="card">
-    <div class="slabel">㉕ 接写質感</div>
+    <div class="slabel">㉖ 接写質感</div>
     <div class="hint">顔アップや横顔アップで効きやすい近接描写の質感です。まつ毛・唇・肌のきめなどの描写密度を調整します。</div>
     <div class="chips" id="closeupTextureChips"></div>
   </div>
@@ -533,7 +536,7 @@ const DAY_MOOD = {
   Sat:"Relaxed confident Saturday energy",
 };
 
-const APP_VERSION = "v6.2.0-selection-compatibility-engine";
+const APP_VERSION = "v6.3.0-base-posture-selector";
 const CHARACTER_MODE_OPTIONS = [
   {label:"📷 OFF / 写真参照のみ", key:"off", value:"off"},
   {label:"✨ LIGHT / 写真参照＋雰囲気", key:"light", value:"light"},
@@ -545,6 +548,13 @@ const OUTFIT_REFERENCE_MODE_OPTIONS = [
   {label:"✨ LIGHT / 色・雰囲気", key:"light", value:"light"},
   {label:"👗 FULL / 着用写真を参照", key:"full", value:"full"},
   {label:"📋 SHEET / コーデシート優先", key:"sheet", value:"sheet"},
+];
+
+const BASE_POSTURE_OPTIONS = [
+  {label:"🎲 自動 / おまかせ", key:"auto", value:"auto", prompt:"(base posture is derived from the written scene only when no posture is selected:1.9), (do not default to standing when the scene leaves posture open:1.9)"},
+  {label:"🧍 立っている", key:"standing", value:"standing", prompt:"(mandatory base posture is standing:2.0), (feet and legs carry the body weight in a believable standing balance:1.96), (scene details may refine this into forward-leaning, wall-leaning, standing still, or walking, but must not switch to sitting or reclining:2.0), (do not simplify a difficult standing detail into a generic straight pose:1.98)"},
+  {label:"🪑 座っている", key:"seated", value:"seated", prompt:"(mandatory base posture is seated:2.0), (hips are visibly supported by the floor, chair, sofa, bench, or another real surface:1.98), (scene details may refine this into floor triangle-sitting, knees-up sitting, cross-legged sitting, chair sitting, or leaning while seated, but must not switch to standing or reclining:2.0), (do not simplify a specified seated pose into ordinary standing:2.0)"},
+  {label:"🛋️ 寝転がっている", key:"reclining", value:"reclining", prompt:"(mandatory base posture is reclining or lying down:2.0), (the body is visibly supported by a bed, sofa, floor, or another real surface:1.98), (scene details may refine this into side-lying, supine, prone, curled-up, or resting posture, but must not switch to standing or seated:2.0), (gravity, support contact, spine, shoulders, pelvis, and limbs remain physically believable:1.98)"}
 ];
 
 const LIGHT_CHARACTER_LOCK = `(refined Korean Asian fashion-model beauty atmosphere:1.5),
@@ -1193,7 +1203,32 @@ function effectiveSelfieSelection() {
   if (state.selfieMode === "on") return "on";
   const scene = getCurrentSceneText();
   if (/自撮りじゃない|セルフィーじゃない|非自撮り|他撮り|第三者撮影|誰かに撮られ|撮ってもら|non-selfie|third-person|third person|photographed by someone/i.test(scene)) return "off";
-  return "on";
+  if (/自撮り|セルフィー|front[- ]camera selfie|selfie/i.test(scene)) return "on";
+  return "auto";
+}
+
+function detectExplicitPosture(sceneText = "") {
+  const t = sceneText || "";
+  const reclining = /寝転|寝そべ|横たわ|横になる|うつ伏せ|仰向け|lying|reclining/i.test(t);
+  const seated = !reclining && /座って|座る|腰掛|椅子に座|ソファに座|ベンチに座|床に座|三角座|体育座|正座|あぐら|sitting|seated/i.test(t);
+  const walking = !reclining && !seated && /歩いて|歩く|散歩|移動中|walking|mid-walk/i.test(t);
+  const standing = !reclining && !seated && /立って|立つ|立ち止ま|直立|standing|stand/i.test(t);
+  return { seated, reclining, walking, standing, known: seated || reclining || walking || standing };
+}
+
+function getBasePostureMode() {
+  return BASE_POSTURE_OPTIONS.find(item => item.value === (state.basePosture || "auto")) || BASE_POSTURE_OPTIONS[0];
+}
+
+function getPostureConflictReason(sceneText = "") {
+  const selected = state.basePosture || "auto";
+  if (selected === "auto") return "";
+  const explicit = detectExplicitPosture(sceneText);
+  if (!explicit.known) return "";
+  if (selected === "standing" && (explicit.seated || explicit.reclining)) return "基本姿勢は『立っている』ですが、シーン文に座る・寝転がる表現があります。";
+  if (selected === "seated" && (explicit.standing || explicit.walking || explicit.reclining)) return "基本姿勢は『座っている』ですが、シーン文に立つ・歩く・寝転がる表現があります。";
+  if (selected === "reclining" && (explicit.standing || explicit.walking || explicit.seated)) return "基本姿勢は『寝転がっている』ですが、シーン文に立つ・歩く・座る表現があります。";
+  return "";
 }
 
 function isCloseSubjectKey(key = "") {
@@ -1209,6 +1244,7 @@ function getIncompatibilityReason(stateKey, itemValue) {
 
   const sceneText = getCurrentSceneText();
   const poseCtx = detectPoseContext(sceneText);
+  const explicitPose = detectExplicitPosture(sceneText);
   const selfie = effectiveSelfieSelection();
   const closeFace = isCloseSubjectKey(state.subjectSize);
   const closeKeys = ["headClose", "faceCloseup", "profileCloseup", "extremeFace"];
@@ -1216,7 +1252,9 @@ function getIncompatibilityReason(stateKey, itemValue) {
   const lookBackAngles = ["lookBack", "overShoulder"];
 
   if (stateKey === "cameraHeight") {
-    if (itemValue === "knee" && !poseCtx.seated) return "『座り時：膝あたり』は、シーンが座っている時だけ選べます。";
+    const base = state.basePosture || "auto";
+    if (itemValue === "knee" && (base === "standing" || base === "reclining")) return "『座り時：膝あたり』は基本姿勢が『座っている』の時だけ使用できます。";
+    if (itemValue === "knee" && base === "auto" && (explicitPose.standing || explicitPose.walking || explicitPose.reclining)) return "シーンに立ち姿・歩行・寝転びが明記されているため、『座り時：膝あたり』は選べません。";
   }
 
   if (stateKey === "cameraHold") {
@@ -1227,7 +1265,7 @@ function getIncompatibilityReason(stateKey, itemValue) {
   }
 
   if (stateKey === "shotAngle") {
-    if (rearAngles.includes(itemValue) && selfie !== "off") return "背中側からの撮影は第三者撮影を先に選んでください。";
+    if (rearAngles.includes(itemValue) && selfie === "on") return "自撮りONでは背中側から撮れません。自動のままなら、背中側を選ぶと第三者撮影へ自動調整されます。";
     if (lookBackAngles.includes(itemValue) && selfie === "on" && state.cameraHold === "bodyNear") return "見返り・肩越し自撮りでは、体の近くに保持したスマホ位置が成立しません。";
   }
 
@@ -1250,7 +1288,7 @@ function getIncompatibilityReason(stateKey, itemValue) {
     if (state.proximity === "macro" && !closeKeys.includes(itemValue)) return "マクロ距離では顔・細部中心の接写構図だけ選べます。";
     if (state.proximity === "veryClose" && itemValue === "widerBody") return "かなり近い距離では、服や体を広く写せません。";
     if (["slightlyWide", "wide"].includes(state.proximity) && closeKeys.includes(itemValue)) return "引いた距離では顔の接写構図を選べません。";
-    if (["veryLow", "knee"].includes(state.cameraHeight) && poseCtx.standing && closeKeys.includes(itemValue)) return "立った状態の膝付近カメラでは、顔の接写構図は成立しません。";
+    if (["veryLow", "knee"].includes(state.cameraHeight) && explicitPose.standing && closeKeys.includes(itemValue)) return "立ち姿が明記された膝付近カメラでは、顔の接写構図は成立しません。";
     if (state.cameraHeight === "topDown" && itemValue === "profileCloseup") return "真上カメラと真横の横顔アップは同時に成立しません。";
     if (state.cameraHold === "bodyNear" && ["macro", "veryClose", "close"].includes(state.proximity) && itemValue === "widerBody") return "体の近くからの近接自撮りでは、広い身体構図を作れません。";
   }
@@ -1272,7 +1310,8 @@ function getIncompatibilityReason(stateKey, itemValue) {
 
   if (stateKey === "garmentLight") {
     const currentAngle = state.angleMode === "auto" ? "" : state.angleMode;
-    if ((itemValue === "softGlow" || itemValue === "backlitEdge") && !isBacklightSafeAngle(currentAngle, state.selfieMode || "auto")) return "この撮影方向では、服の逆光縁取りを安全かつ自然に成立させにくいです。";
+    const explicitSelfie = state.selfieMode === "on" || state.selfieMode === "off";
+    if ((itemValue === "softGlow" || itemValue === "backlitEdge") && currentAngle && explicitSelfie && !isBacklightSafeAngle(currentAngle, state.selfieMode)) return "この確定済み撮影方向では、服の逆光縁取りを安全かつ自然に成立させにくいです。";
   }
 
   const transparentEffects = transparentEffectValues();
@@ -1338,7 +1377,7 @@ function resetSelectionIfInvalid(key, fallback, changes) {
   const reason = getIncompatibilityReason(key, current);
   if (!reason) return;
   const labelSets = {
-    cameraHeight:CAMERA_HEIGHT_OPTIONS, proximity:PROXIMITY_OPTIONS, cameraHold:CAMERA_HOLD_OPTIONS,
+    basePosture:BASE_POSTURE_OPTIONS, cameraHeight:CAMERA_HEIGHT_OPTIONS, proximity:PROXIMITY_OPTIONS, cameraHold:CAMERA_HOLD_OPTIONS,
     shotAngle:SHOT_ANGLE_OPTIONS, lensDirection:LENS_DIRECTION_OPTIONS, cameraRoll:CAMERA_ROLL_OPTIONS,
     faceDirection:FACE_DIRECTION_OPTIONS, gaze:GAZE_OPTIONS, subjectSize:SUBJECT_SIZE_MODES,
     backgroundView:BACKGROUND_VIEW_MODES, framing:FRAMING_MODES, photoStyle:PHOTO_STYLE_MODES,
@@ -1355,7 +1394,7 @@ function normalizeCompatibleState(changedKey) {
 
   // 上位選択に対して、下位の矛盾だけを解除する。
   const ordered = [
-    ["cameraHeight", "auto"], ["proximity", "auto"], ["cameraHold", "auto"],
+    ["basePosture", "auto"], ["cameraHeight", "auto"], ["proximity", "auto"], ["cameraHold", "auto"],
     ["shotAngle", "auto"], ["lensDirection", "auto"], ["cameraRoll", "auto"],
     ["faceDirection", "auto"], ["gaze", "auto"], ["subjectSize", "balanced"],
     ["backgroundView", "auto"], ["framing", "standard"], ["photoStyle", PHOTO_STYLE_MODES[0].value],
@@ -1396,16 +1435,21 @@ function normalizeCompatibleState(changedKey) {
 
   syncDerivedAngleState(getCurrentSceneText());
   lastCompatibilityChanges = [...new Set(changes)];
-  if (lastCompatibilityChanges.length) {
+  const postureConflict = getPostureConflictReason(getCurrentSceneText());
+  if (postureConflict) {
+    const extra = lastCompatibilityChanges.length ? " / " + lastCompatibilityChanges.join(" / ") : "";
+    setCompatibilityStatus(postureConflict + " 基本姿勢の選択を優先して生成します。" + extra, "warn");
+  } else if (lastCompatibilityChanges.length) {
     setCompatibilityStatus(lastCompatibilityChanges.join(" / "), "warn");
   } else {
-    setCompatibilityStatus("現在の選択は整合しています。下位の矛盾項目は選択できません。", "ok");
+    setCompatibilityStatus("現在の選択は整合しています。基本姿勢はシーンの細部より上位で、細かな姿勢だけを②シーン欄から補完します。", "ok");
   }
 }
 
 function renderAllOptionChips() {
   renderChips("characterModeChips", CHARACTER_MODE_OPTIONS, "characterMode");
   renderChips("outfitReferenceModeChips", OUTFIT_REFERENCE_MODE_OPTIONS, "outfitReferenceMode");
+  renderChips("basePostureChips", BASE_POSTURE_OPTIONS, "basePosture");
   renderChips("selfieModeChips", SELFIE_MODE_OPTIONS, "selfieMode");
   renderChips("cameraHeightChips", CAMERA_HEIGHT_OPTIONS, "cameraHeight");
   renderChips("proximityChips", PROXIMITY_OPTIONS, "proximity");
@@ -1604,7 +1648,12 @@ const HIP_OPTIONS = [
 let state = {
   characterMode: "light", outfitReferenceMode: "off",
   bust: "", garmentLight: "", hip: "", weather: "", film: "", tone: "",
-  effects: [], effectStrength: "standard", skinFinish: SKIN_FINISH_OPTIONS[0].value, closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode: "", cameraHold: "auto", lensDirection: "auto", cameraRoll: "auto", angleMode: "", gaze: GAZE_OPTIONS[0].value, faceDirection: FACE_DIRECTION_OPTIONS[0].value, subjectSize: "", backgroundView: "", framing: "", photoStyle: "", mood: "auto",
+  effects: [], effectStrength: "standard",
+  skinFinish: SKIN_FINISH_OPTIONS[0].value, closeupTexture: CLOSEUP_TEXTURE_OPTIONS[0].value,
+  basePosture: "auto", selfieMode: "auto", cameraHeight: "auto", proximity: "auto", cameraHold: "auto",
+  shotAngle: "auto", lensDirection: "auto", cameraRoll: "auto", angleMode: "auto",
+  gaze: "auto", faceDirection: "auto", subjectSize: "balanced",
+  backgroundView: "auto", framing: "standard", photoStyle: PHOTO_STYLE_MODES[0].value, mood: "auto",
 };
 let tokyoNow = {};
 
@@ -1765,14 +1814,41 @@ function renderMultiChips(containerId, items, stateKey) {
 
 function detectPoseContext(sceneText = "") {
   const t = sceneText || "";
-  const floorSeated = /三角座|体育座|床.*座|床に座|床座|あぐら|正座|膝を抱|膝.*立て|壁にもたれて座|floor.*sit|sitting on the floor|cross[- ]legged|knees bent/i.test(t);
-  const seated = floorSeated || /座|腰掛|椅子|ソファ|ベンチ|chair|sofa|sitting|seated/i.test(t);
-  const reclining = /寝転|寝そべ|横たわ|横になる|うつ伏せ|仰向け|lying|reclining/i.test(t);
-  const walking = /歩|散歩|移動|walking|mid-walk/i.test(t);
-  const standing = !seated && !reclining && (/立|standing|stand/i.test(t) || !walking);
+  const explicit = detectExplicitPosture(t);
+  const selected = state.basePosture || "auto";
+  const detailFloorSeated = /三角座|体育座|床.*座|床に座|床座|あぐら|正座|膝を抱|膝.*立て|壁にもたれて座|floor.*sit|sitting on the floor|cross[- ]legged|knees bent/i.test(t);
+  const detailWalking = /歩|散歩|移動|walking|mid-walk/i.test(t);
+
+  let floorSeated = false;
+  let seated = false;
+  let reclining = false;
+  let walking = false;
+  let standing = false;
+  let known = false;
+
+  if (selected === "standing") {
+    standing = true;
+    walking = detailWalking;
+    known = true;
+  } else if (selected === "seated") {
+    seated = true;
+    floorSeated = detailFloorSeated;
+    known = true;
+  } else if (selected === "reclining") {
+    reclining = true;
+    known = true;
+  } else {
+    floorSeated = detailFloorSeated;
+    seated = explicit.seated || floorSeated;
+    reclining = explicit.reclining;
+    walking = explicit.walking;
+    standing = explicit.standing;
+    known = explicit.known || floorSeated;
+  }
+
   const support = /シンク|sink/i.test(t) ? "sink" : /ベランダ|balcony|手すり|柵|フェンス|railing|rail|fence/i.test(t) ? "railing" : /窓|window|ガラス|glass/i.test(t) ? "glass" : /壁|wall/i.test(t) ? "wall" : /机|テーブル|カウンター|キッチン台|desk|table|counter/i.test(t) ? "desk" : /椅子|ソファ|chair|sofa/i.test(t) ? "chair" : floorSeated ? "floor" : "none";
   const tightOutfit = /レギンス|タイト|ミニ|ボディライン|bodycon|leggings|tight/i.test(t);
-  return { floorSeated, seated, reclining, walking, standing, support, tightOutfit };
+  return { floorSeated, seated, reclining, walking, standing, known, support, tightOutfit, selectedBasePosture:selected };
 }
 
 function detectLeanDirective(sceneText = "") {
@@ -1901,6 +1977,7 @@ function buildPosturePrompt(sceneText, scene, poseCtx) {
   if (poseCtx.support === "railing") return "standing posture near the railing, body balance stays natural and support remains believable";
   if (poseCtx.support === "desk") return "standing or leaning posture with one hand or hip lightly supported by the desk or counter, torso tilt stays physically believable";
   if (poseCtx.support === "wall" || poseCtx.support === "glass") return "standing near the wall or glass with subtle support, shoulders and spine remain naturally aligned";
+  if (!poseCtx.known) return "base posture is naturally derived from the written scene without defaulting to a generic standing pose";
   return "standing posture with natural weight shift through the legs, torso only slightly angled, no unsupported extreme lean";
 }
 
@@ -2264,6 +2341,7 @@ function buildPrompt(t, situation, characterLock, bustPrompt, hipPrompt, skinFin
 
   return `APP_VERSION: ${APP_VERSION}
 ANGLE_ENGINE: ordered-selection-compatibility + independent-camera-controls + no-easy-escape
+POSTURE_ENGINE: selected-base-posture + scene-detail-refinement + conflict-warning
 HAIR_ENGINE: monthly-hair-priority + no-reference-hairstyle-copy
 TIME: ${t.day}, month ${t.month}, ${t.timeCtx.label} / ${t.timeCtx.en}, ${t.timeStr} JST
 
@@ -2295,13 +2373,18 @@ ${isSwimwear ? "(safe non-sexual adult cute swimsuit portrait at a beach/pool/re
 (photographic realism only:1.95), (real skin texture, realistic lighting and shadows:1.85),
 (no anime, no illustration, no plastic skin, no waxy skin, no beauty filter:1.9)
 
-SCENE:
+BASE POSTURE — USER SELECTION:
+${getBasePostureMode().prompt}
+(scene details may refine the selected base posture, but must not replace it with another broad posture category:2.0)
+(if the written scene conflicts with a selected base posture, preserve the selected base posture and reinterpret only the conflicting posture words:1.98)
+
+SCENE DETAIL:
 ${sceneText}
-(scene text overrides default location, clothing, pose and action, but never overrides face-reference safety or app-priority hair rules:1.9)
+(scene detail controls location, clothing, action, support, and fine posture details, but never overrides face-reference safety, app-priority hair rules, or a selected base posture:1.96)
 
 SELECTION PRIORITY / NO-EASY-ESCAPE RULE:
-(scene defines the physical situation first:2.0),
-(user-selected camera height, distance, hold, body direction, lens direction, camera roll, face direction, gaze, subject size, background direction, and framing are concrete shooting conditions:2.0),
+(selected base posture and written scene details define the physical situation first:2.0),
+(user-selected base posture, camera height, distance, hold, body direction, lens direction, camera roll, face direction, gaze, subject size, background direction, and framing are concrete conditions:2.0),
 (do not replace a difficult selected combination with an easier eye-level front selfie or generic portrait:2.0),
 (if the selected setup is difficult, adjust posture, hand placement, body rotation, balance, and head angle while preserving every enabled selection:1.98),
 (lower-priority mood, style, film tone, and effects must not change any selected physical camera control:2.0)
@@ -2523,7 +2606,7 @@ function sanitizeSceneForFaceReference(sceneText = "") {
     if (/場所はおまかせ|場所おまかせ|おまかせ/.test(s) && !/ビーチ|海|プール|リゾート|pool|beach|resort/i.test(s)) {
       s += "\n場所は、自然なビーチ、プールサイド、またはリゾートの休憩スペース。街中や駅前ではない。";
     }
-    s += "\n水着はスポーツ競泳用ではなく、可愛いリゾート向けのファッション水着。上品で明るい夏らしいデザイン。体型表現は選択された②胸シルエット設定をそのまま使い、服装別に別ルールへ切り替えない。";
+    s += "\n水着はスポーツ競泳用ではなく、可愛いリゾート向けのファッション水着。上品で明るい夏らしいデザイン。体型表現は選択された胸シルエット設定をそのまま使い、服装別に別ルールへ切り替えない。";
   }
 
   const replacements = [
@@ -2870,6 +2953,7 @@ function handleGenerate() {
 
   document.getElementById("metaCard").classList.remove("hidden");
   const selectedOutfitReferenceLabel = getLabelByValue(OUTFIT_REFERENCE_MODE_OPTIONS, state.outfitReferenceMode);
+  const selectedBasePostureLabel = getLabelByValue(BASE_POSTURE_OPTIONS, state.basePosture || "auto");
   const selectedWeatherLabel = getLabelByValue(WEATHER_OPTIONS, state.weather);
   const selectedFilmLabel = getLabelByValue(FILM_TONES, state.film);
   const selectedToneLabel = getLabelByValue(OVERALL_TONES, state.tone);
@@ -2902,10 +2986,11 @@ function handleGenerate() {
 
   document.getElementById("metaContent").innerHTML =
     "🧩 <b style='color:#c4b5fd'>App</b>：" + APP_VERSION + "<br>" +
-    "🧠 <b style='color:#c4b5fd'>選択整合性エンジン</b>：ON / 上位選択で下位を制御<br>" +
+    "🧠 <b style='color:#c4b5fd'>選択整合性エンジン</b>：ON / 基本姿勢を含む上位選択で下位を制御<br>" +
     "🕐 <b style='color:#c4b5fd'>時間帯</b>：" + t.timeCtx.label + " / " + t.timeCtx.en + "<br>" +
     "🔒 <b style='color:#c4b5fd'>固定キャラモード</b>：" + getLabelByValue(CHARACTER_MODE_OPTIONS, state.characterMode) + "<br>" +
     "👗 <b style='color:#c4b5fd'>コーデ参照</b>：" + selectedOutfitReferenceLabel + "<br>" +
+    "🧍 <b style='color:#c4b5fd'>基本姿勢</b>：" + selectedBasePostureLabel + "<br>" +
     (state.outfitReferenceMode === "sheet" ? "📋 <b style='color:#c4b5fd'>コーデシート読取</b>：ON / 現在の2枚目だけを動的参照<br>" : "") +
     "📅 <b style='color:#c4b5fd'>曜日 mood</b>：" + DAY_MOOD[t.day] + "<br>" +
     "☀️ <b style='color:#c4b5fd'>天気</b>：" + selectedWeatherLabel + "<br>" +
@@ -3036,10 +3121,11 @@ function setCharacterMode(mode) {
 
 function handleReset() {
   document.getElementById("situation").value = "";
-  state = { characterMode:"light", outfitReferenceMode:"off", bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, cameraHold:CAMERA_HOLD_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, lensDirection:LENS_DIRECTION_OPTIONS[0].value, cameraRoll:CAMERA_ROLL_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
+  state = { characterMode:"light", outfitReferenceMode:"off", basePosture:BASE_POSTURE_OPTIONS[0].value, bust:"", garmentLight:"", hip:"", weather:"", film:"", tone:"", effects:[], effectStrength:"standard", skinFinish:SKIN_FINISH_OPTIONS[0].value, closeupTexture:CLOSEUP_TEXTURE_OPTIONS[0].value, selfieMode:SELFIE_MODE_OPTIONS[0].value, cameraHeight:CAMERA_HEIGHT_OPTIONS[0].value, proximity:PROXIMITY_OPTIONS[0].value, cameraHold:CAMERA_HOLD_OPTIONS[0].value, shotAngle:SHOT_ANGLE_OPTIONS[0].value, lensDirection:LENS_DIRECTION_OPTIONS[0].value, cameraRoll:CAMERA_ROLL_OPTIONS[0].value, angleMode:ANGLE_UI_OPTIONS[0].value, gaze:GAZE_OPTIONS[0].value, faceDirection:FACE_DIRECTION_OPTIONS[0].value, subjectSize:SUBJECT_SIZE_MODES[0].value, backgroundView:BACKGROUND_VIEW_MODES[0].value, framing:FRAMING_MODES[0].value, photoStyle:PHOTO_STYLE_MODES[0].value, mood:"auto" };
   document.getElementById("metaCard").classList.add("hidden");
   document.getElementById("outputCard").classList.add("hidden");
   document.getElementById("outputArea").value = "";
+  renderChips("basePostureChips", BASE_POSTURE_OPTIONS, "basePosture");
   renderChips("bustChips", BUST_OPTIONS, "bust");
   renderChips("garmentLightChips", GARMENT_BACKLIGHT_OPTIONS, "garmentLight");
   renderChips("weatherChips", WEATHER_OPTIONS, "weather");
@@ -3069,6 +3155,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const characterLockEl = document.getElementById("characterLock");
   state.characterMode = "light";
   state.outfitReferenceMode = OUTFIT_REFERENCE_MODE_OPTIONS[0].value;
+  state.basePosture = BASE_POSTURE_OPTIONS[0].value;
   if (characterLockEl) characterLockEl.value = LIGHT_CHARACTER_LOCK;
   state.selfieMode = SELFIE_MODE_OPTIONS[0].value;
   state.cameraHeight = CAMERA_HEIGHT_OPTIONS[0].value;
