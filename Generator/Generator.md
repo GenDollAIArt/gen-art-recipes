@@ -1,8 +1,10 @@
 <!--
   Selfie Prompt Generator
-  Version: 9.1.1
-  Updated: 2026-07-21
+  Version: 9.1.3
+  Updated: 2026-07-22
   Changelog:
+    v9.1.3 - 被写体身体形態の参照読取を全面強化。身体ラインが明確なA4〜A9を補正推測せず直接・忠実に読み、A4〜A6を上半身、A7〜A9を全身の主参照として正面・45度・真横の役割を明文化。バスト、ウエスト、骨盤・ヒップ、四肢、全身比率を独立した固定対象として追加し、バスト→ウエスト→骨盤・ヒップ→太腿を一続きの三次元構造として保持。選択アングルの方向に近い参照を主にし、他方向を幅・奥行き・位置関係の確認に使う方向別参照を追加。Image Bのモデル・マネキン・商品シルエットから身体を再定義しない分離を強化し、357系遠近は固定身体への投影として扱う。末尾にA4〜A9基準の最終身体形態検証を追加。その他の顔ID、月別ヘア、撮影腕・手役割、服装・場所参照、構図、エフェクトは維持。
+    v9.1.2 - 自撮り時の手の役割と357系身体沿いアングルの優先順位を再整理。撮影スマートフォンを撮影手が持つ唯一の端末として固定し、端末自体はそのレンズから生成される画面内へ写さない。反対側の手によるスマートフォン・第2端末・リモコン保持を禁止し、空いている手はシーン上の身体支持または非スマートフォン小物を優先し、それ以外は「身体の動き / 躍動感」へ連動。身体沿い自撮りでは撮影腕を腹部・腰・ヒップ・脇腹の選択ラインへ密着させ、腕をレンズ前へ突き出す通常セルフィー化、大きな前景腕、中央を横切る腕を禁止。生成順をカメラ方式→完成アングル→手役割→躍動感へ変更し、最終手役割検証を追加。その他の参照、月別ヘア、服装・場所参照、構図、エフェクトは維持。
     v9.1.1 - アングル選択時は選択したアングルが属する分類だけを開いた状態で残し、他のアングル分類を自動で閉じるよう変更。被写体設定のOFFを「参照なし」へ整理し、OFF時の被写体テキスト入力欄・初期化ボタン・テキスト由来の被写体定義を削除。ON時のA1〜A9参照、顔ID・体型の役割分離、月別ヘア、服装・場所参照、357系angle-core、シーン連動、エフェクト定義は維持。
     v9.1.0 - 357系angle-coreの全アングル定義を再整理。各選択肢を完成済み撮影形として、カメラ位置・被写体との距離・方向・光軸・遠近感の順に統一し、写す範囲・背景・余白・画面傾きが選択アングルを別構図へ変えない共通ロックを追加。腰位置／腰下の身体沿いアングルには、身体との近接距離、前景となる腹部・腰・脇腹、胴体から顔へ続くライン、自撮り腕または第三者カメラ位置を固定する専用ロックを追加。覗き込み3種では角度専用の顔向き・視線を実際の出力へ適用。UIはアングルを7系統の折りたたみ分類へ再編。追加要素／空間演出は全項目を維持したまま8系統の折りたたみ分類へ分け、生成プロンプトの実行計画も同じ分類へ統一。被写体・顔ID・月別ヘア・服装・場所参照・シーン連動・エフェクト定義は維持。
     v9.0.11 - 「表現の主役」で被写体＋飲み物／被写体＋食べ物／被写体＋テーブル上を選択した場合、⑮「背景の見せ方」を指定なしへ自動固定し、控えめ・バランス・下／足元側・奥・上を選択不可に変更。テーブル上の前景〜中景は表現の主役側だけで制御し、背景指定との重複を防止。その他の顔ID、月別ヘア、357系アングル、撮影腕ロック、シーン連動、エフェクトは維持。
@@ -95,7 +97,7 @@
 <div class="content">
   <div class="card card-dark"><div class="slabel">自動取得 — 東京時間</div><div class="info-row"><span class="info-icon">📅</span><span id="infoDay">取得中…</span></div><div class="info-row"><span class="info-icon">🕐</span><span id="infoTime">取得中…</span></div><div class="info-row"><span class="info-icon">💭</span><span id="infoDayMood" style="font-size:.786rem;color:#71717a;"></span></div><div class="info-row"><span class="info-icon">✂️</span><span><span style="font-size:.786rem;color:#71717a;">今月のヘアスタイル</span><br><span id="infoHair" style="font-size:.857rem;"></span></span></div></div>
 
-  <div class="card card-dark"><div class="slabel">被写体設定 — 9枚画像参照</div><div class="hint">OFFは被写体画像参照を使用せず、被写体テキストも追加しません。ONは被写体画像A1〜A9の9枚を同時添付して参照します。A1〜A3は顔、A4〜A6はバストショット、A7〜A9は全身の正面・45°・真横です。顔・全体的な体型・四肢バランスまで使用し、服・髪型・ポーズ・構図・背景は参照しません。</div><div class="slabel" style="margin-top:10px;">被写体A1〜A9画像参照</div><div class="chips" id="characterModeChips"></div></div>
+  <div class="card card-dark"><div class="slabel">被写体設定 — 9枚画像参照</div><div class="hint">OFFは被写体画像参照を使用せず、被写体テキストも追加しません。ONは被写体画像A1〜A9の9枚を同時添付して参照します。A1〜A3は顔、A4〜A6は上半身、A7〜A9は全身の正面・45°・真横です。顔IDに加え、バスト・ウエスト・骨盤・ヒップ、胴体、四肢、全身比率を身体ラインから直接読みます。服・髪型・ポーズ・構図・背景は参照しません。</div><div class="slabel" style="margin-top:10px;">被写体A1〜A9画像参照</div><div class="chips" id="characterModeChips"></div></div>
 
   <div class="card card-dark"><div class="slabel">コーデ画像B参照（被写体9枚の後に最後の1枚）</div><div class="hint">OFFはシーンに合うコーディネートをおまかせで作成します。ONは被写体A1〜A9の後に最後の1枚として添付したコーデ画像Bを使用します。服・靴・バッグ・アクセサリー・配色をFULL相当で厳格に使用します。コーディネートシートの場合も、枠やテンプレデザインは生成画像に持ち込みません。</div><div class="chips" id="outfitReferenceModeChips"></div></div>
 
@@ -144,7 +146,7 @@
   <div class="card"><div class="slabel">⑭ 視線</div><div class="chips" id="gazeChips"></div></div>
   <div class="card"><div class="slabel">⑮ 背景の見せ方</div><div class="hint">店内・街・建築など、被写体の後方空間をどの程度見せるかを選びます。表現の主役が「被写体＋飲み物／食べ物／テーブル上」の場合は、重複を避けるため「指定なし」に自動固定されます。</div><div class="chips" id="backgroundViewChips"></div></div>
   <div class="card"><div class="slabel">⑯ 被写体サイズ / 余白</div><div class="chips" id="framingChips"></div></div>
-  <div class="card"><div class="slabel">⑰ 身体の動き / 躍動感</div><div class="hint">立つ・座るなどの基本姿勢ではなく、その姿勢の中で髪・服・腕・上体がどの程度動いて見えるかを選びます。モーションブラーとは別の物理的な動きです。</div><div class="chips" id="motionEnergyChips"></div></div>
+  <div class="card"><div class="slabel">⑰ 身体の動き / 躍動感</div><div class="hint">立つ・座るなどの基本姿勢ではなく、その姿勢の中で髪・服・腕・上体がどの程度動いて見えるかを選びます。自撮り時は撮影腕をカメラ位置へ固定したまま、空いている手と上体の動きへ反映します。モーションブラーとは別の物理的な動きです。</div><div class="chips" id="motionEnergyChips"></div></div>
   <div class="card"><div class="slabel">⑱ 表情（顔の出力）</div><div class="hint">未選択の場合はシーン・時間・天気から自然に導出します。</div><div class="chips" id="expressionChips"></div></div>
   <div class="btn-row"><button class="btn-generate" id="btnGen" onclick="handleGenerate()">✦ プロンプト生成</button><button class="btn-reset" onclick="handleReset()">リセット</button></div>
   <div class="card card-dark hidden" id="metaCard"><div class="slabel">展開結果サマリー</div><div id="metaContent" style="font-size:.857rem;color:#a1a1aa;line-height:1.9;"></div></div>
@@ -152,7 +154,7 @@
 </div>
 <div class="help-overlay hidden" id="chipHelpOverlay" onclick="hideChipHelp()"><div class="help-sheet" onclick="event.stopPropagation()"><div class="help-title" id="chipHelpTitle">ヘルプ</div><div class="help-body" id="chipHelpBody"></div><button class="help-close" onclick="hideChipHelp()">閉じる</button></div></div>
 <script>
-const APP_VERSION = "v9.1.1";
+const APP_VERSION = "v9.1.3";
 const HAIR_BY_MONTH = {1:"(long straight, dark brown hair:1.65), (hair falls below the shoulders:1.55)",2:"(long wave, chestnut brown gradient hair:1.65), (hair falls below the shoulders:1.55)",3:"(long soft wave, chestnut brown hair:1.65), (hair falls below the shoulders:1.55)",4:"(medium straight, chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",5:"(medium wave, light chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",6:"(soft bob, ash brown hair:1.78), (jaw-to-neck length bob:1.88), (not long hair:1.95)",7:"(short airy bob, ash brown hair:1.9), (airy bob ending strictly between the jaw and the base of the neck:2.0), (all visible hair terminates above the shoulders:2.0)",8:"(short bob, light ash brown hair:1.8), (clear short bob length above or around jaw:1.9), (not long hair:1.98)",9:"(medium bob, ash brown to dark brown hair:1.75), (shoulder-grazing medium bob length:1.82), (not chest-length hair:1.95)",10:"(inner-color straight, dark brown with caramel inner highlight:1.65), (long hair below shoulders:1.55)",11:"(inner-color wave, dark brown with rose-beige inner highlight:1.65), (long hair below shoulders:1.55)",12:"(long straight, dark brown with subtle inner highlight:1.65), (long hair below shoulders:1.55)"};
 const HAIR_DISPLAY_BY_MONTH = {
   1:"ロングストレート／ダークブラウン／肩より下",
@@ -907,6 +909,9 @@ const ANGLE_PRESET_GROUPS=[
 ];
 const BODY_ADJACENT_ANGLE_KEYS=new Set(["waistSideLow","lowerBodyExtremeFront","lowerBodyExtremeThreeQuarter","lowerBodyExtremeSide","lowerBodyExtremeFrontLookDown","lowerBodyExtremeThreeQuarterLookDown","lowerBodyExtremeSideLookDown"]);
 const EXTREME_BODY_ADJACENT_ANGLE_KEYS=new Set(["lowerBodyExtremeFront","lowerBodyExtremeThreeQuarter","lowerBodyExtremeSide","lowerBodyExtremeFrontLookDown","lowerBodyExtremeThreeQuarterLookDown","lowerBodyExtremeSideLookDown"]);
+const BODY_REFERENCE_FRONT_ANGLE_KEYS=new Set(["eye","lowFront","hiddenWaist","tableLeanForwardOneElbow","counterLeanForwardOneElbow","tableLeanForwardBothElbows","counterLeanForwardBothElbows","lowerBodyExtremeFront","lowerBodyExtremeFrontLookDown","superLow","groundLegToFaceSelfie"]);
+const BODY_REFERENCE_THREE_QUARTER_ANGLE_KEYS=new Set(["tilted","overShoulder","lowerBodyExtremeThreeQuarter","lowerBodyExtremeThreeQuarterLookDown"]);
+const BODY_REFERENCE_PROFILE_ANGLE_KEYS=new Set(["side","lowerBodyExtremeSide","lowerBodyExtremeSideLookDown"]);
 
 const VISIBLE_RANGE_OPTIONS=[opt("⚖️ バランス","balanced","(balanced portrait composition with face, upper body, and believable context:1.82)"),opt("🙂 顔のみ","faceOnly","(face-only portrait crop:1.92), (only the face is the image subject:1.9), (crop from slightly above forehead to around chin or just above neck:1.88), (shoulders, chest, outfit, and background are minimal:1.86)"),opt("🧿 顔どアップ","extremeFace","(extreme face close-up composition:1.98), (face fills almost the entire frame:1.96), (eyes, lips, skin texture, and hairline dominate:1.9), (background barely visible:1.86)"),opt("🔍 顔アップ","faceCloseup","(close-up face composition:1.92), (face fills most of the frame:1.9), (hair, neck, and slight shoulder may appear:1.82)"),opt("↔️ 横顔アップ","profileCloseup","(profile close-up composition:1.94), (side face line, eye, nose bridge, lips, and cheek contour clearly readable:1.9)"),opt("🙂 顔〜肩","headShoulder","(head-and-shoulders portrait framing:1.88), (face, hair, neck, and shoulders are visible:1.86)"),opt("🧥 上半身","upperBody","(upper-body portrait composition:1.88), (head to chest or waist area visible:1.86), (face and outfit both readable:1.86)"),opt("🧍 腰上","waistUp","(waist-up portrait framing:1.92), (head to waist or upper-hip area visible:1.9), (face, body line, and outfit coordination readable:1.88)"),opt("🧍 全身","fullBody","(full-body portrait framing:1.88), (entire outfit and standing balance visible:1.86), (face remains readable but body and clothing are important:1.82)")];
 const CAMERA_ROLL_OPTIONS=[opt("🎲 おまかせ","auto","natural camera roll chosen to suit the scene; keep the frame visually stable unless a tilt improves the snapshot"),opt("📐 水平","level","level camera roll; background horizontal lines remain horizontal and vertical architectural lines remain vertical"),opt("／ 少し斜め","slight","visible 6–10 degree camera roll; the entire frame, background horizontal lines, and architectural verticals share the same mild diagonal rotation; keep the selected viewpoint and crop unchanged"),opt("／／ 斜め強め","strong","clearly visible 15–22 degree camera roll; the entire image plane and all background structural lines are intentionally rotated together; preserve the selected viewpoint, crop, and subject pose")];
@@ -1073,7 +1078,35 @@ function resolvedFaceGazePrompt(angleKey){
   if(lookDownAngles[angleKey])return lookDownAngles[angleKey]+"\n(the angle-specific low-camera look-down lock overrides generic face-direction or gaze selections when they conflict:2.0)";
   return find("faceDirection").value+"\n"+find("gaze").value;
 }
-function characterBlock(){if(state.characterMode==="off")return`SUBJECT REFERENCE — OFF:
+function bodyReferenceDirectionBlock(angleKey){
+  if(BODY_REFERENCE_PROFILE_ANGLE_KEYS.has(angleKey))return`DIRECTION-AWARE BODY REFERENCE APPLICATION — PROFILE PRIORITY:
+For the selected profile camera direction, prioritize A6 and A9 as the primary visible morphology references.
+Use A4, A5, A7, and A8 only to confirm width, placement, and continuity that are not fully visible from the side.
+Preserve the true profile depth and alignment of the ribcage, bust, waist, pelvis, hips, back line, and limbs.
+Do not rotate the reconstructed body toward a front or three-quarter body type.`;
+  if(BODY_REFERENCE_THREE_QUARTER_ANGLE_KEYS.has(angleKey))return`DIRECTION-AWARE BODY REFERENCE APPLICATION — THREE-QUARTER PRIORITY:
+For the selected three-quarter camera direction, prioritize A5 and A8 as the primary visible morphology references.
+Use A4 and A7 to confirm front-view width, and A6 and A9 to confirm profile depth.
+Preserve the simultaneous visibility of front width and side depth across the bust, waist, pelvis, hips, torso, and limbs.
+Do not flatten the body into a frontal view or rotate it into a true profile.`;
+  if(BODY_REFERENCE_FRONT_ANGLE_KEYS.has(angleKey))return`DIRECTION-AWARE BODY REFERENCE APPLICATION — FRONT PRIORITY:
+For the selected frontal or near-frontal camera direction, prioritize A4 and A7 as the primary visible morphology references.
+Use A5, A6, A8, and A9 only to confirm depth and three-dimensional continuity.
+Preserve the front-view widths, vertical placement, left-right balance, and full-body alignment of the bust, waist, pelvis, hips, torso, and limbs.
+Do not replace the front-view morphology with a generic symmetrical body.`;
+  return`DIRECTION-AWARE BODY REFERENCE APPLICATION — MULTI-VIEW CONSISTENCY:
+The selected angle does not map to only one reference direction.
+Use A4 through A9 together as views of one continuous three-dimensional body, while giving the closest available view the strongest visible-shape authority.
+Use the remaining views only to confirm width, depth, vertical placement, and continuity.
+Do not average the six views into a new body and do not invent a generic body between them.`;
+}
+function bodyDirectionValidationLine(angleKey){
+  if(BODY_REFERENCE_PROFILE_ANGLE_KEYS.has(angleKey))return"for the selected profile direction, validate the visible morphology primarily against A6 and A9 while using the remaining views only for width and continuity confirmation";
+  if(BODY_REFERENCE_THREE_QUARTER_ANGLE_KEYS.has(angleKey))return"for the selected three-quarter direction, validate the visible morphology primarily against A5 and A8 while using frontal views for width and profile views for depth confirmation";
+  if(BODY_REFERENCE_FRONT_ANGLE_KEYS.has(angleKey))return"for the selected frontal or near-frontal direction, validate the visible morphology primarily against A4 and A7 while using the remaining views only for depth confirmation";
+  return"validate the selected camera direction against the closest available A4 through A9 view while using the remaining views only for three-dimensional consistency";
+}
+function characterBlock(angleKey){if(state.characterMode==="off")return`SUBJECT REFERENCE — OFF:
 No Images A1 through A9 and no typed subject definition are used.
 (the subject remains a clearly adult person and is derived naturally from the written scene and active photographic settings:1.9),
 (do not create or imply a fixed identity lock when subject reference is OFF:1.9)`;return`IMAGES A1–A9 — SUBJECT REFERENCE:
@@ -1106,8 +1139,24 @@ Do not read, extract, infer, average, or use any facial information from A4 thro
 - jaw width or chin shape
 - forehead or facial proportions
 
-Use A4 through A6 only for upper-body structure, shoulder–torso balance, and anatomy across front / 45-degree / profile views.
-Use A7 through A9 only for full-body proportions, pelvis balance, limb length / thickness, and overall bodyline.
+BODY REFERENCE ROLE SEPARATION — MANDATORY:
+A4 through A6 are the primary upper-body morphology references.
+Use A4 for the front-view structure of the shoulders, ribcage, bust, torso, and waist.
+Use A5 for the three-quarter upper-body structure and the transition between visible width and depth.
+Use A6 for profile structure, including torso depth, bust projection, waist depth, back line, and upper-body balance.
+
+A7 through A9 are the primary full-body morphology references.
+Use A7 for front-view full-body proportions, bust–waist–hip alignment, shoulder-to-pelvis balance, limb length, and overall bodyline.
+Use A8 for three-quarter full-body depth, waist-to-hip transition, pelvis structure, hip contour, and limb volume.
+Use A9 for profile depth, bust–waist–pelvis alignment, hip projection, torso-to-leg balance, and overall bodyline.
+
+DIRECT BODY MORPHOLOGY READING — MANDATORY:
+The reference images were selected so that the subject's bodyline and proportions are clearly readable.
+Read the visible body structure directly and faithfully from A4 through A9.
+Do not invent hidden corrections, compensations, alternative estimates, or a different body beneath the visible reference lines.
+Treat the visible bust, waist, ribcage, torso, pelvis, hips, arms, and legs as the intended morphology of the subject.
+Do not normalize, slim, enlarge, flatten, reduce, exaggerate, or redesign any body region.
+Do not replace the visible reference morphology with a generic fashion-model body, an averaged body type, or a newly idealized body.
 
 Do not use A1 through A9 for clothing, hairstyle, pose, hand position, camera angle, composition, background, lighting, or scene content.
 The clothing visible in A1 through A9 must not appear in the generated image.
@@ -1119,15 +1168,36 @@ Use A2 and A3 only as angle-confirmation evidence for A1, never as competing fac
 Do not turn the subject into a different, averaged, generic, or newly beautified face.
 Close camera distance, wide-angle perspective, expression, lighting, skin finish, HDR, monthly hairstyle, and crop must not redesign the facial identity.
 
-BODY MORPHOLOGY LOCK:
-Preserve the underlying body morphology from the consistent body evidence in A4 through A9.
-Use A1 through A3 only for face identity and facial angle confirmation, not for replacing the body evidence in A4 through A9.
-Do not replace the subject with a generic body type.
-Do not reshape the subject's underlying proportions.
-Ignore pose distortion, clothing padding, compression, and perspective distortion when reading body shape.
+BUST / WAIST / HIP MORPHOLOGY LOCK — MANDATORY:
+Preserve the subject's visible bust morphology from A4 through A6, with A7 through A9 confirming its position and proportion within the full body.
+Preserve bust width in front view, bust projection in profile view, vertical placement on the torso, three-quarter volume, and the visible upper, outer, and lower contours.
+Preserve the continuous transition from ribcage and bust into the waist.
+
+Preserve the waist morphology across A4 through A9.
+Preserve the vertical waist position, front-view waist width, profile waist depth, the visible degree and shape of torso narrowing, and the transition from ribcage to waist and waist to pelvis.
+
+Preserve the pelvis and hip morphology from A7 through A9.
+Preserve pelvic width and depth, hip width in front view, hip projection in profile view, three-quarter hip contour, and the transitions from waist to hips and from lower hips into the upper thighs.
+
+Treat the bust, waist, pelvis, hips, and thighs as one continuous three-dimensional body structure rather than as separate adjustable parts.
+
+FULL BODY PROPORTION LOCK — MANDATORY:
+Preserve the full-body proportional relationships visible across A7 through A9.
+Preserve shoulder width relative to pelvis width, torso length relative to leg length, vertical waist position, bust–waist–hip spacing, arm length and thickness, thigh / knee / calf / ankle proportions, limb taper, and the overall front / three-quarter / profile bodyline.
+Use A1 through A3 only for face identity and facial-angle confirmation, never to replace the body evidence in A4 through A9.
+Do not replace the subject with a generic body type and do not reshape the subject's underlying proportions.
+
+${bodyReferenceDirectionBlock(angleKey)}
+
+MORPHOLOGY / PERSPECTIVE SEPARATION — MANDATORY:
+The selected 357-series angle may strongly enlarge the body region nearest the lens and reduce the apparent size of more distant regions.
+Treat this only as perspective projection applied to the already locked body morphology.
+Do not permanently enlarge, reduce, flatten, or reshape the underlying bust, waist, pelvis, hips, torso, or limbs to match the projected appearance.
+Pose and camera perspective may change visible projection, but must not redefine the subject's underlying morphology.
 
 SUBJECT / GARMENT CONSISTENCY:
 Render the selected outfit on the same adult subject defined by Images A1 through A9.
+First resolve and lock the body morphology from A4 through A9, then place the selected outfit onto that fixed body.
 Treat garment silhouette, looseness, fit, and drape as clothing properties rather than as evidence for changing the subject.
 Keep anatomy coherent with the selected pose, camera perspective, and visible range.
 ${state.outfitReferenceMode==="on"?"When Image B is active, use it only to determine the outfit design, materials, fit, and styling.":""}`}
@@ -1156,8 +1226,11 @@ Ignore all non-outfit information in Image B.
 Image B must control the outfit only.
 
 If Image B is a coordinate sheet, read its filled item boxes, item names, accessories, color palette, POINT, and STYLE POINT as outfit instructions.
-Ignore coordinate-sheet borders, template layout, title typography, decorative lines, and empty boxes as scene objects.
-Do not reuse a previous coordinate sheet, cached outfit, sample outfit, or earlier conversation outfit.`}
+Ignore coordinate-sheet borders, template layout, title typography, decorative lines, empty boxes, mannequin form, model body, illustration body, and product-presentation silhouette as scene or subject information.
+Do not reuse a previous coordinate sheet, cached outfit, sample outfit, or earlier conversation outfit.
+
+IMAGE B / BODY SEPARATION — MANDATORY:
+${state.characterMode==="on"?"The subject's body morphology has already been established from A4 through A9. Fit and drape the selected garments over that fixed body.\nDo not use any body, mannequin, model, illustration, item silhouette, or coordinate-sheet presentation in Image B to redefine bust morphology, waist width or position, pelvis width, hip morphology, limb length or thickness, or overall body proportions.\nResolve A4 through A9 body morphology first; apply Image B clothing second.":"Subject reference is OFF, so Image B must still control clothing only and must not impose the body, mannequin, model, or illustration shown in the outfit reference."}`}
 function visibleRangeLock(){
   const key=state.visibleRange;
   const map={
@@ -1189,25 +1262,61 @@ function cameraModeBlock(selfie,angleKey){
 (no timer shot, no remote camera, no tripod, no third-person photographer, and no detached external viewpoint:2.0)`;
   if(BODY_ADJACENT_ANGLE_KEYS.has(angleKey))return`CAMERA MODE — BODY-ADJACENT LOW SELFIE — MANDATORY:
 (this must remain a real selfie captured by the subject herself:2.0),
-(the smartphone in her lowered hand is the active front camera:2.0),
+(the single active smartphone is held by the lowered shooting hand and its front camera produces the image:2.0),
+(the active camera smartphone itself remains outside the captured image because the viewpoint originates from its lens:2.0),
 (the viewpoint originates from the selected waist or waist-below body-adjacent position:2.0),
-(the shooting hand remains low and close to the selected front, diagonal, or side body line:2.0),
-(the shooting elbow stays below shoulder height and close to the torso:2.0),
+(the shooting shoulder, upper arm, elbow, forearm, wrist, and hand remain compressed close to the selected front, diagonal, or side body line:2.0),
+(the shooting arm follows the contour of the abdomen, waist, hip, or flank instead of projecting straight forward from the torso:2.0),
+(the shooting elbow stays below shoulder height, tucked beside the torso, and does not open away from the body:2.0),
+(the camera-holding hand and active phone stay just beyond the lower or side frame boundary at the lens origin:2.0),
+(only a small cropped portion of the shooting forearm may touch the lower or side frame edge when anatomically unavoidable:2.0),
+(the immediate foreground is formed by the near abdomen, waist, hip, or flank, never by the shooting arm:2.0),
+(the camera arm must not become a long foreshortened foreground arm, must not cross the center of the image, and must not dominate the frame:2.0),
+(do not render the full shoulder-to-hand chain as a visible diagonal extending toward the viewer:2.0),
 (the upper arm does not rise beside the face and the phone does not move toward chest or eye level:2.0),
-(no ordinary raised-arm selfie, no detached camera viewpoint, and no external photographer:2.0)`;
+(no ordinary arm-extended selfie, no raised-arm selfie, no detached camera viewpoint, and no external photographer:2.0)`;
   if(angleKey==="hiddenWaist")return`CAMERA MODE — HIDDEN WAIST-HELD SELFIE — MANDATORY:
 (this must remain a real selfie captured by the subject herself:2.0),
-(smartphone in her lowered hand is the active camera at waist or lower-torso height:2.0),
-(the elbow stays bent and close to the body:2.0),
-(no arm's-length selfie, no long foreground arm, no raised-hand selfie, and no external viewpoint:2.0)`;
+(the single smartphone in her lowered shooting hand is the active camera at waist or lower-torso height:2.0),
+(the active camera smartphone itself remains outside the captured image because the viewpoint originates from its lens:2.0),
+(the shooting elbow stays bent and close to the body and the shooting forearm follows the torso rather than extending toward the lens:2.0),
+(no arm's-length selfie, no long foreground arm, no raised-hand selfie, no second smartphone, and no external viewpoint:2.0)`;
   return`CAMERA MODE — SELFIE — MANDATORY:
 (this must remain a real selfie captured by the subject herself:2.0),
-(the smartphone in her own hand is the active front camera:2.0),
-(the image viewpoint must originate from that smartphone:2.0),
+(the single smartphone in her shooting hand is the active front camera:2.0),
+(the image viewpoint must originate from that smartphone and the active camera phone itself must remain outside its own captured image:2.0),
 (viewpoint follows the selected completed camera-angle preset exactly:2.0),
-(no third-person photographer, no external camera viewpoint, no observer viewpoint:2.0),
+(no second smartphone, no third-person photographer, no external camera viewpoint, no observer viewpoint:2.0),
 (do not convert this into a third-person portrait under any circumstance:2.0),
 (do not copy the reference image camera angle or arm extension:1.98)`}
+function selfieHandRoleBlock(selfie,angleKey){
+  if(selfie!=="on")return"";
+  const bodyAdjacent=BODY_ADJACENT_ANGLE_KEYS.has(angleKey);
+  return `SELFIE HAND ROLE / SINGLE-DEVICE LOCK — MANDATORY:
+(exactly one smartphone exists in the selfie setup:2.0),
+(the shooting hand holds that single smartphone as the active front camera:2.0),
+(the active camera smartphone is outside the captured image because the image is produced from its own lens:2.0),
+(the non-shooting hand must not hold, display, touch, or operate a smartphone, second phone, remote shutter, compact camera, or any duplicate recording device:2.0),
+(any scene mention of smartphone screen light or phone-screen glow refers to the screen of the active camera phone near the lens, not to a visible phone in the free hand:2.0),
+(the non-shooting hand first follows any explicit physical support or explicitly required non-phone prop in the written scene; otherwise it is assigned to the selected BODY MOTION / DYNAMIC ENERGY:1.98),
+(the camera-holding arm is excluded from free-hand motion and must preserve the selected camera geometry:2.0),
+(the free hand must not reach across the lens, imitate the shooting arm, or create a second selfie gesture:2.0)${bodyAdjacent?`,
+(for this body-adjacent angle, the entire shooting arm remains folded and contour-following beside the abdomen, waist, hip, or flank:2.0),
+(the shooting wrist, camera-holding hand, and active phone remain immediately outside the lower or side frame at the lens origin:2.0),
+(the shooting arm must not extend straight toward the viewer and must not create a large blurred arm in the immediate foreground:2.0),
+(the visible near-body surface, not the shooting arm, must be the dominant closest foreground:2.0)`:""}`;
+}
+function bodyMotionBlock(selfie,angleKey){
+  if(selfie!=="on")return `BODY MOTION / DYNAMIC ENERGY:\n${find("motionEnergy").value}`;
+  const motion={
+    auto:"(derive natural movement from the written action and physical support, applying it to the non-shooting hand, shoulders, torso, clothing, and locked-length hair only:1.86), (do not move the camera-holding arm away from the selected camera position:2.0)",
+    subtle:"(the non-shooting hand makes a small relaxed movement or rests naturally on the body, clothing, sofa, cushion, chair, or other support described in the scene:1.9), (subtle motion appears in shoulders, posture, clothing edges, and locked-length hair tips while the camera arm remains fixed:1.88)",
+    natural:"(the non-shooting hand, shoulders, and upper body form one believable in-between movement that follows the written action:1.94), (the free hand may adjust clothing, touch a support, or move naturally through the pose, but it must remain empty of smartphones and must not cross the lens:2.0), (hair and garment movement follow inertia and gravity while the camera arm remains locked:1.9)",
+    strong:"(strong dynamic energy is expressed through the non-shooting hand, torso twist, shoulders, clothing, and locked-length hair while preserving physical support:1.96), (the free arm may form a decisive gesture only away from the lens and away from the camera arm:1.94), (the camera-holding shoulder, elbow, forearm, wrist, and hand remain fixed to the selected camera line despite the stronger body motion:2.0)"
+  }[state.motionEnergy]||"(derive natural free-hand and body movement from the written scene while keeping the camera arm fixed:1.9)";
+  const adjacent=BODY_ADJACENT_ANGLE_KEYS.has(angleKey)?"\n(the body-adjacent shooting arm remains tucked along the selected body contour and is never used as the visible dynamic arm:2.0),\n(the non-shooting arm supplies any visible arm movement without entering the immediate lens-to-body corridor:2.0)":"";
+  return `BODY MOTION / DYNAMIC ENERGY — RESOLVED AFTER CAMERA AND HAND LOCKS:\n(resolve the active camera, camera arm, and completed angle geometry before applying body motion:2.0),\n${motion}${adjacent}`;
+}
 function angleGroupForKey(angleKey){return ANGLE_PRESET_GROUPS.find(group=>group.items.includes(angleKey))||null}
 function buildAngleExecutionPrompt(angle,selfie){
   const family=angleGroupForKey(angle.key);
@@ -1220,7 +1329,13 @@ function buildAngleExecutionPrompt(angle,selfie){
   blocks.push(`CAMERA POSITION / ANGLE — ${angle.label}:\n${angle.value}`);
   if(BODY_ADJACENT_ANGLE_KEYS.has(angle.key)){
     const intensity=EXTREME_BODY_ADJACENT_ANGLE_KEYS.has(angle.key)?`(the near abdomen, waist, hip, or flank occupies a dominant large area of the immediate foreground:2.0),\n(the torso appears substantially larger and closer than the face because the lens is immediately adjacent to the body line:2.0),`:`(the near waist or torso remains clearly in the immediate foreground:1.96),\n(the torso appears noticeably closer than the face because the lens stays beside the body line:1.96),`;
-    const mode=selfie==="on"?`(the subject's lowered camera hand physically maintains this close body-adjacent distance:2.0),\n(the elbow remains below the shoulder and the camera cannot rise into an ordinary selfie:2.0)`:`(the external camera is physically placed immediately beside the selected body line:2.0),\n(the photographer must not step backward to obtain a safer or more balanced composition:2.0)`;
+    const mode=selfie==="on"?`(the subject's lowered camera hand physically maintains this close body-adjacent distance:2.0),
+(the shooting forearm remains folded along the abdomen, waist, hip, or flank and does not point outward toward the lens:2.0),
+(the shooting wrist and camera-holding hand remain just outside the lower or side image boundary at the lens origin:2.0),
+(the shooting arm stays outside the central lens-to-face corridor and cannot become a large foreground limb:2.0),
+(the near abdomen, waist, hip, or flank must remain visibly closer to the lens than any visible part of the shooting arm:2.0),
+(the elbow remains below the shoulder, tucked beside the body, and the camera cannot rise into an ordinary selfie:2.0)`:`(the external camera is physically placed immediately beside the selected body line:2.0),
+(the photographer must not step backward to obtain a safer or more balanced composition:2.0)`;
     blocks.push(`BODY-ADJACENT DISTANCE LOCK — MANDATORY:
 (the camera remains immediately beside or in front of the selected waist-to-upper-thigh body line:2.0),
 (no broad empty gap is allowed between the lens and the near body surface:2.0),
@@ -1314,6 +1429,21 @@ function finalFaceIdentityCheck(){
 (close camera distance, wide-angle perspective, high angle, low angle, HDR, hard sunlight, split light, skin finish, close-up texture, expression, monthly hairstyle, and crop may change photographic appearance but must not create a different identity:2.0),
 (if the visible face differs from A1, correct the facial identity before finalizing the image:2.0)`;
 }
+function finalBodyMorphologyCheck(angleKey){
+  if(state.characterMode!=="on")return"";
+  return `FINAL BODY MORPHOLOGY VALIDATION — A4–A9 AUTHORITY — MANDATORY:
+(before final rendering, verify that the visible body remains the same subject defined directly by Images A4 through A9:2.0),
+(verify shoulder-to-torso balance and shoulder width relative to pelvis width:2.0),
+(verify bust width, vertical placement, profile projection, three-quarter volume, and visible contour:2.0),
+(verify waist width, depth, vertical position, torso narrowing, and ribcage-to-waist-to-pelvis transition:2.0),
+(verify pelvic width and depth, hip width, profile projection, three-quarter contour, and hip-to-thigh connection:2.0),
+(verify torso length, bust–waist–hip spacing, arm and leg length, limb thickness and taper, and overall full-body proportions:2.0),
+(${bodyDirectionValidationLine(angleKey)}:1.95),
+(Image B, clothing fit, pose, camera angle, visible range, lighting, motion, and effects must not redefine the underlying body morphology:2.0),
+(perspective may change apparent size according to camera distance, but the underlying proportions must remain consistent with A4 through A9:2.0),
+(do not apply hidden corrections or alternative body estimates; validate against the visible reference lines directly:2.0),
+(if the visible body differs from A4 through A9, correct the body structure before finalizing the image:2.0)`;
+}
 function finalMonthlyHairCheck(month){
   const julyRule=month===7
     ? "(for July, reject and correct any shoulder-touching or longer hair, hidden gathered length, tied hair, or long strands extending across the pillow, chest, or back:2.0),\n"
@@ -1323,13 +1453,27 @@ function finalMonthlyHairCheck(month){
 ${julyRule}(pose, reclining, gravity, wind, motion, camera angle, lighting, and effects may alter only natural strand placement and must not alter the actual cut, length, color, or hairstyle category:2.0),
 (if the visible hair conflicts with the active monthly definition, correct the hair before finalizing the image:2.0)`;
 }
+function finalSelfieHandValidation(selfie,angleKey){
+  if(selfie!=="on")return"";
+  const bodyAdjacent=BODY_ADJACENT_ANGLE_KEYS.has(angleKey);
+  return `FINAL SELFIE HAND / DEVICE VALIDATION — MANDATORY:
+(before final rendering, verify that there is exactly one smartphone and that it is the active camera held by the shooting hand:2.0),
+(the active camera phone must not appear as a visible object inside the image generated from its own lens:2.0),
+(the non-shooting hand must not hold any smartphone, second device, remote shutter, or duplicate camera:2.0),
+(the camera-holding arm must preserve the selected camera position and must not be reassigned to BODY MOTION / DYNAMIC ENERGY:2.0),
+(the visible free-hand action must follow the written scene or selected motion energy without crossing the lens:1.98)${bodyAdjacent?`,
+(for the selected body-adjacent angle, reject and correct any long arm projected toward the viewer, any large foreground selfie arm, any arm crossing the center, or any gap that detaches the camera arm from the torso line:2.0),
+(reject and correct any composition where the shooting arm is the nearest or largest foreground object instead of the abdomen, waist, hip, or flank:2.0),
+(the corrected shooting arm must remain tucked and contour-following beside the abdomen, waist, hip, or flank, with the wrist, camera hand, and active phone outside the lower or side frame boundary:2.0)`:""},
+(if any hand or device violates these roles, correct the hand assignment and camera-arm geometry before finalizing the image:2.0)`;
+}
 function buildPrompt(){const t=getTokyoNow();const sceneRaw=document.getElementById("situation").value.trim()||"No scene details provided. Create a realistic everyday portrait scene.";const angle=pickAngle();const selfie=effectiveSelfie(sceneRaw);const fxMult=EFFECT_MULT[state.effectStrength]||1;const selectedEffectKeys=state.effects.filter(k=>EFFECTS.some(e=>e.key===k));const selectedAdditionalKeys=state.additionalElements.filter(k=>ADDITIONAL_ELEMENTS.some(e=>e.key===k));const additionalElements=selectedAdditionalKeys.map(k=>ADDITIONAL_ELEMENTS.find(e=>e.key===k)).filter(Boolean).map(e=>e.value);const effects=selectedEffectKeys.map(k=>EFFECTS.find(e=>e.key===k)).filter(Boolean).map(e=>scaleWeightedPrompt(e.value,fxMult));const effectPriority=state.effects.length?(state.effectStrength==="strong"?"(selected effects are mandatory, clearly visible, and must strongly affect the final image:2.0)":state.effectStrength==="max"?"(selected effects are mandatory, dominant, unmistakable, and visually prominent across the final image:2.15)":state.effectStrength==="standard"?"(selected effects must be clearly visible in the final image:1.86)":"(selected effects should remain subtly but visibly present in the final image:1.72)"):"";const weather=state.weather?find("weather").value:"";const film=find("film").value;const tone=find("tone").value;const blocks=[];blocks.push(`APP_VERSION: ${APP_VERSION}\nPROMPT_ENGINE: angle-core + reference reading + visible-range + style/effects\nCAMERA_ENGINE: angle-preset, not micro physical controls`);
 blocks.push(`PROJECT SOURCE FILE RESOLUTION:
 ${state.characterMode==="on"?"Use the fixed project source files below for subject reference when they are available in the project information sources.\nIf project information sources are not available, attach the subject images together with the prompt in this exact order.\nA1 = A1_FACE_FRONT.jpg\nA2 = A2_FACE_45.jpg\nA3 = A3_FACE_PROFILE.jpg\nA4 = A4_BUST_FRONT.jpg\nA5 = A5_BUST_45.jpg\nA6 = A6_BUST_PROFILE.jpg\nA7 = A7_FULL_FRONT.jpg\nA8 = A8_FULL_45.jpg\nA9 = A9_FULL_PROFILE.jpg\nA1 is the sole primary face-identity reference. A2–A3 confirm that same face from additional angles without averaging or redesigning it. A4–A9 are body-morphology references only and must not contribute any facial feature information.":"Subject image reference is OFF, so no A1 through A9 subject images are used."}
 ${state.outfitReferenceMode==="on"?"Use Image B = B_CURRENT_OUTFIT.jpg as the fixed outfit / coordinate-sheet reference when it is available in the project information sources.\nIf project information sources are not available, attach Image B after A1 through A9 as the next reference image.":"Outfit reference is OFF, so no Image B outfit reference is used."}
 ${state.locationReferenceMode==="on"?"Use Image C = C_LOCATION_REFERENCE.jpg as the fixed location reference when it is available in the project information sources.\n"+manualLocationReferenceAttachmentText():"Location reference is OFF, so no Image C place reference is used."}
 (When the fixed files are available in project information sources, do not request re-upload:2.0)\n(When active references are manually attached instead, all active reference images must be attached at the same time as the prompt:2.0)`);
-blocks.push(`SUBJECT REFERENCE MODE:\n${find("characterMode").label}\n${characterBlock()}`);
+blocks.push(`SUBJECT REFERENCE MODE:\n${find("characterMode").label}\n${characterBlock(angle.key)}`);
 blocks.push(`OUTFIT REFERENCE MODE:\n${find("outfitReferenceMode").label}\n${outfitBlock()}`);
 blocks.push(`LOCATION REFERENCE MODE:\n${find("locationReferenceMode").label}\n${locationReferenceBlock()}`);
 blocks.push(monthlyHairBlock(t.month,state.characterMode==="on"));
@@ -1340,13 +1484,15 @@ blocks.push(`SAFETY / REALISM:
 (no anime, no illustration, no plastic skin, no excessive beauty-filter appearance:1.9)`);
 blocks.push(`SCENE:
 ${sceneRaw}
-(scene text controls location, outfit notes, standing, seated, reclining, leaning, action, physical support, and expression detail, but must not override the selected subject definition, monthly hair, or selected angle preset:1.9),
+(scene text controls location, outfit notes, standing, seated, reclining, leaning, action, physical support, and expression detail, but must not override the selected subject definition, monthly hair, selected angle preset, camera-arm position, or selfie hand roles:1.9),
 (the scene must not lengthen, shorten, recolor, tie up, braid, or otherwise replace the locked monthly hairstyle:2.0),
 (the written scene text is the authoritative source for standing, seated, reclining, leaning, and physical support:1.92),
 (keep the pose physically consistent with chairs, sofas, tables, counters, beds, floors, and walls described in the scene:1.9)`);
-blocks.push(`BODY MOTION / DYNAMIC ENERGY:\n${find("motionEnergy").value}`);
-blocks.push(`CAMERA MODE:\n${cameraModeBlock(selfie,angle.key)}`);
+blocks.push(`CAMERA MODE:
+${cameraModeBlock(selfie,angle.key)}`);
 blocks.push(buildAngleExecutionPrompt(angle,selfie));
+const handRole=selfieHandRoleBlock(selfie,angle.key);if(handRole)blocks.push(handRole);
+blocks.push(bodyMotionBlock(selfie,angle.key));
 blocks.push(`VISIBLE RANGE — STRICT CROP LOCK:\n${find("visibleRange").value}\n${visibleRangeLock()}`);
 blocks.push(`IMAGE TILT / CAMERA ROLL:\n${find("cameraRoll").value}`);
 blocks.push(`FACE / GAZE:
@@ -1359,7 +1505,9 @@ const effectPlan=buildEffectPlan(selectedEffectKeys); if(effectPlan)blocks.push(
 blocks.push(`STYLE / EFFECTS — APPLY LAST:\nCurrent time: ${t.timeCtx.label} (${t.timeCtx.en}), ${t.timeStr} JST\nDay mood: ${DAY_MOOD[t.day]}\nTime-of-day mood: ${t.timeCtx.mood}\n${weather?"Weather: "+weather:""}\n${film?"Film tone: "+film:""}\n${tone?"Overall tone: "+tone:""}\n${effects.length?"Effects: "+effects.join(", "):""}\n${effectPriority}\n(apply film tone, color treatment, blur, grain, light, and texture only after the portrait composition is solved:1.88)`);
 blocks.push(`ASPECT / ENVIRONMENT:\n(vertical 9:16 smartphone image:1.6),\n(real location matching the written scene, believable people, signs, lighting, and depth:1.75),\n(realistic ambient lighting and natural handheld micro-shake:1.65)`);
 blocks.push(finalFaceIdentityCheck());
+blocks.push(finalBodyMorphologyCheck(angle.key));
 blocks.push(finalMonthlyHairCheck(t.month));
+blocks.push(finalSelfieHandValidation(selfie,angle.key));
 return blocks.filter(Boolean).join("\n\n");}
 function handleGenerate(){const validationErrors=collectSceneValidationErrors();if(validationErrors.length){updateSceneValidationStatus();document.getElementById("sceneCard")?.scrollIntoView({behavior:"smooth",block:"center"});alert("シーン連動チェックで不足があります。\n\n・"+validationErrors.join("\n・"));return;}const prompt=buildPrompt();document.getElementById("metaCard").classList.remove("hidden");document.getElementById("outputCard").classList.remove("hidden");document.getElementById("outputArea").value=prompt;document.getElementById("metaContent").innerHTML=[`🧩 <b style='color:#c4b5fd'>App</b>：${APP_VERSION}`,`👤 <b style='color:#c4b5fd'>被写体参照</b>：${find("characterMode").label}`,`👗 <b style='color:#c4b5fd'>コーデ参照</b>：${find("outfitReferenceMode").label}`,`📍 <b style='color:#c4b5fd'>場所参照</b>：${find("locationReferenceMode").label}`,`🎥 <b style='color:#c4b5fd'>撮影方式</b>：${find("selfieMode").label}`,`🧰 <b style='color:#c4b5fd'>撮影プリセット</b>：${state.shootingPreset&&state.shootingPreset!=="custom"?(document.querySelector('#shootingPresetSelect option[value="'+state.shootingPreset+'"]')?.textContent||state.shootingPreset):state.shootingPreset==="custom"?"カスタム（個別調整中）":"未選択"}`,`🌿 <b style='color:#c4b5fd'>写真の作り込み度</b>：${find("photoStyle").label}`,`🎯 <b style='color:#c4b5fd'>表現の主役</b>：${resolvedVisualFocusLabel()}`,`💨 <b style='color:#c4b5fd'>身体の動き</b>：${find("motionEnergy").label}`,`📸 <b style='color:#c4b5fd'>アングル</b>：${pickAngle().label}`,`🖼️ <b style='color:#c4b5fd'>写す範囲</b>：${find("visibleRange").label}`,`📐 <b style='color:#c4b5fd'>画面の傾き</b>：${find("cameraRoll").label}`,`🎞️ <b style='color:#c4b5fd'>フィルム</b>：${find("film").label||"未選択"}`,`✨ <b style='color:#c4b5fd'>エフェクト</b>：${state.effects.length?state.effects.map(k=>EFFECTS.find(e=>e.key===k)?.label).join("、"):"未選択"}`,`🌫️ <b style='color:#c4b5fd'>追加要素</b>：${state.additionalElements.length?state.additionalElements.map(k=>ADDITIONAL_ELEMENTS.find(e=>e.key===k)?.label).filter(Boolean).join("、"):"未選択"}`, `🔒 <b style='color:#c4b5fd'>後処理</b>：weight削除なし / 重複削除なし`].join("<br>");copyPromptToClipboard(true);document.getElementById("outputCard").scrollIntoView({behavior:"smooth"});}
 function handleCopy(){copyPromptToClipboard(false)}
