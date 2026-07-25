@@ -1,8 +1,9 @@
 <!--
   Selfie Prompt Generator
-  Version: 9.4.2
-  Updated: 2026-07-24
+  Version: 9.4.3
+  Updated: 2026-07-25
   Changelog:
+    v9.4.3 - 写す範囲Dataと357系アングル投影Dataの合成方式を維持したまま、上半身が写る範囲でA4〜A9由来の胸郭対上半身比、前後奥行き、横方向量感、上半身からウエストへの移行を明示。横方向投影では固定身体の前後奥行きと側面シルエットを保持し、一般的な平たい胴体への置換を防止。Image Bのゆったりした服も固定身体の胸郭・上半身量感に支えられた前面／側面シルエットとしてドレープさせ、平たいテント状の布や小さい一般体形への再構築を禁止。身体の向きUIや357系への方向ロックは追加せず、カメラ位置・顔向き・シーンから自然に解釈させる。357系定義、顔ID、身体Data合成、表情・エフェクト、表示設定、出力署名は維持。
     v9.4.2 - 身体Data選別を、単一プロフィールの早期return方式から「写す範囲で必要な身体領域Data」＋「選択357系アングルの投影Data」を必ず合成する方式へ修正。低位置・身体沿い、俯瞰、横方向、地面付近を選んでも写す範囲Dataを失わず、重複アングル特性は短く合成する。UIは写す身体領域とアングル投影を別表示し、生成サマリーと最終身体確認も同じ2層構造へ追従。357系定義、A1顔ID、A4〜A9単一身体ID、Image B、月別ヘア、場所・シーン、エフェクトは変更なし。生成画像の最下部中央へ「GEN-DOLL Ver 9.4.2」を透過70%（不透明度30%）・極小文字で入れる出力署名指示を追加。
     v9.4.1 - 最大文字サイズ時に横余白までrem連動で大きくなっていたため、画面外側の左右余白とカード内側の左右余白を従来の半分へ縮小。上下余白、文字サイズ、ボタン高さ、357系、参照・生成ロジックは変更なし。
     v9.4.0 - UI全体の表示文字サイズを4段階化し、初期値を「最大（旧版の約2倍）」へ変更。表示設定を端末内へ保存。長押しヘルプの判定時間を700／900／1200／1500msから選択可能にし、初期値を900msへ変更。指が12px以上動いた時、スクロール時、離した時は長押しをキャンセルし、長押し後の通常タップ重複を防止。表情を笑顔／落ち着き／眠り・眠気／感情／遊び・SNSに分類し、安らかな寝顔、深い睡眠、うとうと、寝落ち直前、寝起き、目を閉じて休む、目を閉じた微笑み、あくび等を追加。睡眠系選択時は視線を「目を閉じる／視線なし」へ自動連動。既存と新規エフェクトを光・照明／レンズ・光学／ピント・奥行き／空気・大気／動き・ブレ／カメラ・端末／色処理／質感・仕上げの8分類へ再編し、自然・リング状・映画的レンズフレア、フレアゴースト、ハレーション、ブルーム、アナモルフィック光筋、窓光、逆光各種、端末特性等を追加。相性ガードと実行計画も分類へ追従。357系定義、A1顔ID、A4〜A9身体ID、写す範囲×アングルData選別、参照運用は変更なし。
@@ -194,7 +195,7 @@
 </div>
 <div class="help-overlay hidden" id="chipHelpOverlay" onclick="hideChipHelp()"><div class="help-sheet" onclick="event.stopPropagation()"><div class="help-title" id="chipHelpTitle">ヘルプ</div><div class="help-body" id="chipHelpBody"></div><button class="help-close" onclick="hideChipHelp()">閉じる</button></div></div>
 <script>
-const APP_VERSION = "v9.4.2";
+const APP_VERSION = "v9.4.3";
 const OUTPUT_SIGNATURE_TEXT = `GEN-DOLL Ver ${APP_VERSION.replace(/^v/,"")}`;
 const HAIR_BY_MONTH = {1:"(long straight, dark brown hair:1.65), (hair falls below the shoulders:1.55)",2:"(long wave, chestnut brown gradient hair:1.65), (hair falls below the shoulders:1.55)",3:"(long soft wave, chestnut brown hair:1.65), (hair falls below the shoulders:1.55)",4:"(medium straight, chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",5:"(medium wave, light chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",6:"(soft bob, ash brown hair:1.78), (jaw-to-neck length bob:1.88), (not long hair:1.95)",7:"(short airy bob, ash brown hair:1.9), (airy bob ending strictly between the jaw and the base of the neck:2.0), (all visible hair terminates above the shoulders:2.0)",8:"(short bob, light ash brown hair:1.8), (clear short bob length above or around jaw:1.9), (not long hair:1.98)",9:"(medium bob, ash brown to dark brown hair:1.75), (shoulder-grazing medium bob length:1.82), (not chest-length hair:1.95)",10:"(inner-color straight, dark brown with caramel inner highlight:1.65), (long hair below shoulders:1.55)",11:"(inner-color wave, dark brown with rose-beige inner highlight:1.65), (long hair below shoulders:1.55)",12:"(long straight, dark brown with subtle inner highlight:1.65), (long hair below shoulders:1.55)"};
 const HAIR_DISPLAY_BY_MONTH = {
@@ -1051,14 +1052,14 @@ const SIDE_BODY_DATA_ANGLE_KEYS=new Set(["side","overShoulder","lowerBodyExtreme
 const VISIBLE_BODY_REGION_PROFILES={
   face:{label:"顔中心・頭首肩",prompt:"Preserve the fixed head–neck–shoulder connection and the anatomically coherent continuation into the same A4–A9 body."},
   headShoulder:{label:"頭・首・肩・胸郭上部",prompt:"Preserve the fixed head, neck, shoulders, and upper ribcage relationship."},
-  upperBody:{label:"頭から上半身・ウエスト移行",prompt:"Preserve the fixed head, neck, shoulders, ribcage, upper-torso width, depth, volume, and transition toward the waist."},
-  waistUp:{label:"頭から上部ヒップ",prompt:"Preserve the fixed head, neck, shoulders, ribcage, upper-torso volume, waist, pelvis top, and upper-hip relationship."},
-  fullBody:{label:"頭から足先までの全身",prompt:"Preserve the fixed head, shoulder, torso, waist, pelvis, hip, leg, and foot proportions, including hip-to-thigh continuity and limb thickness and taper."}
+  upperBody:{label:"頭から上半身・ウエスト移行",prompt:"Preserve the fixed head, neck, shoulders, ribcage, reference-defined bust-to-ribcage ratio, upper-torso forward depth and side volume, and the bust-to-waist transition."},
+  waistUp:{label:"頭から上部ヒップ",prompt:"Preserve the fixed head, neck, shoulders, ribcage, reference-defined bust-to-ribcage ratio, upper-torso forward depth and side volume, bust-to-waist transition, waist, pelvis top, and upper-hip relationship."},
+  fullBody:{label:"頭から足先までの全身",prompt:"Preserve the fixed head, shoulders, ribcage, reference-defined upper-torso depth and side volume, waist, pelvis, hips, legs, and feet, including bust-to-waist transition, hip-to-thigh continuity, and limb thickness and taper."}
 };
 const ANGLE_BODY_PROJECTION_PROFILES={
   standard:{label:"標準投影",prompt:"Apply the selected camera geometry without changing the underlying body proportions or three-dimensional volume."},
   overhead:{label:"高位置・俯瞰投影",prompt:"High-angle or overhead foreshortening may change apparent contours only; it must not flatten, narrow, minimize, or reconstruct the visible and perspective-supporting upper body."},
-  side:{label:"横方向・奥行き投影",prompt:"Preserve the reference-defined front-to-back depth and continuous side contour of the head, ribcage, torso, pelvis, hips, and visible limbs under the selected side direction."},
+  side:{label:"横方向・奥行き投影",prompt:"Preserve the fixed front-to-back upper-torso depth and reference-defined side silhouette under the selected side direction. Do not compress the visible upper-torso volume into the ribcage or replace it with a flatter generic torso; keep the head, torso, pelvis, hips, and visible limbs as one continuous side projection."},
   low:{label:"低位置・身体沿い投影",prompt:"Apply the upward low or body-adjacent perspective to the fixed body. Nearer waist, abdomen, flank, hip, or lower-torso regions may appear larger, but the ribcage, upper-torso width, depth, and volume must not collapse, narrow, flatten, or be reconstructed."},
   ground:{label:"地面付近・脚から顔への投影",prompt:"Preserve one continuous fixed-body projection from the nearer leg and pelvis through the torso, shoulders, neck, and face, with coherent support, reach, limb volume, and near-to-far perspective."}
 };
@@ -1362,7 +1363,7 @@ CROP-REQUIRED BODY REGIONS:
 ${region.prompt}
 ANGLE PROJECTION BEHAVIOR:
 ${projection.prompt}
-Keep all visible and perspective-supporting off-frame regions consistent with the single fixed A4–A9 body. Loose garments may soften surface contours, but their drape must remain supported by the fixed underlying torso volume rather than collapsing inward.`
+Keep all visible and perspective-supporting off-frame regions consistent with the single fixed A4–A9 body.`
   };
 }
 function bodyProjectionBlock(angleKey,rangeKey){return state.characterMode==="on"?resolveBodyProjectionProfile(angleKey,rangeKey).prompt:""}
@@ -1403,7 +1404,7 @@ Do not use Image B. Create one coherent outfit from the written scene, weather, 
 Use Image B only for clothing type, coordination, layering, material, color, shoes, bag, accessories, palette, and written POINT / STYLE POINT notes.
 If B is a coordinate sheet, read filled item boxes and text; ignore borders, typography, empty boxes, mannequins, models, illustration bodies, and presentation layout.
 Do not use B for face, body ID, hair, pose, hands, camera, composition, place, lighting, or expression. Do not reuse any previous outfit.
-${state.characterMode==="on"?"Fit Image B garments to the fixed A4–A9 body by adjusting garment cut, stretch, looseness, folds, tension, and drape; never alter the body to fit the clothing.":"Image B must not impose the body shown in the reference; it controls clothing only."}`}
+${state.characterMode==="on"?"Fit Image B garments over the exact fixed A4–A9 body. Adjust garment cut, stretch, looseness, folds, tension, and drape around that body. Loose or fully opaque fabric may soften surface detail, but it must hang from and wrap around the reference-defined ribcage and upper-torso volume, preserving the body-supported front and side silhouette. Do not use flat tent-like drape or a smaller generic torso, and do not enlarge or redesign the body beyond A4–A9.":"Image B must not impose the body shown in the reference; it controls clothing only."}`}
 function visibleRangeLock(){
   const key=state.visibleRange;
   const map={
