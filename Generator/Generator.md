@@ -1,8 +1,9 @@
 <!--
   Selfie Prompt Generator
-  Version: 9.4.4
+  Version: 9.4.5
   Updated: 2026-07-25
   Changelog:
+    v9.4.5 - A4〜A6を単純平均や方向別の別身体として扱わず、正面・45度・横の3投影が共同で定義する一つの上半身形態として再整理。A4は横幅とウエストへの比率、A5は前後奥行きと横方向量感の同時確認、A6は前後最大奥行きと側面外形を担い、どの一枚の明確な寸法も小さい妥協値へ平均化しない。357系の完成アングル定義は変更せず、正面・斜め・真横を明示する一部アングルでのみ、A4／A5／A6を「投影照合の主参照」として選び、他2枚を必須の三次元整合確認に使用。主参照は身体IDを再解析・切替するものではなく、固定済み単一身体の見え方を検証するだけ。生成UIとサマリーへ投影照合参照を追加し、服の完成外形と最終身体確認も同じ参照へ照合。顔ID、A7〜A9全身接続、写す範囲×アングルData合成、月別ヘア、Image B、357系定義、出力署名は維持。
     v9.4.4 - A4〜A9の単一身体IDを維持しながら、部位別の参照権限を明確化。A4〜A6を上半身形態の高詳細・確定ソース、A7〜A9を全身比率と接続整合の確認ソースとして固定し、A7〜A9や一般体形によるA4〜A6の平均化・拡大・縮小・置換を禁止。写す範囲Dataでは上半身が必要な場合にA4〜A6で確定した形・大きさ・前後奥行き・横方向量感・縦位置・胸郭／ウエストとの関係を参照相対で保持。Image Bの服は、その解析結果を増減せず完成外形へ反映し、ゆったり・不透明な布でも細部だけを隠して全体量感を平均化しない。最終身体確認も上半身はA4〜A6、全身接続はA7〜A9へ分離。357系定義、身体Data合成、顔ID、月別ヘア、表情・エフェクト、出力署名は維持。
     v9.4.3 - 写す範囲Dataと357系アングル投影Dataの合成方式を維持したまま、上半身が写る範囲でA4〜A9由来の胸郭対上半身比、前後奥行き、横方向量感、上半身からウエストへの移行を明示。横方向投影では固定身体の前後奥行きと側面シルエットを保持し、一般的な平たい胴体への置換を防止。Image Bのゆったりした服も固定身体の胸郭・上半身量感に支えられた前面／側面シルエットとしてドレープさせ、平たいテント状の布や小さい一般体形への再構築を禁止。身体の向きUIや357系への方向ロックは追加せず、カメラ位置・顔向き・シーンから自然に解釈させる。357系定義、顔ID、身体Data合成、表情・エフェクト、表示設定、出力署名は維持。
     v9.4.2 - 身体Data選別を、単一プロフィールの早期return方式から「写す範囲で必要な身体領域Data」＋「選択357系アングルの投影Data」を必ず合成する方式へ修正。低位置・身体沿い、俯瞰、横方向、地面付近を選んでも写す範囲Dataを失わず、重複アングル特性は短く合成する。UIは写す身体領域とアングル投影を別表示し、生成サマリーと最終身体確認も同じ2層構造へ追従。357系定義、A1顔ID、A4〜A9単一身体ID、Image B、月別ヘア、場所・シーン、エフェクトは変更なし。生成画像の最下部中央へ「GEN-DOLL Ver 9.4.2」を透過70%（不透明度30%）・極小文字で入れる出力署名指示を追加。
@@ -196,7 +197,7 @@
 </div>
 <div class="help-overlay hidden" id="chipHelpOverlay" onclick="hideChipHelp()"><div class="help-sheet" onclick="event.stopPropagation()"><div class="help-title" id="chipHelpTitle">ヘルプ</div><div class="help-body" id="chipHelpBody"></div><button class="help-close" onclick="hideChipHelp()">閉じる</button></div></div>
 <script>
-const APP_VERSION = "v9.4.4";
+const APP_VERSION = "v9.4.5";
 const OUTPUT_SIGNATURE_TEXT = `GEN-DOLL Ver ${APP_VERSION.replace(/^v/,"")}`;
 const HAIR_BY_MONTH = {1:"(long straight, dark brown hair:1.65), (hair falls below the shoulders:1.55)",2:"(long wave, chestnut brown gradient hair:1.65), (hair falls below the shoulders:1.55)",3:"(long soft wave, chestnut brown hair:1.65), (hair falls below the shoulders:1.55)",4:"(medium straight, chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",5:"(medium wave, light chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",6:"(soft bob, ash brown hair:1.78), (jaw-to-neck length bob:1.88), (not long hair:1.95)",7:"(short airy bob, ash brown hair:1.9), (airy bob ending strictly between the jaw and the base of the neck:2.0), (all visible hair terminates above the shoulders:2.0)",8:"(short bob, light ash brown hair:1.8), (clear short bob length above or around jaw:1.9), (not long hair:1.98)",9:"(medium bob, ash brown to dark brown hair:1.75), (shoulder-grazing medium bob length:1.82), (not chest-length hair:1.95)",10:"(inner-color straight, dark brown with caramel inner highlight:1.65), (long hair below shoulders:1.55)",11:"(inner-color wave, dark brown with rose-beige inner highlight:1.65), (long hair below shoulders:1.55)",12:"(long straight, dark brown with subtle inner highlight:1.65), (long hair below shoulders:1.55)"};
 const HAIR_DISPLAY_BY_MONTH = {
@@ -1050,6 +1051,15 @@ const FACE_FOCUSED_RANGE_KEYS=new Set(["faceOnly","extremeFace","faceCloseup","p
 const OVERHEAD_BODY_DATA_ANGLE_KEYS=new Set(["trueTopDown","overhead","high","golden"]);
 const LOW_BODY_PATH_ANGLE_KEYS=new Set(["lowFront","hiddenWaist","waistSideLow","lowerBodyExtremeFront","lowerBodyExtremeThreeQuarter","lowerBodyExtremeSide","lowerBodyExtremeFrontLookDown","lowerBodyExtremeThreeQuarterLookDown","lowerBodyExtremeSideLookDown","superLow"]);
 const SIDE_BODY_DATA_ANGLE_KEYS=new Set(["side","overShoulder","lowerBodyExtremeSide","lowerBodyExtremeSideLookDown"]);
+const FRONT_UPPER_TORSO_AUTHORITY_ANGLE_KEYS=new Set(["tableLeanForwardOneElbow","counterLeanForwardOneElbow","tableLeanForwardBothElbows","counterLeanForwardBothElbows","lowFront","lowerBodyExtremeFront","lowerBodyExtremeFrontLookDown"]);
+const THREE_QUARTER_UPPER_TORSO_AUTHORITY_ANGLE_KEYS=new Set(["lowerBodyExtremeThreeQuarter","lowerBodyExtremeThreeQuarterLookDown","tilted"]);
+const SIDE_UPPER_TORSO_AUTHORITY_ANGLE_KEYS=new Set(["side","lowerBodyExtremeSide","lowerBodyExtremeSideLookDown"]);
+const UPPER_TORSO_PROJECTION_AUTHORITIES={
+  joint:{key:"joint",label:"A4〜A6共同照合",prompt:"This preset does not impose one explicit front, three-quarter, or profile body direction. Preserve the single upper-torso morphology jointly resolved from A4–A6. Treat the three views as mutually constraining projections of the same volume, not alternatives to average; do not choose a smaller compromise or let one view erase dimensions clearly present in another."},
+  front:{key:"A4",label:"A4 正面投影を主照合",prompt:"For this explicitly frontal body projection, use A4 as the primary projection check for lateral extent, vertical placement, ribcage-to-upper-torso scale, and transition toward the waist. A5 and A6 remain mandatory cross-view checks for forward depth and three-dimensional continuity; do not let the frontal view flatten or reduce volume established across A4–A6."},
+  threeQuarter:{key:"A5",label:"A5 45度投影を主照合",prompt:"For this explicitly three-quarter body projection, use A5 as the primary projection check for the combined forward depth, lateral extent, vertical placement, and transition toward the waist. A4 and A6 remain mandatory cross-view checks for width and profile depth; do not average the A5 projection down or replace it with a smaller generic compromise."},
+  side:{key:"A6",label:"A6 横投影を主照合",prompt:"For this explicitly side-view body projection, use A6 as the primary projection check for front-to-back depth, outer side silhouette, vertical placement, and transition toward the waist. A4 and A5 remain mandatory cross-view checks for width and three-dimensional continuity; do not average the A6 profile depth down."}
+};
 const VISIBLE_BODY_REGION_PROFILES={
   face:{label:"顔中心・頭首肩",prompt:"Preserve the fixed head–neck–shoulder connection and the anatomically coherent continuation into the same A4–A9 body."},
   headShoulder:{label:"頭・首・肩・胸郭上部",prompt:"Preserve the fixed head, neck, shoulders, and upper ribcage relationship, using A4–A6 for any visible upper-torso morphology."},
@@ -1350,20 +1360,31 @@ function resolveAngleBodyProjection(angleKey){
     prompt:parts.map(p=>p.prompt).join("\n")
   };
 }
+function resolveUpperTorsoProjectionAuthority(angleKey){
+  if(FRONT_UPPER_TORSO_AUTHORITY_ANGLE_KEYS.has(angleKey))return UPPER_TORSO_PROJECTION_AUTHORITIES.front;
+  if(THREE_QUARTER_UPPER_TORSO_AUTHORITY_ANGLE_KEYS.has(angleKey))return UPPER_TORSO_PROJECTION_AUTHORITIES.threeQuarter;
+  if(SIDE_UPPER_TORSO_AUTHORITY_ANGLE_KEYS.has(angleKey))return UPPER_TORSO_PROJECTION_AUTHORITIES.side;
+  return UPPER_TORSO_PROJECTION_AUTHORITIES.joint;
+}
 function resolveBodyProjectionProfile(angleKey,stateRange=state.visibleRange){
-  if(state.characterMode!=="on")return{key:"none",label:"参照なし",regionLabel:"参照なし",projectionLabel:"参照なし",prompt:""};
+  if(state.characterMode!=="on")return{key:"none",label:"参照なし",regionLabel:"参照なし",projectionLabel:"参照なし",authorityLabel:"参照なし",prompt:""};
   const region=resolveVisibleBodyRegion(stateRange);
   const projection=resolveAngleBodyProjection(angleKey);
+  const authority=resolveUpperTorsoProjectionAuthority(angleKey);
   return{
-    key:`${region.key}:${projection.key}`,
-    label:`${region.label} ＋ ${projection.label}`,
+    key:`${region.key}:${projection.key}:${authority.key}`,
+    label:`${region.label} ＋ ${projection.label} ＋ ${authority.label}`,
     regionLabel:region.label,
     projectionLabel:projection.label,
+    authorityLabel:authority.label,
     prompt:`VISIBLE BODY PROJECTION — CROP DATA × ANGLE DATA:
 CROP-REQUIRED BODY REGIONS:
 ${region.prompt}
 ANGLE PROJECTION BEHAVIOR:
 ${projection.prompt}
+ANGLE-MATCHED UPPER-TORSO REFERENCE CHECK:
+${authority.prompt}
+This angle-matched reference is a projection validation of the already fixed canonical body; it must never create a separate body ID or recalculate the morphology.
 Keep all visible and perspective-supporting off-frame regions consistent with the single fixed A4–A9 body.`
   };
 }
@@ -1376,12 +1397,15 @@ function updateBodyProjectionStatus(){
   const region=resolveVisibleBodyRegion(state.visibleRange);
   if(state.angleMode==="auto"){
     el.textContent=`写す身体領域：${region.label}
-アングル投影：生成時に確定した357系アングルDataを合成`;
+アングル投影：生成時に確定した357系アングルDataを合成
+上半身投影照合：生成時の方向に応じてA4／A5／A6または共同照合`;
     return;
   }
   const projection=resolveAngleBodyProjection(state.angleMode);
+  const authority=resolveUpperTorsoProjectionAuthority(state.angleMode);
   el.textContent=`写す身体領域：${region.label}
 アングル投影：${projection.label}
+上半身投影照合：${authority.label}
 ${find("visibleRange").label} × ${find("angleMode").label}`;
 }
 function characterBlock(){if(state.characterMode==="off")return`SUBJECT REFERENCE — OFF:
@@ -1399,8 +1423,9 @@ Preserve A1's defining facial proportions and eye, eyelid, eyebrow, nose, lip, c
 CANONICAL BODY ID — A4–A9 / REGION-SPECIFIC AUTHORITY:
 Resolve and freeze one fixed three-dimensional body across A4–A9 before outfit, pose, camera, crop, lighting, or effects.
 
-UPPER-TORSO SOURCE AUTHORITY — A4–A6:
-A4–A6 are the authoritative high-detail sources for the upper-torso morphology of that single body. Resolve and preserve exactly the reference-defined upper-torso size, shape, forward projection, lateral extent, vertical placement, and relationship to the shoulders, ribcage, and waist — no more and no less.
+UPPER-TORSO SOURCE AUTHORITY — A4–A6 CROSS-VIEW CONSENSUS:
+A4–A6 jointly define one upper-torso morphology of the same canonical body. Treat A4 front, A5 three-quarter, and A6 profile as mutually constraining projections of one fixed volume, not separate bodies and not alternatives to average into a smaller compromise.
+A4 confirms lateral extent and the torso-to-waist relationship. A5 confirms forward projection and lateral volume together. A6 confirms front-to-back depth and the outer side silhouette. Preserve every dimension that is clearly supported across these views — no more and no less — and do not let one view erase, reduce, or normalize dimensions revealed by another.
 
 FULL-BODY INTEGRATION — A7–A9:
 A7–A9 confirm stature, overall proportions, waist, pelvis, hips, limbs, and how the same A4–A6-defined upper torso connects into the full body. They must not average down, enlarge, reduce, reshape, normalize, or replace the upper-torso morphology established by A4–A6.
@@ -1411,7 +1436,7 @@ Do not use Image B. Create one coherent outfit from the written scene, weather, 
 Use Image B only for clothing type, coordination, layering, material, color, shoes, bag, accessories, palette, and written POINT / STYLE POINT notes.
 If B is a coordinate sheet, read filled item boxes and text; ignore borders, typography, empty boxes, mannequins, models, illustration bodies, and presentation layout.
 Do not use B for face, body ID, hair, pose, hands, camera, composition, place, lighting, or expression. Do not reuse any previous outfit.
-${state.characterMode==="on"?"Fit Image B garments over the exact canonical body, using A4–A6 as the authoritative source for upper-torso morphology. The completed garment silhouette must reflect the size, shape, forward projection, lateral extent, vertical placement, and transition toward the waist actually present in A4–A6 — no more and no less. Adjust garment cut, stretch, looseness, folds, tension, and drape around that fixed morphology. Loose or fully opaque fabric may hide fine surface contours, but it must not enlarge, reduce, average, flatten, or replace the body-supported overall volume and front/side silhouette. A7–A9 confirm full-body continuity only and must not override the A4–A6 upper-torso morphology.":"Image B must not impose the body shown in the reference; it controls clothing only."}`}
+${state.characterMode==="on"?"Fit Image B garments over the exact canonical body, using the cross-view A4–A6 consensus as the authoritative source for upper-torso morphology. The completed garment silhouette must reflect the size, shape, forward projection, lateral extent, vertical placement, and transition toward the waist jointly established by A4–A6 — no more and no less. Adjust garment cut, stretch, looseness, folds, tension, and drape around that fixed morphology. Loose or fully opaque fabric may hide fine surface contours, but it must not enlarge, reduce, average down, flatten, or replace the body-supported overall volume and front/side silhouette. A7–A9 confirm full-body continuity only and must not override the A4–A6 upper-torso morphology.":"Image B must not impose the body shown in the reference; it controls clothing only."}`}
 function visibleRangeLock(){
   const key=state.visibleRange;
   const map={
@@ -1582,7 +1607,7 @@ function finalBodyMorphologyCheck(angleKey,rangeKey){
   if(state.characterMode!=="on")return"";
   const profile=resolveBodyProjectionProfile(angleKey,rangeKey);
   return `FINAL BODY ID CHECK — A4–A9 / REGION AUTHORITY:
-Confirm that the visible projection and anatomically continuous off-frame body remain the same canonical identity under crop-required body regions “${profile.regionLabel}” and angle projection “${profile.projectionLabel}”. For every visible or garment-supported upper-torso region, verify specifically against A4–A6: the completed silhouette must preserve the reference-defined size, shape, forward depth, lateral extent, vertical placement, and transition toward the waist — no more and no less. Use A7–A9 only to confirm full-body proportions and continuity; do not let them average, enlarge, reduce, reshape, or replace the A4–A6 upper-torso morphology. If any region was normalized, flattened, altered by garment drape, or replaced by a generic body, restore the canonical body before finalizing.`;
+Confirm that the visible projection and anatomically continuous off-frame body remain the same canonical identity under crop-required body regions “${profile.regionLabel}”, angle projection “${profile.projectionLabel}”, and upper-torso projection check “${profile.authorityLabel}”. Verify the completed body-supported garment silhouette against that angle-matched A4, A5, A6, or joint cross-view check without enlargement, reduction, flattening, or averaging down. The matched view is only a projection check; A4–A6 jointly define one fixed morphology, and A7–A9 only confirm full-body proportions and continuity. If any region was normalized, altered by garment drape, or replaced by a generic body, restore the canonical body before finalizing.`;
 }
 function outputSignatureBlock(){
   return `OUTPUT SIGNATURE — APPLY AFTER ALL IMAGE CONTENT AND FINISHING:
@@ -1616,7 +1641,7 @@ function finalSelfieHandValidation(selfie,angleKey){
 }
 let lastGeneratedAngle=null;
 let lastGeneratedBodyProfile=null;
-function buildPrompt(){const t=getTokyoNow();const sceneRaw=document.getElementById("situation").value.trim()||"No scene details provided. Create a realistic everyday portrait scene.";const angle=pickAngle();lastGeneratedAngle=angle;lastGeneratedBodyProfile=state.characterMode==="on"?resolveBodyProjectionProfile(angle.key,state.visibleRange):null;const selfie=effectiveSelfie(sceneRaw);const fxMult=EFFECT_MULT[state.effectStrength]||1;const selectedEffectKeys=state.effects.filter(k=>EFFECTS.some(e=>e.key===k));const selectedAdditionalKeys=state.additionalElements.filter(k=>ADDITIONAL_ELEMENTS.some(e=>e.key===k));const additionalElements=selectedAdditionalKeys.map(k=>ADDITIONAL_ELEMENTS.find(e=>e.key===k)).filter(Boolean).map(e=>e.value);const effects=selectedEffectKeys.map(k=>EFFECTS.find(e=>e.key===k)).filter(Boolean).map(e=>scaleWeightedPrompt(e.value,fxMult));const effectPriority=state.effects.length?(state.effectStrength==="strong"?"(selected effects are mandatory, clearly visible, and must strongly affect the final image:2.0)":state.effectStrength==="max"?"(selected effects are mandatory, dominant, unmistakable, and visually prominent across the final image:2.15)":state.effectStrength==="standard"?"(selected effects must be clearly visible in the final image:1.86)":"(selected effects should remain subtly but visibly present in the final image:1.72)"):"";const weather=state.weather?find("weather").value:"";const film=find("film").value;const tone=find("tone").value;const blocks=[];blocks.push(`APP_VERSION: ${APP_VERSION}\nPROMPT_ENGINE: compact identity/location core + A4-A6 upper-torso authority + A7-A9 full-body integration + crop-body-region + angle-projection composition + angle-core + visual-preset mapping + visible-range + style/effects\nCAMERA_ENGINE: angle-preset, not micro physical controls`);
+function buildPrompt(){const t=getTokyoNow();const sceneRaw=document.getElementById("situation").value.trim()||"No scene details provided. Create a realistic everyday portrait scene.";const angle=pickAngle();lastGeneratedAngle=angle;lastGeneratedBodyProfile=state.characterMode==="on"?resolveBodyProjectionProfile(angle.key,state.visibleRange):null;const selfie=effectiveSelfie(sceneRaw);const fxMult=EFFECT_MULT[state.effectStrength]||1;const selectedEffectKeys=state.effects.filter(k=>EFFECTS.some(e=>e.key===k));const selectedAdditionalKeys=state.additionalElements.filter(k=>ADDITIONAL_ELEMENTS.some(e=>e.key===k));const additionalElements=selectedAdditionalKeys.map(k=>ADDITIONAL_ELEMENTS.find(e=>e.key===k)).filter(Boolean).map(e=>e.value);const effects=selectedEffectKeys.map(k=>EFFECTS.find(e=>e.key===k)).filter(Boolean).map(e=>scaleWeightedPrompt(e.value,fxMult));const effectPriority=state.effects.length?(state.effectStrength==="strong"?"(selected effects are mandatory, clearly visible, and must strongly affect the final image:2.0)":state.effectStrength==="max"?"(selected effects are mandatory, dominant, unmistakable, and visually prominent across the final image:2.15)":state.effectStrength==="standard"?"(selected effects must be clearly visible in the final image:1.86)":"(selected effects should remain subtly but visibly present in the final image:1.72)"):"";const weather=state.weather?find("weather").value:"";const film=find("film").value;const tone=find("tone").value;const blocks=[];blocks.push(`APP_VERSION: ${APP_VERSION}\nPROMPT_ENGINE: compact identity/location core + A4-A6 cross-view upper-torso authority + angle-matched projection validation + A7-A9 full-body integration + crop-body-region + angle-projection composition + angle-core + visual-preset mapping + visible-range + style/effects\nCAMERA_ENGINE: angle-preset, not micro physical controls`);
 blocks.push(`ACTIVE REFERENCE FILES / ORDER:
 ${state.characterMode==="on"?"A1=A1_FACE_FRONT.jpg; A2=A2_FACE_45.jpg; A3=A3_FACE_PROFILE.jpg; A4=A4_BUST_FRONT.jpg; A5=A5_BUST_45.jpg; A6=A6_BUST_PROFILE.jpg; A7=A7_FULL_FRONT.jpg; A8=A8_FULL_45.jpg; A9=A9_FULL_PROFILE.jpg":"Subject reference OFF: no A1–A9."}
 ${state.outfitReferenceMode==="on"?"B=B_CURRENT_OUTFIT.jpg (after A1–A9 when active).":"Outfit reference OFF: no B."}
@@ -1659,7 +1684,7 @@ blocks.push(finalBodyMorphologyCheck(angle.key,state.visibleRange));
 blocks.push(finalMonthlyHairCheck(t.month));
 blocks.push(finalSelfieHandValidation(selfie,angle.key));
 return blocks.filter(Boolean).join("\n\n");}
-function handleGenerate(){const validationErrors=collectSceneValidationErrors();if(validationErrors.length){updateSceneValidationStatus();document.getElementById("sceneCard")?.scrollIntoView({behavior:"smooth",block:"center"});alert("シーン連動チェックで不足があります。\n\n・"+validationErrors.join("\n・"));return;}const prompt=buildPrompt();document.getElementById("metaCard").classList.remove("hidden");document.getElementById("outputCard").classList.remove("hidden");document.getElementById("outputArea").value=prompt;document.getElementById("metaContent").innerHTML=[`🧩 <b style='color:#c4b5fd'>App</b>：${APP_VERSION}`,`👤 <b style='color:#c4b5fd'>被写体参照</b>：${find("characterMode").label}`,`🧍 <b style='color:#c4b5fd'>身体ID</b>：${state.characterMode==="on"?"A4〜A6で上半身確定＋A7〜A9で全身接続":"参照なし"}`,`🧩 <b style='color:#c4b5fd'>写す身体領域</b>：${lastGeneratedBodyProfile?lastGeneratedBodyProfile.regionLabel:"参照なし"}`,`📐 <b style='color:#c4b5fd'>アングル投影</b>：${lastGeneratedBodyProfile?lastGeneratedBodyProfile.projectionLabel:"参照なし"}`,`👗 <b style='color:#c4b5fd'>コーデ参照</b>：${find("outfitReferenceMode").label}`,`📍 <b style='color:#c4b5fd'>場所参照</b>：${find("locationReferenceMode").label}`,`🎥 <b style='color:#c4b5fd'>撮影方式</b>：${find("selfieMode").label}`,`🧭 <b style='color:#c4b5fd'>目的・表現プリセット</b>：${activeVisualPresetKey()?(state.visualPreset==="custom"?"カスタム：":"")+visualPresetName(activeVisualPresetKey()):"未選択"}`,`🌿 <b style='color:#c4b5fd'>写真の作り込み度</b>：${find("photoStyle").label}`,`🎯 <b style='color:#c4b5fd'>表現の主役</b>：${resolvedVisualFocusLabel()}`,`💨 <b style='color:#c4b5fd'>身体の動き</b>：${find("motionEnergy").label}`,`📸 <b style='color:#c4b5fd'>アングル</b>：${(lastGeneratedAngle||pickAngle()).label}`,`🖼️ <b style='color:#c4b5fd'>写す範囲</b>：${find("visibleRange").label}`,`📐 <b style='color:#c4b5fd'>画面の傾き</b>：${find("cameraRoll").label}`,`🎞️ <b style='color:#c4b5fd'>フィルム</b>：${find("film").label||"未選択"}`,`✨ <b style='color:#c4b5fd'>エフェクト</b>：${state.effects.length?state.effects.map(k=>EFFECTS.find(e=>e.key===k)?.label).join("、"):"未選択"}`,`🌫️ <b style='color:#c4b5fd'>追加要素</b>：${state.additionalElements.length?state.additionalElements.map(k=>ADDITIONAL_ELEMENTS.find(e=>e.key===k)?.label).filter(Boolean).join("、"):"未選択"}`, `🧾 <b style='color:#c4b5fd'>プロンプト</b>：${prompt.length.toLocaleString()}文字 / 範囲Data＋アングルData合成`,`🔏 <b style='color:#c4b5fd'>画像署名</b>：${OUTPUT_SIGNATURE_TEXT} / 透過70% / 最下部中央`,`🔒 <b style='color:#c4b5fd'>後処理</b>：weight削除なし / 重複削除なし`].join("<br>");copyPromptToClipboard(true);document.getElementById("outputCard").scrollIntoView({behavior:"smooth"});}
+function handleGenerate(){const validationErrors=collectSceneValidationErrors();if(validationErrors.length){updateSceneValidationStatus();document.getElementById("sceneCard")?.scrollIntoView({behavior:"smooth",block:"center"});alert("シーン連動チェックで不足があります。\n\n・"+validationErrors.join("\n・"));return;}const prompt=buildPrompt();document.getElementById("metaCard").classList.remove("hidden");document.getElementById("outputCard").classList.remove("hidden");document.getElementById("outputArea").value=prompt;document.getElementById("metaContent").innerHTML=[`🧩 <b style='color:#c4b5fd'>App</b>：${APP_VERSION}`,`👤 <b style='color:#c4b5fd'>被写体参照</b>：${find("characterMode").label}`,`🧍 <b style='color:#c4b5fd'>身体ID</b>：${state.characterMode==="on"?"A4〜A6共同確定＋A7〜A9で全身接続":"参照なし"}`,`🧩 <b style='color:#c4b5fd'>写す身体領域</b>：${lastGeneratedBodyProfile?lastGeneratedBodyProfile.regionLabel:"参照なし"}`,`📐 <b style='color:#c4b5fd'>アングル投影</b>：${lastGeneratedBodyProfile?lastGeneratedBodyProfile.projectionLabel:"参照なし"}`,`🔎 <b style='color:#c4b5fd'>上半身投影照合</b>：${lastGeneratedBodyProfile?lastGeneratedBodyProfile.authorityLabel:"参照なし"}`,`👗 <b style='color:#c4b5fd'>コーデ参照</b>：${find("outfitReferenceMode").label}`,`📍 <b style='color:#c4b5fd'>場所参照</b>：${find("locationReferenceMode").label}`,`🎥 <b style='color:#c4b5fd'>撮影方式</b>：${find("selfieMode").label}`,`🧭 <b style='color:#c4b5fd'>目的・表現プリセット</b>：${activeVisualPresetKey()?(state.visualPreset==="custom"?"カスタム：":"")+visualPresetName(activeVisualPresetKey()):"未選択"}`,`🌿 <b style='color:#c4b5fd'>写真の作り込み度</b>：${find("photoStyle").label}`,`🎯 <b style='color:#c4b5fd'>表現の主役</b>：${resolvedVisualFocusLabel()}`,`💨 <b style='color:#c4b5fd'>身体の動き</b>：${find("motionEnergy").label}`,`📸 <b style='color:#c4b5fd'>アングル</b>：${(lastGeneratedAngle||pickAngle()).label}`,`🖼️ <b style='color:#c4b5fd'>写す範囲</b>：${find("visibleRange").label}`,`📐 <b style='color:#c4b5fd'>画面の傾き</b>：${find("cameraRoll").label}`,`🎞️ <b style='color:#c4b5fd'>フィルム</b>：${find("film").label||"未選択"}`,`✨ <b style='color:#c4b5fd'>エフェクト</b>：${state.effects.length?state.effects.map(k=>EFFECTS.find(e=>e.key===k)?.label).join("、"):"未選択"}`,`🌫️ <b style='color:#c4b5fd'>追加要素</b>：${state.additionalElements.length?state.additionalElements.map(k=>ADDITIONAL_ELEMENTS.find(e=>e.key===k)?.label).filter(Boolean).join("、"):"未選択"}`, `🧾 <b style='color:#c4b5fd'>プロンプト</b>：${prompt.length.toLocaleString()}文字 / 範囲Data＋アングルData合成`,`🔏 <b style='color:#c4b5fd'>画像署名</b>：${OUTPUT_SIGNATURE_TEXT} / 透過70% / 最下部中央`,`🔒 <b style='color:#c4b5fd'>後処理</b>：weight削除なし / 重複削除なし`].join("<br>");copyPromptToClipboard(true);document.getElementById("outputCard").scrollIntoView({behavior:"smooth"});}
 function handleCopy(){copyPromptToClipboard(false)}
 function copyPromptToClipboard(auto=false){const ta=document.getElementById("outputArea");if(!ta||!ta.value)return;ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);const ok=()=>showCopied(auto);const fallback=()=>{try{if(document.execCommand("copy"))ok()}catch(e){}};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(ta.value).then(ok).catch(fallback)}else fallback()}
 function showCopied(auto=false){const btn=document.getElementById("btnCopy");btn.textContent=auto?"✓ 自動コピー済み":"✓ コピー済み";btn.classList.add("copied");setTimeout(()=>{btn.textContent="コピー";btn.classList.remove("copied")},2500)}
