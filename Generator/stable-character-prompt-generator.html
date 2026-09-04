@@ -1,0 +1,388 @@
+<!--
+  Selfie Prompt Generator
+  Version: 8.0.2
+  Updated: 2026-07-28
+  Changelog:
+    v8.0.2 - 9.20.0の被写体9枚画像参照（A1〜A9）のキャラクターロック仕様を移植。
+    v8.0.1 - APP_VERSIONをv8.0.1に更新。アプリ名の下にバージョン表示を追加。Image A / Image B FULL の参照制約を厳格化。visibleなv3.57表記を削除。
+    v8.0.0 - v3.57思想の角度コア復活版を正式メジャー化。ライトモード専用、拡張フィルム/エフェクト、自動コピーを維持。
+    v7.3.0 - v3.57の思想へ戻して再設計。カメラ高さ/距離/持ち方/レンズ向き/撮影メモの分解を廃止し、人物写真としての「カメラ位置 / アングル」プリセットを主軸に復活。
+             腰だめ / 低め前持ち / 強い煽りを明確化し、顔のみ・顔どアップ・横顔アップなどの写す範囲を追加。
+             1枚目=顔・体型参照、2枚目=コーデ参照（OFF/LIGHT/FULL）を追加。SHEETはFULLへ統合。
+             画面の傾き、顔向き、視線、肌の見え方、接写質感、拡張エフェクトをv3.57の単純選択思想で追加。
+             後処理によるweight削除や重複削除は行わず、各選択肢の元プロンプトを根本から整理。
+    v3.57.0 - エフェクト系の長押しヘルプを拡張。各エフェクト/エフェクト強度の「何が変わるか」「向く場面」「注意点」を表示
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Stable Character Prompt Generator</title>
+<style>
+  :root {
+    /* v7.2系に合わせてライトモード専用。OSのダークモード設定には連動しない。 */
+    --bg:#f4f4f5; --bg-card:#fff; --bg-dark:#ede9fe; --bg-out:#f8f7ff; --bg-input:#f4f4f5; --bg-ta:#f8f8f8;
+    --border:#e4e4e7; --border-m:#d4d4d8; --border-pu:#c4b5fd;
+    --text:#18181b; --text-sub:#52525b; --text-dim:#71717a; --text-hint:#a1a1aa; --text-pu:#7c3aed;
+    --chip-bg:#f4f4f5; --chip-col:#52525b; --chip-abg:#7c3aed; --chip-acol:#fff; --chip-abdr:#7c3aed;
+    --hdr-bg:linear-gradient(135deg,#ede9fe 0%,#f5f3ff 100%); --reset-col:#71717a; --reset-bdr:#d4d4d8;
+    --info-val:#6d28d9; --copy-done-bg:#7c3aed; --copy-done-col:#fff; --placeholder:#d4d4d8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;padding-bottom:80px;font-size:14px}
+  .header{background:var(--hdr-bg);border-bottom:1px solid var(--border);padding:16px 14px 12px;position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px}
+  .header-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .header-title{font-size:15px;font-weight:700}.header-sub{font-size:10px;color:var(--text-hint);margin-top:1px}.header-time{margin-left:auto;text-align:right}.header-time-main{font-size:13px;color:#a855f7;font-weight:700}.header-time-sub{font-size:10px;color:var(--text-hint)}
+  .content{padding:12px 14px 0}.card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}.card-dark{background:var(--bg-dark);border-color:var(--border-pu)}.card-out{background:var(--bg-out);border-color:var(--border-pu)}
+  .slabel{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:8px}.hint{font-size:11px;color:var(--text-hint);margin-bottom:8px;line-height:1.55}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}.chip{padding:7px 13px;border-radius:20px;border:2px solid var(--border-m);background:var(--chip-bg);color:var(--chip-col);font-size:12px;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none}.chip.active{border-color:var(--chip-abdr);background:var(--chip-abg);color:var(--chip-acol);font-weight:600}.chip.disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.6)}.chip.has-help::after{content:"？";display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:5px;border-radius:999px;font-size:10px;color:#c4b5fd;background:rgba(168,85,247,.18);border:1px solid rgba(196,181,253,.35)}
+  textarea{width:100%;background:var(--bg-input);border:1px solid var(--border-m);border-radius:10px;color:var(--text);font-size:14px;line-height:1.6;padding:10px 12px;resize:vertical;outline:none;font-family:inherit}textarea::placeholder{color:var(--placeholder)}
+  .btn-row{display:flex;gap:10px;margin:6px 0 14px}.btn-generate{flex:3;padding:14px 0;border-radius:12px;border:none;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.03em}.btn-reset{flex:1;padding:14px 0;border-radius:12px;border:1px solid var(--reset-bdr);background:transparent;color:var(--reset-col);font-size:14px;font-weight:600;cursor:pointer}.btn-copy{padding:6px 14px;border-radius:8px;border:1px solid #7c3aed;background:transparent;color:#a855f7;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}.btn-copy.copied{background:var(--copy-done-bg);color:var(--copy-done-col)}
+  .output-ta{width:100%;height:300px;font-size:11px;color:var(--text-sub);line-height:1.8;font-family:monospace;background:var(--bg-ta);border-radius:8px;padding:10px 12px;border:1px solid var(--border);resize:none;outline:none}.info-row{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text-sub);margin-bottom:5px}.info-icon{flex-shrink:0;color:#7c3aed}.info-val{color:var(--info-val);font-weight:600}.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.hidden{display:none}
+  .help-overlay{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;padding:14px}.help-overlay.hidden{display:none}.help-sheet{width:100%;max-width:520px;background:var(--bg-card);border:1px solid var(--border-pu);border-radius:16px;padding:16px;box-shadow:0 -10px 40px rgba(0,0,0,.35)}.help-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}.help-body{font-size:13px;line-height:1.75;color:var(--text-sub);white-space:pre-line}.help-close{margin-top:14px;width:100%;padding:12px 0;border-radius:12px;border:1px solid #7c3aed;background:transparent;color:#c4b5fd;font-weight:700;font-size:14px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-icon">✦</div>
+  <div><div class="header-title">Stable Character Prompt Generator</div><div class="header-sub">v8.0.2</div><div class="header-sub">参照/写す範囲/拡張エフェクト</div></div>
+  <div class="header-time"><div class="header-time-main" id="hTime">--:--</div><div class="header-time-sub" id="hDay">-- · --月 · --</div></div>
+</div>
+<div class="content">
+  <div class="card card-dark"><div class="slabel">自動取得 — 東京時間</div><div class="info-row"><span class="info-icon">📅</span><span id="infoDay">取得中…</span></div><div class="info-row"><span class="info-icon">🕐</span><span id="infoTime">取得中…</span></div><div class="info-row"><span class="info-icon">💭</span><span id="infoDayMood" style="font-size:11px;color:#71717a;"></span></div><div class="info-row"><span class="info-icon">✂️</span><span id="infoHair" style="font-size:11px;color:#71717a;"></span></div></div>
+
+  <div class="card card-dark"><div class="slabel">被写体設定 — 9枚画像参照</div><div class="hint">OFFは被写体画像参照を使用せず、被写体テキストも追加しません。ONはA1〜A9を同一の成人被写体として扱い、顔IDと全身体型IDを一度だけ固定します。A1が唯一の顔ID、A2〜A3は同じ顔の角度確認、A4〜A6は身体の正面・45度・側面確認、A7〜A9は全身比率と接続確認です。バスト・胴体・ウエスト・腰・ヒップ・四肢・身長を一つの自然な全身シルエットとして維持し、特定部位だけを平均化・縮小・増大・平坦化・再設計しません。357系は見え方だけを変更し、身体そのものの寸法や比率は変更しません。髪型・ポーズ・構図・背景はA1〜A9から参照しません。</div><div class="slabel" style="margin-top:10px;">被写体A1〜A9画像参照</div><div class="chips" id="characterModeChips"></div></div>
+
+  <div class="card card-dark"><div class="slabel">コーディネート画像参照 — 2枚目の添付画像</div><div class="hint">OFF/LIGHT/FULLのみ。FULLは普通の服装写真にもコーディネートシートにも使います。シートの場合はアイテム・色・STYLE POINTを読み、枠やテンプレデザインは生成画像に持ち込みません。</div><div class="chips" id="outfitReferenceModeChips"></div></div>
+
+  <div class="card"><div class="slabel">① 基本姿勢</div><div class="hint">大きな姿勢だけを選びます。細部は②シーンに書きます。</div><div class="chips" id="basePostureChips"></div></div>
+  <div class="card"><div class="slabel">② 今回のシーンだけ（日本語で入力）</div><div class="hint">場所・服装・ポーズ細部・表情・何してるか。撮影メモ欄は作らず、構図は下の選択肢で決めます。</div><textarea id="situation" rows="4" placeholder="例：ThinkPark Towerのロビー。めっちゃ嬉しそうな顔。"></textarea></div>
+
+  <div class="card"><div class="slabel">③ 胸シルエット</div><div class="hint">選択した意味をそのまま服越しの自然なシルエットに反映します。</div><div class="chips" id="bustChips"></div></div>
+  <div class="card"><div class="slabel">④ ヒップ / 下半身シルエット</div><div class="hint">細身Iラインを維持しつつ、小尻・コンパクト感を調整します。</div><div class="chips" id="hipChips"></div></div>
+  <div class="card"><div class="slabel">⑤ 天気を選択</div><div class="chips" id="weatherChips"></div></div>
+  <div class="card"><div class="slabel">⑥ フィルムトーン / 質感</div><div class="hint">長押しでヘルプ表示。色味・質感・雰囲気を選びます。</div><div class="chips" id="filmChips"></div></div>
+  <div class="card"><div class="slabel">⑦ 作品トーン</div><div class="hint">長押しでヘルプ表示。写真全体の印象を選びます。</div><div class="chips" id="toneChips"></div></div>
+  <div class="card"><div class="slabel">⑧ エフェクト（複数選択可）</div><div class="hint">各エフェクトは元プロンプト段階で重みを持ち、後処理で消しません。まずは3〜5個がおすすめ。</div><div class="chips" id="effectChips"></div></div>
+  <div class="card"><div class="slabel">⑨ エフェクト強度</div><div class="hint">選択エフェクトのweightを倍率補正します。通常プロンプトには触りません。</div><div class="chips" id="effectStrengthChips"></div></div>
+  <div class="card"><div class="slabel">⑩ 肌の見え方 / 肌質感</div><div class="chips" id="skinFinishChips"></div></div>
+  <div class="card"><div class="slabel">⑪ 接写質感</div><div class="hint">顔のみ・顔どアップ・横顔アップで効きやすい質感です。</div><div class="chips" id="closeupTextureChips"></div></div>
+  <div class="card"><div class="slabel">⑫ 自撮り / 第三者撮影</div><div class="hint">自撮りONならスマホ手持ちカメラ視点。OFFなら外部カメラの自然なポートレート/スナップ扱い。</div><div class="chips" id="selfieModeChips"></div></div>
+  <div class="card"><div class="slabel">⑬ カメラ位置 / アングル</div><div class="hint">このアプリの中核。カメラ高さ・距離・レンズ向きを分解せず、人物写真の見え方として選びます。</div><div class="chips" id="angleModeChips"></div></div>
+  <div class="card"><div class="slabel">⑭ 写す範囲</div><div class="hint">顔のみ・顔どアップなどを追加。場所を見せる量は背景/余白側で調整します。</div><div class="chips" id="visibleRangeChips"></div></div>
+  <div class="card"><div class="slabel">⑮ 画面の傾き</div><div class="hint">構図の回転だけを指定します。腰だめやローアングルの起点は変えません。</div><div class="chips" id="cameraRollChips"></div></div>
+  <div class="card"><div class="slabel">⑯ 顔向き</div><div class="chips" id="faceDirectionChips"></div></div>
+  <div class="card"><div class="slabel">⑰ 視線</div><div class="chips" id="gazeChips"></div></div>
+  <div class="card"><div class="slabel">⑱ 背景の見せ方</div><div class="chips" id="backgroundViewChips"></div></div>
+  <div class="card"><div class="slabel">⑲ 余白 / リーディングスペース</div><div class="chips" id="framingChips"></div></div>
+  <div class="card"><div class="slabel">⑳ 写真の自然さ / 演出度</div><div class="chips" id="photoStyleChips"></div></div>
+  <div class="card"><div class="slabel">㉑ テンション（動きの強さ）</div><div class="chips" id="tensionChips"></div></div>
+  <div class="card"><div class="slabel">㉒ 感情（内面の気分）</div><div class="chips" id="emotionChips"></div></div>
+  <div class="card"><div class="slabel">㉓ 表情（顔の出力）</div><div class="hint">未選択の場合はシーンと感情から自然に導出します。</div><div class="chips" id="expressionChips"></div></div>
+
+  <div class="btn-row"><button class="btn-generate" id="btnGen" onclick="handleGenerate()">✦ プロンプト生成</button><button class="btn-reset" onclick="handleReset()">リセット</button></div>
+  <div class="card card-dark hidden" id="metaCard"><div class="slabel">展開結果サマリー</div><div id="metaContent" style="font-size:12px;color:#a1a1aa;line-height:1.9;"></div></div>
+  <div class="card card-out hidden" id="outputCard"><div class="card-head"><div class="slabel" style="margin-bottom:0;">生成プロンプト</div><button class="btn-copy" id="btnCopy" onclick="handleCopy()">コピー</button></div><textarea class="output-ta" id="outputArea" readonly onclick="this.select();this.setSelectionRange(0,this.value.length);" onfocus="this.select();this.setSelectionRange(0,this.value.length);"></textarea></div>
+</div>
+<div class="help-overlay hidden" id="chipHelpOverlay" onclick="hideChipHelp()"><div class="help-sheet" onclick="event.stopPropagation()"><div class="help-title" id="chipHelpTitle">ヘルプ</div><div class="help-body" id="chipHelpBody"></div><button class="help-close" onclick="hideChipHelp()">閉じる</button></div></div>
+<script>
+const APP_VERSION = "v8.0.2";
+const HAIR_BY_MONTH = {1:"(long straight, dark brown hair:1.65), (hair falls below the shoulders:1.55)",2:"(long wave, chestnut brown gradient hair:1.65), (hair falls below the shoulders:1.55)",3:"(long soft wave, chestnut brown hair:1.65), (hair falls below the shoulders:1.55)",4:"(medium straight, chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",5:"(medium wave, light chestnut brown hair:1.6), (shoulder-length medium hair:1.5)",6:"(soft bob, ash brown hair:1.78), (jaw-to-neck length bob:1.88), (not long hair:1.95)",7:"(airy bob, ash brown hair:1.8), (short-to-medium airy bob length around jaw to neck:1.9), (not long hair:1.98)",8:"(short bob, light ash brown hair:1.8), (clear short bob length above or around jaw:1.9), (not long hair:1.98)",9:"(medium bob, ash brown to dark brown hair:1.75), (shoulder-grazing medium bob length:1.82), (not chest-length hair:1.95)",10:"(inner-color straight, dark brown with caramel inner highlight:1.65), (long hair below shoulders:1.55)",11:"(inner-color wave, dark brown with rose-beige inner highlight:1.65), (long hair below shoulders:1.55)",12:"(long straight, dark brown with subtle inner highlight:1.65), (long hair below shoulders:1.55)"};
+const DAY_MOOD={Sun:"Quiet reflective Sunday mood, gentle weekend loneliness",Mon:"Tired but composed Monday mood",Tue:"Focused stable neutral Tuesday calm",Wed:"Midweek fatigue, quiet weariness",Thu:"Slight pre-weekend anticipation",Fri:"Friday pre-weekend energy, lively but time-neutral mood",Sat:"Relaxed confident Saturday energy"};
+const CHIN_CONTROL = "(neutral chin position:1.92), (chin not thrust forward:1.92), (no jutting chin:1.9), (face kept level or only naturally tilted:1.85), (neck relaxed and not stretched:1.82)";
+const opt=(label,key,value,help="")=>({label,key,value,help});
+const CHARACTER_MODE_OPTIONS=[opt("🚫 OFF / 被写体参照なし","off","off"),opt("📷 ON / 被写体9枚画像から","on","on")];
+const OUTFIT_REFERENCE_MODE_OPTIONS=[opt("🚫 OFF / 使わない","off","off"),opt("✨ LIGHT / 色・雰囲気だけ","light","light"),opt("👗 FULL / 服装・小物・色を使う","full","full")];
+const BASE_POSTURE_OPTIONS=[opt("🎲 おまかせ","auto","auto","シーン文から自然に姿勢を補完します。"),opt("🧍 立っている","standing","standing"),opt("🪑 座っている","seated","seated"),opt("🛋️ 寝転がっている","reclining","reclining")];
+const BUST_OPTIONS=[opt("🫧 控えめ","subtle","(normal-size upper-body silhouette through opaque clothing:1.68), (restrained natural bust contour:1.68), (face remains the main focal point:1.88)"),opt("🌿 自然","natural","(natural balanced upper-body garment contour:1.78), (natural bust volume and body line through clothing:1.78), (realistic adult proportions:1.8), (face remains the main focal point:1.88)"),opt("⬆️ 立体感","dimensional","(slightly fuller upper-body silhouette through clothing:1.86), (high-set lifted bust position through clothing:1.88), (firm structured upper-body garment contour:1.86), (face remains primary:1.88)"),opt("🧱 ラインくっきり","defined","(clearly readable upper-body outline through opaque clothing:1.86), (defined bust line and garment contour:1.84), (realistic fabric fit:1.82), (face remains primary:1.88)"),opt("⬆️🧱 立体感＋ライン","both","(slightly fuller and dimensional upper-body silhouette through clothing:1.9), (high-set lifted bust position through clothing:1.9), (defined opaque garment contour around upper body:1.88), (slender I-line body remains narrow and elegant:1.88), (face remains primary:1.9)"),opt("👚 服装なり","outfit","(upper-body silhouette follows the selected outfit naturally:1.8), (fabric thickness, cut, and neckline decide how much shape is visible:1.76), (no forced silhouette beyond outfit design:1.76)")];
+const HIP_OPTIONS=[opt("🫧 控えめ","subtle","(subtle compact lower-body silhouette:1.6), (straight narrow waist-to-hip line:1.82), (hips remain small and not laterally wide:1.88)"),opt("🌿 自然","natural","(natural compact lower-body silhouette:1.72), (clean narrow waist-to-hip line:1.84), (hips stay compact, not wide or bulky:1.9)"),opt("🍑 小尻プリ","perky","(compact small hips with a gently rounded shape:1.88), (small but firm perky hip silhouette:1.88), (subtle lifted curve without extra side width:1.86), (not laterally wide hips:1.94)"),opt("🍑⬆️ 小尻アップ","lifted","(compact small hips with a clearly lifted shape:1.9), (small firm upward hip silhouette:1.9), (high-set compact lower-body curve without lateral width:1.88), (not exaggerated:1.92)"),opt("👖 服装なり","outfit","(lower-body silhouette follows the selected outfit naturally:1.8), (pants, skirt, or fabric cut decides how much hip line is visible:1.78), (hips remain compact and not laterally wide:1.9)")];
+const WEATHER_OPTIONS=[opt("晴れ ☀️","clear","clear sunny sky, bright natural daylight"),opt("曇り ☁️","cloudy","overcast cloudy sky, cloud-filtered diffused daylight, muted atmosphere"),opt("小雨 🌦️","drizzle","light drizzle rain, wet streets, soft grey ambient light, misty air"),opt("雨 🌧️","rain","steady rain, rain-soaked streets, dark moody wet atmosphere"),opt("雪 ❄️","snow","snow falling, winter white scenery, cold crisp air, soft white light"),opt("霧 🌫️","fog","foggy misty atmosphere, dreamlike hazy soft light")];
+const FILM_TONES=[
+opt("なし","none","",`フィルムトーンを使わない標準状態です。`),
+opt("コダック ゴールド 200","gold200","Kodak Gold 200 film tone, clearly visible warm golden cast, noticeable analog warmth, lightly visible grain, unmistakable vintage print feel",`暖かく少し懐かしい色味。`),
+opt("コダック ポートラ 400","portra400","Kodak Portra 400 film tone, clearly visible natural warm skin color, soft contrast, fine grain, unmistakable balanced portrait-film look",`人物向けの定番。`),
+opt("コダック ポートラ 800","portra800","Kodak Portra 800 film tone, clearly visible rich warm skin, creamy highlight rolloff, noticeable film grain, unmistakable premium portrait film look",`夜や暗所でも人物がきれいに見えやすい暖色ポートレート系です。`),
+opt("コダック エクター 100","ektar100","Kodak Ektar 100 film tone, clearly visible vivid yet clean color reproduction, crisp contrast, ultra-fine grain, unmistakable polished color-film look",`色が鮮やかで、粒子は細かめ。`),
+opt("フジ プロ 400H","fuji400h","Fuji Pro 400H film tone, clearly visible pastel palette, soft mint-cool shadows, airy film color separation, unmistakable film softness",`淡くて軽い、透明感寄りのフィルム調。`),
+opt("フジ スーペリア 400","superia400","Fujifilm Superia 400 film tone, clearly visible lively green-blue color bias, casual snapshot color, medium grain, unmistakable everyday consumer-film feel",`気軽な日常スナップっぽさ。`),
+opt("フジ リアラエース","realaace","Fujifilm Reala Ace film tone, clearly visible clean neutral color reproduction, soft highlight control, gentle film contrast, unmistakable refined modern-film look",`ニュートラルで整った色味。`),
+opt("シネスティル 800T","cinestill800t","CineStill 800T film tone, clearly visible tungsten-balanced cool shadows, glowing highlights, cinematic night color separation, unmistakable urban night-film look",`夜の街灯やネオンと相性が良いシネマ系。`),
+opt("イルフォード HP5","ilfordhp5","Ilford HP5 black and white film, clearly visible monochrome rendering, strong classic contrast, obvious grain texture, unmistakable black-and-white film look",`白黒フィルム調。`),
+opt("ポラロイド","polaroid","Polaroid instant film tone, clearly visible faded instant-film colors, nostalgic warm cast, soft bloom, unmistakable instant snapshot feel",`インスタント写真っぽい、少し褪せたやさしい色味です。`),
+opt("ローモ","lomo","Lomography vivid tone, clearly visible cross-processed colors, strong saturation shift, lo-fi contrast, vignette edges, unmistakable lomo look",`クセのある発色と周辺落ちで、ローファイ感が強いです。`),
+opt("シネスコープ","cinemascope","CinemaScope film tone, clearly visible teal and orange grade, cinematic color separation, anamorphic blockbuster look, unmistakable movie-like grading",`映画っぽいティール&オレンジ寄りの色分離。`),
+opt("ヴィンテージ 90s","vintage90s","1990s vintage film tone, clearly visible retro color shift, muted warm mid-tones, nostalgic softness, unmistakable 90s film-photo mood",`90年代っぽい色ズレと少し眠い発色。`),
+opt("ガサつき","gritty","gritty rough film tone, clearly visible coarse texture and dry roughness, pronounced gritty surface feel, raw unpolished analog mood, unmistakably harsh tactile photo texture",`ザラつき・乾いた粗さ・アナログ感を強く出します。`)
+];
+const OVERALL_TONES=[opt("なし","none",""),opt("クール / モダン","cool","cool modern aesthetic, crisp clean image design, urban sophisticated mood"),opt("キュート / 柔らか","cute","cute soft aesthetic, gentle pastel atmosphere, soft warm friendliness"),opt("ダーク / ムーディ","dark","dark moody aesthetic, deeper shadows, brooding emotional atmosphere"),opt("ナチュラル / 透明感","transparent","natural transparent beauty aesthetic, fresh clean look, airy brightness"),opt("エレガント / 上品","elegant","elegant refined aesthetic, graceful composition, polished sophistication"),opt("ストリート / エッジ","street","street edge aesthetic, raw urban energy, gritty authentic mood"),opt("ロマンティック","romantic","romantic dreamy aesthetic, soft warm glow, tender emotional atmosphere"),opt("ミニマル / 静寂","minimal","minimal quiet aesthetic, restrained negative-space calm")];
+const EFFECTS=[
+opt("🌫️ 背景ボケ","bokeh","(portrait-safe moderate background blur:1.66), (background softly blurred but still readable as a real place:1.68), (moderate depth separation without cutout look:1.7)","背景をほどよくぼかします。場所感は残します。"),
+opt("✨ 光の玉ボケ","orb","(clearly visible light orb bokeh:1.8), (ambient light circles in background:1.8), (noticeable specular bokeh highlights:1.8)","背景光を丸い玉ボケにします。夜景・ロビー照明向き。"),
+opt("✨ 前ボケ","foreground","(soft out-of-focus foreground bokeh in front of the subject:1.74), (layered depth with foreground bokeh and readable background:1.72)","手前に軽いボケを入れて奥行きを出します。"),
+opt("💧 水滴/結露感","droplet","(subtle condensation droplets on glass or foreground:1.68), (noticeable water droplet texture where physically appropriate:1.66)","雨・窓・ガラス向き。肌に直接寄せすぎない設定。"),
+opt("✨ きらめき粒子","sparkle","(clearly visible sparkling light particles in air:1.7), (noticeable shimmering particles:1.68)","空気中の小さなキラキラ。SNS加工寄り。"),
+opt("🌁 ソフトフォーカス","softfocus","(soft focus haze:1.68), (gentle dreamy blur on edges:1.66), (diffused hazy atmosphere:1.66)","輪郭を柔らかくします。"),
+opt("🌙 逆光/リムライト","rim","(clearly visible backlighting:1.78), (rim light on hair and shoulders:1.78), (silhouette-edge glow:1.68)","髪や肩の輪郭光。"),
+opt("📼 VHS/グリッチ","vhs","(vhs tape artifact:1.5), (subtle rgb shift:1.4), (glitch art aesthetic:1.4)","レトロなビデオテープ風。"),
+opt("🌈 フレア/漏れ光","flare","(lens flare:1.6), (light leaks:1.5), (colorful lens artifact:1.4)","レンズの光の反射や漏れ。")
+];
+
+const EFFECT_STRENGTH_OPTIONS=[opt("標準","1.0","1.0"),opt("強め","1.2","1.2"),opt("弱め","0.8","0.8")];
+const SKIN_FINISH_OPTIONS=[opt("ナチュラル","natural","natural skin texture"),opt("ツヤ肌","glossy","glossy healthy skin, glowing complexion"),opt("マット","matte","matte smooth skin, flawless finish")];
+const CLOSEUP_TEXTURE_OPTIONS=[opt("なし","none",""),opt("産毛/毛穴","pore","detailed skin pores, peach fuzz, micro texture"),opt("汗/潤い","sweat","subtle sweat drops, moist skin, wet look")];
+const SELFIE_MODE_OPTIONS=[opt("OFF","off",""),opt("ON","on","(selfie photo:1.8), (arm extended holding camera:1.5)")];
+const ANGLE_MODE_OPTIONS=[opt("おまかせ","auto",""),opt("アイレベル","eye","(eye-level shot:1.5)"),opt("ローアングル","low","(low angle shot:1.5)"),opt("ハイアングル","high","(high angle shot:1.5)")];
+const VISIBLE_RANGE_OPTIONS=[opt("おまかせ","auto",""),opt("顔のみ","face","(face close-up:1.6)"),opt("上半身","upper","(upper body shot:1.5)"),opt("全身","full","(full body shot:1.5)")];
+const CAMERA_ROLL_OPTIONS=[opt("水平","0",""),opt("少し傾く","15","(dutch angle:1.3)"),opt("大きく傾く","30","(strong dutch angle:1.5)")];
+const FACE_DIRECTION_OPTIONS=[opt("正面","front","(facing camera:1.5)"),opt("横顔","side","(profile face:1.5)")];
+const GAZE_OPTIONS=[opt("カメラ目線","camera","(looking at viewer:1.5)"),opt("外す","away","(looking away:1.5)")];
+const BACKGROUND_VIEW_OPTIONS=[opt("標準","normal",""),opt("広め","wide","(wide angle lens, showing environment:1.5)"),opt("狭め","narrow","(telephoto lens, compressed background:1.5)")];
+const FRAMING_OPTIONS=[opt("標準","normal",""),opt("余白多め","loose","(loose framing, negative space:1.5)")];
+const PHOTO_STYLE_OPTIONS=[opt("自然","natural","(candid natural photo:1.5)"),opt("ポーズあり","posed","(posed portrait:1.5)")];
+const TENSION_OPTIONS=[opt("静か","calm",""),opt("動きあり","dynamic","(dynamic pose, motion:1.5)")];
+const EMOTION_OPTIONS=[opt("おまかせ","auto",""),opt("嬉しい","happy","(happy emotion:1.3)"),opt("クール","cool","(cool neutral emotion:1.3)")];
+const EXPRESSION_OPTIONS=[opt("おまかせ","auto",""),opt("笑顔","smile","(smiling face:1.5)"),opt("真顔","neutral","(neutral face:1.5)")];
+
+let state = {
+  characterMode: "off",
+  outfitReferenceMode: "off",
+  basePosture: "auto",
+  bust: "natural",
+  hip: "natural",
+  weather: "clear",
+  film: "none",
+  tone: "none",
+  effects: [],
+  effectStrength: "1.0",
+  skinFinish: "natural",
+  closeupTexture: "none",
+  selfieMode: "off",
+  angleMode: "auto",
+  visibleRange: "auto",
+  cameraRoll: "0",
+  faceDirection: "front",
+  gaze: "camera",
+  backgroundView: "normal",
+  framing: "normal",
+  photoStyle: "natural",
+  tension: "calm",
+  emotion: "auto",
+  expression: "auto"
+};
+
+function renderChips(containerId, options, stateKey, isMulti = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  options.forEach(opt => {
+    const chip = document.createElement("div");
+    chip.className = "chip";
+    if (opt.help) chip.classList.add("has-help");
+    
+    if (isMulti) {
+      if (state[stateKey].includes(opt.key)) chip.classList.add("active");
+    } else {
+      if (state[stateKey] === opt.key) chip.classList.add("active");
+    }
+
+    chip.textContent = opt.label;
+    
+    // Help behavior
+    let timer;
+    chip.addEventListener("mousedown", () => {
+      timer = setTimeout(() => {
+        if(opt.help) showChipHelp(opt.label, opt.help);
+      }, 500);
+    });
+    chip.addEventListener("mouseup", () => clearTimeout(timer));
+    chip.addEventListener("mouseleave", () => clearTimeout(timer));
+    chip.addEventListener("touchstart", () => {
+      timer = setTimeout(() => {
+        if(opt.help) showChipHelp(opt.label, opt.help);
+      }, 500);
+    });
+    chip.addEventListener("touchend", () => clearTimeout(timer));
+
+    chip.addEventListener("click", () => {
+      if (isMulti) {
+        if (state[stateKey].includes(opt.key)) {
+          state[stateKey] = state[stateKey].filter(k => k !== opt.key);
+        } else {
+          state[stateKey].push(opt.key);
+        }
+      } else {
+        state[stateKey] = opt.key;
+      }
+      renderChips(containerId, options, stateKey, isMulti);
+    });
+    container.appendChild(chip);
+  });
+}
+
+function showChipHelp(title, body) {
+  document.getElementById("chipHelpTitle").textContent = title;
+  document.getElementById("chipHelpBody").textContent = body;
+  document.getElementById("chipHelpOverlay").classList.remove("hidden");
+}
+function hideChipHelp() {
+  document.getElementById("chipHelpOverlay").classList.add("hidden");
+}
+
+function init() {
+  renderChips("characterModeChips", CHARACTER_MODE_OPTIONS, "characterMode");
+  renderChips("outfitReferenceModeChips", OUTFIT_REFERENCE_MODE_OPTIONS, "outfitReferenceMode");
+  renderChips("basePostureChips", BASE_POSTURE_OPTIONS, "basePosture");
+  renderChips("bustChips", BUST_OPTIONS, "bust");
+  renderChips("hipChips", HIP_OPTIONS, "hip");
+  renderChips("weatherChips", WEATHER_OPTIONS, "weather");
+  renderChips("filmChips", FILM_TONES, "film");
+  renderChips("toneChips", OVERALL_TONES, "tone");
+  renderChips("effectChips", EFFECTS, "effects", true);
+  renderChips("effectStrengthChips", EFFECT_STRENGTH_OPTIONS, "effectStrength");
+  renderChips("skinFinishChips", SKIN_FINISH_OPTIONS, "skinFinish");
+  renderChips("closeupTextureChips", CLOSEUP_TEXTURE_OPTIONS, "closeupTexture");
+  renderChips("selfieModeChips", SELFIE_MODE_OPTIONS, "selfieMode");
+  renderChips("angleModeChips", ANGLE_MODE_OPTIONS, "angleMode");
+  renderChips("visibleRangeChips", VISIBLE_RANGE_OPTIONS, "visibleRange");
+  renderChips("cameraRollChips", CAMERA_ROLL_OPTIONS, "cameraRoll");
+  renderChips("faceDirectionChips", FACE_DIRECTION_OPTIONS, "faceDirection");
+  renderChips("gazeChips", GAZE_OPTIONS, "gaze");
+  renderChips("backgroundViewChips", BACKGROUND_VIEW_OPTIONS, "backgroundView");
+  renderChips("framingChips", FRAMING_OPTIONS, "framing");
+  renderChips("photoStyleChips", PHOTO_STYLE_OPTIONS, "photoStyle");
+  renderChips("tensionChips", TENSION_OPTIONS, "tension");
+  renderChips("emotionChips", EMOTION_OPTIONS, "emotion");
+  renderChips("expressionChips", EXPRESSION_OPTIONS, "expression");
+
+  updateTime();
+}
+
+function updateTime() {
+  const now = new Date();
+  const m = now.getMonth() + 1;
+  const d = now.getDate();
+  const day = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][now.getDay()];
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getHours()).padStart(2, '0');
+
+  document.getElementById("hTime").textContent = `${hh}:${mm}`;
+  document.getElementById("hDay").textContent = `${m}月${d}日 · ${day}`;
+  
+  document.getElementById("infoDay").textContent = `${m}月${d}日 (${day})`;
+  document.getElementById("infoTime").textContent = `${hh}:${mm}`;
+  
+  document.getElementById("infoDayMood").textContent = DAY_MOOD[day] || "";
+  document.getElementById("infoHair").textContent = HAIR_BY_MONTH[m] || "";
+}
+
+function handleGenerate() {
+  const parts = [];
+  
+  // Character mode logic
+  if(state.characterMode === "on") {
+     parts.push("CHARACTER LOCK A1-A9 ENABLED");
+  }
+
+  // Collect active options
+  const optGroups = [
+    {val: state.basePosture, opts: BASE_POSTURE_OPTIONS},
+    {val: state.bust, opts: BUST_OPTIONS},
+    {val: state.hip, opts: HIP_OPTIONS},
+    {val: state.weather, opts: WEATHER_OPTIONS},
+    {val: state.film, opts: FILM_TONES},
+    {val: state.tone, opts: OVERALL_TONES},
+    {val: state.skinFinish, opts: SKIN_FINISH_OPTIONS},
+    {val: state.closeupTexture, opts: CLOSEUP_TEXTURE_OPTIONS},
+    {val: state.selfieMode, opts: SELFIE_MODE_OPTIONS},
+    {val: state.angleMode, opts: ANGLE_MODE_OPTIONS},
+    {val: state.visibleRange, opts: VISIBLE_RANGE_OPTIONS},
+    {val: state.cameraRoll, opts: CAMERA_ROLL_OPTIONS},
+    {val: state.faceDirection, opts: FACE_DIRECTION_OPTIONS},
+    {val: state.gaze, opts: GAZE_OPTIONS},
+    {val: state.backgroundView, opts: BACKGROUND_VIEW_OPTIONS},
+    {val: state.framing, opts: FRAMING_OPTIONS},
+    {val: state.photoStyle, opts: PHOTO_STYLE_OPTIONS},
+    {val: state.tension, opts: TENSION_OPTIONS},
+    {val: state.emotion, opts: EMOTION_OPTIONS},
+    {val: state.expression, opts: EXPRESSION_OPTIONS},
+  ];
+
+  optGroups.forEach(g => {
+    const o = g.opts.find(x => x.key === g.val);
+    if(o && o.value && o.value !== "auto" && o.value !== "none" && o.value !== "off") {
+      parts.push(o.value);
+    }
+  });
+
+  // Effects
+  state.effects.forEach(ek => {
+    const ef = EFFECTS.find(x => x.key === ek);
+    if(ef && ef.value) parts.push(ef.value + " *Strength:" + state.effectStrength + "*");
+  });
+
+  // Situation
+  const sit = document.getElementById("situation").value.trim();
+  if(sit) {
+    parts.push(`Situation: ${sit}`);
+  }
+  
+  parts.push(CHIN_CONTROL);
+
+  const promptText = parts.join(",\n");
+  document.getElementById("outputArea").value = promptText;
+  document.getElementById("outputCard").classList.remove("hidden");
+  
+  document.getElementById("metaContent").textContent = "Generated successfully.";
+  document.getElementById("metaCard").classList.remove("hidden");
+}
+
+function handleReset() {
+  state = {
+    characterMode: "off",
+    outfitReferenceMode: "off",
+    basePosture: "auto",
+    bust: "natural",
+    hip: "natural",
+    weather: "clear",
+    film: "none",
+    tone: "none",
+    effects: [],
+    effectStrength: "1.0",
+    skinFinish: "natural",
+    closeupTexture: "none",
+    selfieMode: "off",
+    angleMode: "auto",
+    visibleRange: "auto",
+    cameraRoll: "0",
+    faceDirection: "front",
+    gaze: "camera",
+    backgroundView: "normal",
+    framing: "normal",
+    photoStyle: "natural",
+    tension: "calm",
+    emotion: "auto",
+    expression: "auto"
+  };
+  document.getElementById("situation").value = "";
+  document.getElementById("outputCard").classList.add("hidden");
+  document.getElementById("metaCard").classList.add("hidden");
+  init();
+}
+
+function handleCopy() {
+  const ta = document.getElementById("outputArea");
+  ta.select();
+  document.execCommand("copy");
+  const btn = document.getElementById("btnCopy");
+  btn.textContent = "コピー完了";
+  btn.classList.add("copied");
+  setTimeout(() => {
+    btn.textContent = "コピー";
+    btn.classList.remove("copied");
+  }, 2000);
+}
+
+init();
+</script>
+</body>
+</html>
